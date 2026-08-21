@@ -7,6 +7,7 @@ using Aion.GameServer.Ai.Pattern;
 using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Npcskill;
@@ -327,7 +328,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 90,194 casts across 22,391 npcs, none of them read by a human. The index they came from is only
+	/// 90,261 casts across 22,440 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -346,7 +347,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(90194, casts);
+		Assert.Equal(90261, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -788,7 +789,7 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(1782, spawns);
+		Assert.Equal(1810, spawns);
 	}
 	/// <summary><b>Getting home runs the handler retail hangs there, and starting to go home does not.</b></summary>
 	/// <remarks>
@@ -1079,7 +1080,7 @@ public sealed class BattleCycleAiTests
 				// `is_hp_lower_than` about a friend did. Each time a refused element is read, patterns
 				// that carried it *and* an identity guard come in together. That is the pin doing its
 				// job -- the numbers move as visible edits here rather than as silence.
-				["who:TalkerIsPlayer"] = 2,
+				["who:TalkerIsPlayer"] = 22,
 				["who:AttackedByPlayer"] = 18,
 				["who:SpelledByPlayer"] = 17,
 			}.OrderBy(e => e.Key),
@@ -1365,6 +1366,48 @@ public sealed class BattleCycleAiTests
 
 		Do.SkillOnRankedInReach(AggroTarget.MOST_HATED, NoSuchSkill)(ai);
 		Assert.NotNull(worm.GetNextQueuedSkill());
+	}
+
+	/// <summary><b>A race check names one race, and refuses to guess at the rest.</b></summary>
+	/// <remarks>
+	/// <c>is_race</c> is 2,855 uses, the largest single condition this port had never read. Retail
+	/// leans on it to make a branch answer one faction: a fortress guard that shouts at Elyos and
+	/// ignores Asmodians is one rung with a race check, not two npcs.
+	/// <para>
+	/// <b>The mapping is exact-name-or-refuse.</b> Retail's <c>race_type</c> is uppercased and must
+	/// name a member of <see cref="Race"/>; only <c>pc_light</c> and <c>pc_dark</c> are spelled out as
+	/// aliases, because they are the two most-used values and mean <c>ELYOS</c> and <c>ASMODIANS</c>.
+	/// Anything fuzzier would quietly decide that, say, <c>lizardman</c> and <c>ratman</c> are the same
+	/// thing -- and a guard answering the wrong faction looks exactly like a guard working.
+	/// </para>
+	/// <para>
+	/// The unset case matters for the same reason it does elsewhere: these roles are null outside the
+	/// handler that sets them, and a condition that answered true for an absent creature would fire
+	/// every faction-gated rung continuously.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void ARaceCheckAnswersForTheCreatureItNames()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc worm = harness.Spawn(Worm, 300f, 300f, 200f);
+		PatternAi ai = Assert.IsAssignableFrom<PatternAi>(worm.GetAi());
+
+		Assert.False(When.TargetRace(Race.ELYOS)(ai), "an npc with no target matched a race");
+		Assert.False(When.KillerRace(Race.ELYOS)(ai), "an npc nobody killed matched a killer's race");
+
+		Player player = harness.SpawnPlayer(301f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(worm, player);
+		worm.SetTarget(player);
+
+		Race actual = player.GetRace();
+		Assert.True(When.TargetRace(actual)(ai), "the target's own race did not match");
+
+		Race other = actual == Race.ELYOS ? Race.ASMODIANS : Race.ELYOS;
+		Assert.False(When.TargetRace(other)(ai), "the opposing faction matched too");
+
+		// Retail writes several races on one check, and any of them should do.
+		Assert.True(When.TargetRace(other, actual)(ai), "a list containing the race did not match");
 	}
 
 }

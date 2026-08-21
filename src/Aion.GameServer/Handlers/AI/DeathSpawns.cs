@@ -3,13 +3,14 @@
 //     Do not edit by hand; edit the extractor and re-run.
 // </auto-generated>
 using Aion.GameServer.Ai.Pattern;
+using Aion.GameServer.Model;
 using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Model.Templates.Npcskill;
 
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// What a retail npc leaves behind when it dies: 614 patterns across 1644 npcs, 4143 actions.
+/// What a retail npc leaves behind when it dies: 680 patterns across 1921 npcs, 5241 actions.
 /// </summary>
 /// <remarks>
 /// The encounters no rotation table can reach. <see cref="BattleCycles"/> reads <c>on_die</c> too, but
@@ -62,6 +63,9 @@ internal static class DeathSpawns
         Rungs14(rungs);
         Rungs15(rungs);
         Rungs16(rungs);
+        Rungs17(rungs);
+        Rungs18(rungs);
+        Rungs19(rungs);
         return rungs;
     }
 
@@ -293,6 +297,14 @@ internal static class DeathSpawns
                 Do.SpawnAtForTheFight(281388, 1, 10, new SpawnSpot(784.0f, 226.0f, 225.0f)),
                 Do.SpawnAtForTheFight(281388, 1, 10, new SpawnSpot(769.3f, 278.7f, 222.0f))),
         ];
+        rungs[216882] = [  // Dread02_SurkanaNm05
+            AiPattern.Branch(7, "on_die 0", [When.TargetRace(Race.ELYOS)],
+                Do.SetSpawnVariable("TELEPORT_L_DESTROYED", 0, 1),
+                Do.SystemMessage(1400652, 0)),
+            AiPattern.Branch(7, "on_die 1", [When.TargetRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("TELEPORT_D_DESTROYED", 0, 1),
+                Do.SystemMessage(1400652, 0)),
+        ];
         rungs[216937] = [  // Elim_ComadFe2
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("IDElim_3F_Heal_Plant_Giant", 0, 1)),
@@ -446,6 +458,18 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SpawnNearForTheFight(701009, 0, 1, 0f, 0)),
         ];
+        rungs[217315] = [  // IDYun_TheThingFromAnotherWorld_01
+            AiPattern.Branch(5, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855953, 0, 1, 0f, 30)),
+            AiPattern.Branch(4, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855953, 0, 1, 0f, 30)),
+        ];
+        rungs[217316] = [  // IDYun_TheThingFromAnotherWorld_02
+            AiPattern.Branch(5, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855953, 0, 1, 0f, 30)),
+            AiPattern.Branch(4, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855953, 0, 1, 0f, 30)),
+        ];
         rungs[217327] = [  // IDYun_Temp_19
             AiPattern.Branch(1, "on_die 0", When.Always,
                 Do.SpawnNearForTheFight(282551, 1, 1, 0f, 10)),
@@ -534,6 +558,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("Condition_S2_L", 0, 1)),
         ];
+    }
+
+    private static void Rungs1(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[217499] = [  // IDArena_S2_Monster_6
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("Condition_S2_L", 0, 1)),
@@ -546,10 +574,6 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("Condition_S2_D", 0, 1)),
         ];
-    }
-
-    private static void Rungs1(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[217503] = [  // IDArena_S2_Monster_R2
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("Condition_S2_D", 0, 1)),
@@ -968,6 +992,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("Condition_S4A", 0, 1)),
         ];
+    }
+
+    private static void Rungs2(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[217787] = [  // IDArena_Solo_S2_Nor2
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("Condition_S4B", 0, 1)),
@@ -982,10 +1010,6 @@ internal static class DeathSpawns
                 Do.Say(342151, 0),
                 Do.SetSpawnVariable("Condition_S4A", 0, 1)),
         ];
-    }
-
-    private static void Rungs2(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[217790] = [  // IDArena_Solo_S2_Kaki
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.Say(342149, 0),
@@ -1403,6 +1427,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("Namedkilled", 0, 1)),
         ];
+    }
+
+    private static void Rungs3(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[219267] = [  // IDDreadgion_03_DrakanFiNamedFA_60_Ae
             AiPattern.Branch(5, "on_die 0", When.Always,
                 Do.SetSpawnVariable("Namedkilled", 0, 1)),
@@ -1411,14 +1439,20 @@ internal static class DeathSpawns
             AiPattern.Branch(5, "on_die 0", When.Always,
                 Do.SetSpawnVariable("Namedkilled", 0, 1)),
         ];
+        rungs[219271] = [  // IDDreadgion_03_DrakanGi_NamedC_60_Ae
+            AiPattern.Branch(9, "on_die 0", [When.TargetRace(Race.ELYOS), When.FirstTime(0)],
+                Do.SetSpawnVariable("NAMED_KILLED_L", 1, 0),
+                Do.SetSpawnVariable("Namedkilled", 0, 1),
+                Do.SystemMessage(1401419, 0)),
+            AiPattern.Branch(8, "on_die 1", [When.TargetRace(Race.ASMODIANS), When.FirstTime(0)],
+                Do.SetSpawnVariable("NAMED_KILLED_D", 1, 0),
+                Do.SetSpawnVariable("Namedkilled", 0, 1),
+                Do.SystemMessage(1401419, 0)),
+        ];
         rungs[219311] = [  // TiamatDown_TiamatAgent
             AiPattern.Branch(6, "on_die 0", When.Always,
                 Do.SetSpawnVariable("Agent_Sum_Spawn", 2, 0)),
         ];
-    }
-
-    private static void Rungs3(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[219312] = [  // TiamatDown_TiamatAgent
             AiPattern.Branch(6, "on_die 0", When.Always,
                 Do.SetSpawnVariable("Agent_Sum_Spawn", 2, 0)),
@@ -1865,6 +1899,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("v06ctrl", -1, 0)),
         ];
+    }
+
+    private static void Rungs4(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[231884] = [  // LDF5_Village_KillerCtrl06_DR
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("v06ctrl", -1, 0)),
@@ -1881,10 +1919,6 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("v07ctrl", -1, 0)),
         ];
-    }
-
-    private static void Rungs4(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[231888] = [  // LDF5_Village_KillerCtrl08_L
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("v08ctrl", -1, 0)),
@@ -2120,6 +2154,16 @@ internal static class DeathSpawns
             AiPattern.Branch(5, "on_die 0", When.Always,
                 Do.SetSpawnVariable("Namedkilled", 0, 1)),
         ];
+        rungs[233378] = [  // IDDreadgion_03_DrakanGi_NamedC_60_Ae
+            AiPattern.Branch(9, "on_die 0", [When.TargetRace(Race.ELYOS), When.FirstTime(0)],
+                Do.SetSpawnVariable("NAMED_KILLED_L", 1, 0),
+                Do.SetSpawnVariable("Namedkilled", 0, 1),
+                Do.SystemMessage(1401419, 0)),
+            AiPattern.Branch(8, "on_die 1", [When.TargetRace(Race.ASMODIANS), When.FirstTime(0)],
+                Do.SetSpawnVariable("NAMED_KILLED_D", 1, 0),
+                Do.SetSpawnVariable("Namedkilled", 0, 1),
+                Do.SystemMessage(1401419, 0)),
+        ];
         rungs[233380] = [  // IDF5_U2_VriRP_Ri_party_N_65_Ae2
             AiPattern.Branch(100, "on_die 0", When.Always,
                 Do.SpawnNearForTheFight(702659, 0, 1, 0f, 0),
@@ -2148,6 +2192,226 @@ internal static class DeathSpawns
             AiPattern.Branch(100, "on_die 0", When.Always,
                 Do.SetSpawnVariable("cSetPortal", 0, 1)),
         ];
+        rungs[233498] = [  // IDF5_TD_War_Dark_Officer_01
+            AiPattern.Branch(17, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v01", 2, 0),
+                Do.SpawnNearForTheFight(855029, 0, 1, 0f, 0)),
+            AiPattern.Branch(16, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v01", 3, 0),
+                Do.SpawnNearForTheFight(855019, 0, 1, 0f, 0)),
+        ];
+        rungs[233499] = [  // IDF5_TD_War_Dark_Officer_02
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v02", 2, 0),
+                Do.SpawnNearForTheFight(855030, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v02", 3, 0),
+                Do.SpawnNearForTheFight(855020, 0, 1, 0f, 0)),
+        ];
+        rungs[233500] = [  // IDF5_TD_War_Dark_Officer_03
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v03", 2, 0),
+                Do.SpawnNearForTheFight(855031, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v03", 3, 0),
+                Do.SpawnNearForTheFight(855021, 0, 1, 0f, 0)),
+        ];
+        rungs[233501] = [  // IDF5_TD_War_Dark_Officer_04
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v04", 2, 0),
+                Do.SpawnNearForTheFight(855032, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v04", 3, 0),
+                Do.SpawnNearForTheFight(855022, 0, 1, 0f, 0)),
+        ];
+        rungs[233502] = [  // IDF5_TD_War_Dark_Officer_05
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v05", 2, 0),
+                Do.SpawnNearForTheFight(855033, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v05", 3, 0),
+                Do.SpawnNearForTheFight(855023, 0, 1, 0f, 0)),
+        ];
+        rungs[233503] = [  // IDF5_TD_War_Dark_Officer_06
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v06", 2, 0),
+                Do.SpawnNearForTheFight(855034, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v06", 3, 0),
+                Do.SpawnNearForTheFight(855024, 0, 1, 0f, 0)),
+        ];
+        rungs[233504] = [  // IDF5_TD_War_Dark_Officer_07
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v07", 2, 0),
+                Do.SpawnNearForTheFight(855035, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v07", 3, 0),
+                Do.SpawnNearForTheFight(855035, 0, 1, 0f, 0)),
+        ];
+        rungs[233505] = [  // IDF5_TD_War_Dark_Officer_08
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v08", 2, 0),
+                Do.SpawnNearForTheFight(855026, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v08", 3, 0),
+                Do.SpawnNearForTheFight(855026, 0, 1, 0f, 0)),
+        ];
+        rungs[233506] = [  // IDF5_TD_War_Dark_Officer_09
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855037, 0, 1, 0f, 0),
+                Do.SetSpawnVariable("v09", 2, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855027, 0, 1, 0f, 0),
+                Do.SetSpawnVariable("v09", 3, 0)),
+        ];
+        rungs[233507] = [  // IDF5_TD_War_Dark_Officer_10
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v10", 2, 0),
+                Do.SpawnNearForTheFight(855038, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v10", 3, 0),
+                Do.SpawnNearForTheFight(855028, 0, 1, 0f, 0)),
+        ];
+        rungs[233518] = [  // IDF5_TD_War_Light_Officer_01
+            AiPattern.Branch(17, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v01", 2, 0),
+                Do.SpawnNearForTheFight(855029, 0, 1, 0f, 0)),
+            AiPattern.Branch(16, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v01", 3, 0),
+                Do.SpawnNearForTheFight(855019, 0, 1, 0f, 0)),
+        ];
+        rungs[233519] = [  // IDF5_TD_War_Light_Officer_02
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v02", 2, 0),
+                Do.SpawnNearForTheFight(855030, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v02", 3, 0),
+                Do.SpawnNearForTheFight(855020, 0, 1, 0f, 0)),
+        ];
+        rungs[233520] = [  // IDF5_TD_War_Light_Officer_03
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v03", 2, 0),
+                Do.SpawnNearForTheFight(855031, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v03", 3, 0),
+                Do.SpawnNearForTheFight(855021, 0, 1, 0f, 0)),
+        ];
+        rungs[233521] = [  // IDF5_TD_War_Light_Officer_04
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v04", 2, 0),
+                Do.SpawnNearForTheFight(855032, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v04", 3, 0),
+                Do.SpawnNearForTheFight(855022, 0, 1, 0f, 0)),
+        ];
+        rungs[233522] = [  // IDF5_TD_War_Light_Officer_05
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v05", 2, 0),
+                Do.SpawnNearForTheFight(855033, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v05", 3, 0),
+                Do.SpawnNearForTheFight(855023, 0, 1, 0f, 0)),
+        ];
+        rungs[233523] = [  // IDF5_TD_War_Light_Officer_06
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v06", 2, 0),
+                Do.SpawnNearForTheFight(855034, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v06", 3, 0),
+                Do.SpawnNearForTheFight(855024, 0, 1, 0f, 0)),
+        ];
+        rungs[233524] = [  // IDF5_TD_War_Light_Officer_07
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v07", 2, 0),
+                Do.SpawnNearForTheFight(855035, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v07", 3, 0),
+                Do.SpawnNearForTheFight(855025, 0, 1, 0f, 0)),
+        ];
+        rungs[233525] = [  // IDF5_TD_War_Light_Officer_08
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v08", 2, 0),
+                Do.SpawnNearForTheFight(855036, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v08", 3, 0),
+                Do.SpawnNearForTheFight(855026, 0, 1, 0f, 0)),
+        ];
+        rungs[233526] = [  // IDF5_TD_War_Light_Officer_09
+            AiPattern.Branch(17, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855037, 0, 1, 0f, 0),
+                Do.SetSpawnVariable("v09", 2, 0)),
+            AiPattern.Branch(16, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855027, 0, 1, 0f, 0),
+                Do.SetSpawnVariable("v09", 3, 0)),
+        ];
+        rungs[233527] = [  // IDF5_TD_War_Light_Officer_10
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v10", 2, 0),
+                Do.SpawnNearForTheFight(855038, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v10", 3, 0),
+                Do.SpawnNearForTheFight(855028, 0, 1, 0f, 0)),
+        ];
+        rungs[233550] = [  // IDF5_TD_War_Vri_Officer_01
+            AiPattern.Branch(19, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v01", 2, 0)),
+            AiPattern.Branch(18, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v01", 3, 0)),
+        ];
+        rungs[233551] = [  // IDF5_TD_War_Vri_Officer_02
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v02", 2, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v02", 3, 0)),
+        ];
+        rungs[233552] = [  // IDF5_TD_War_Vri_Officer_03
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v03", 2, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v03", 3, 0)),
+        ];
+        rungs[233553] = [  // IDF5_TD_War_Vri_Officer_04
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v04", 2, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v04", 3, 0)),
+        ];
+        rungs[233554] = [  // IDF5_TD_War_Vri_Officer_05
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v05", 2, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v05", 3, 0)),
+        ];
+        rungs[233555] = [  // IDF5_TD_War_Vri_Officer_06
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v06", 2, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v06", 3, 0)),
+        ];
+        rungs[233556] = [  // IDF5_TD_War_Vri_Officer_07
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v07", 2, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v07", 3, 0)),
+        ];
+        rungs[233557] = [  // IDF5_TD_War_Vri_Officer_08
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v08", 2, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v08", 3, 0)),
+        ];
+        rungs[233558] = [  // IDF5_TD_War_Vri_Officer_09
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v09", 2, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v09", 3, 0)),
+        ];
+        rungs[233559] = [  // IDF5_TD_War_Vri_Officer_10
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v10", 2, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v10", 3, 0)),
+        ];
         rungs[233884] = [  // IDArena_S5_Named_1
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("Condition_S4", 0, 1)),
@@ -2156,6 +2420,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("v01ctrl", -1, 0)),
         ];
+    }
+
+    private static void Rungs5(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[234129] = [  // LDF5_Village_KillerCtrl01_D
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("v01ctrl", -1, 0)),
@@ -2175,6 +2443,1162 @@ internal static class DeathSpawns
         rungs[234133] = [  // LDF5_Village_KillerCtrl02_DR
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("v02ctrl", -1, 0)),
+        ];
+        rungs[234162] = [  // LDF4_Advance_village_19
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.DRAKAN)],
+                Do.SpawnNearForTheFight(855567, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855566, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855566, 0, 1, 0f, 0)),
+        ];
+        rungs[234164] = [  // LDF4_Advance_village_01
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855375, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855388, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855375, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855388, 0, 1, 0f, 0)),
+        ];
+        rungs[234166] = [  // LDF4_Advance_village_10
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855384, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855397, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855384, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855397, 0, 1, 0f, 0)),
+        ];
+        rungs[234216] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[234217] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[234218] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[234542] = [  // IDLDF4_Re_01_PhyBoss
+            AiPattern.Branch(9, "on_killed_by_npc 0", [When.KilledByNpc],
+                Do.SetSpawnVariable("Boss_Die", 0, 1)),
+            AiPattern.Branch(7, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.Broadcast(1002, 50f)),
+            AiPattern.Branch(6, "on_killed_by_npc 2", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.Broadcast(1002, 50f)),
+            AiPattern.Branch(9, "on_killed_by_user 0", [When.KilledByPlayer],
+                Do.SetSpawnVariable("Boss_Die", 0, 1)),
+            AiPattern.Branch(7, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.Broadcast(1002, 50f)),
+            AiPattern.Branch(6, "on_killed_by_user 2", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.Broadcast(1002, 50f)),
+        ];
+        rungs[234646] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235221] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235222] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235223] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235224] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235225] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235226] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235227] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235228] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235229] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235230] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235231] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235232] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235233] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235234] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235235] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235236] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235237] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235238] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235239] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235240] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235241] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235242] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235243] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235244] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235245] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235246] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235247] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235248] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235249] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235250] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235251] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235252] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235253] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235254] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235255] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235256] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235257] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235258] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235259] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235260] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235261] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235262] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235263] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235264] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235265] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235266] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235267] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235268] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235269] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235270] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235271] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235272] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235273] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235274] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235275] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235276] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235277] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235278] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235279] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235280] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235281] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235282] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235283] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235284] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235285] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235286] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235287] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235288] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235289] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235290] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235291] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235292] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235293] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235294] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235295] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235296] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235297] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235298] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235299] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235300] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235301] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235302] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235303] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235304] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235305] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235306] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235307] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+    }
+
+    private static void Rungs6(Dictionary<int, PatternBranch[]> rungs)
+    {
+        rungs[235308] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235309] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235310] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235311] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235312] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235313] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235314] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235315] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235316] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235317] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235318] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235319] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235320] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235321] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235322] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235323] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[235324] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235325] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[235326] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[235327] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
         ];
         rungs[235619] = [  // IDLDF5_Under_02_Boss_Wi
             AiPattern.Branch(1000, "on_die 0", When.Always,
@@ -2338,16 +3762,24 @@ internal static class DeathSpawns
             AiPattern.Branch(4, "on_die 0", When.Always,
                 Do.SpawnNearForTheFight(856481, 1, 1, 0f, 10)),
         ];
+        rungs[236299] = [  // IDYun_TheThingFromAnotherWorld_01
+            AiPattern.Branch(5, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855953, 0, 1, 0f, 30)),
+            AiPattern.Branch(4, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855953, 0, 1, 0f, 30)),
+        ];
+        rungs[236301] = [  // IDYun_TheThingFromAnotherWorld_02
+            AiPattern.Branch(5, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855953, 0, 1, 0f, 30)),
+            AiPattern.Branch(4, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855953, 0, 1, 0f, 30)),
+        ];
         rungs[236306] = [  // IDRaksha_Re_Boss_KJS
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.FirstTime(18)],
                 Do.SetSpawnVariable("idraksha_clear", 1, 0)),
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.FirstTime(18)],
                 Do.SetSpawnVariable("idraksha_clear", 1, 0)),
         ];
-    }
-
-    private static void Rungs5(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[236526] = [  // IDYun_Nmd3_FallOff
             AiPattern.Branch(5, "on_die 0", When.Always,
                 Do.SetSpawnVariable("DISPEL_ARIANA", 1, 0),
@@ -2645,6 +4077,10 @@ internal static class DeathSpawns
                 Do.Say(340925, 0),
                 Do.SpawnNearForTheFight(294564, 0, 1, 0f, 360)),
         ];
+    }
+
+    private static void Rungs7(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[263561] = [  // DGuard_FhA_Officer
             AiPattern.Branch(10, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.Say(340925, 0),
@@ -2983,10 +4419,6 @@ internal static class DeathSpawns
                 Do.Say(340925, 0),
                 Do.SpawnNearForTheFight(294563, 0, 1, 0f, 360)),
         ];
-    }
-
-    private static void Rungs6(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[271797] = [  // DGuard_FhA_Officer
             AiPattern.Branch(10, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.Say(340925, 0),
@@ -3311,6 +4743,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("v13ctrl", -1, 0)),
         ];
+    }
+
+    private static void Rungs8(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[277139] = [  // LDF5_Village_KillerCtrl14_DR
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("v14ctrl", -1, 0)),
@@ -3663,10 +5099,6 @@ internal static class DeathSpawns
                 Do.SetSpawnVariable("v11", 22, 0),
                 Do.SetSpawnVariable("v12", 22, 0)),
         ];
-    }
-
-    private static void Rungs7(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[277408] = [  // BGuard_Chief_Gab1_D
             AiPattern.Branch(100, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SpawnNearForTheFight(295092, 1, 1, 0f, 12),
@@ -4723,6 +6155,10 @@ internal static class DeathSpawns
                 Do.SetSpawnVariable("v11", 22, 0),
                 Do.SetSpawnVariable("v12", 22, 0)),
         ];
+    }
+
+    private static void Rungs9(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[277456] = [  // BGuard_Chief_Gab1_Dr
             AiPattern.Branch(100, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SpawnNearForTheFight(295092, 1, 1, 0f, 12),
@@ -5093,10 +6529,6 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SpawnNearForTheFight(296337, 0, 1, 0f, 12)),
         ];
-    }
-
-    private static void Rungs8(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[277915] = [  // NoAction_AbyssDoor
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SpawnNearForTheFight(296337, 0, 1, 0f, 12)),
@@ -5269,6 +6701,22 @@ internal static class DeathSpawns
                 Do.SpawnNearForTheFight(281197, 1, 1, 0f, 6),
                 Do.SetSpawnVariable("Lever", 2, 0)),
         ];
+        rungs[281128] = [  // IDSlk_KKFoodA
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.SHULACK)],
+                Do.SpawnNearForTheFight(281126, 1, 1, 0f, 6)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc],
+                Do.SpawnNearForTheFight(281196, 1, 1, 0f, 6)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
+                Do.SpawnNearForTheFight(281196, 1, 1, 0f, 6)),
+        ];
+        rungs[281129] = [  // IDSlk_KKFoodB
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.SHULACK)],
+                Do.SpawnNearForTheFight(281127, 1, 1, 0f, 6)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc],
+                Do.SpawnNearForTheFight(281196, 1, 1, 0f, 6)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
+                Do.SpawnNearForTheFight(281196, 1, 1, 0f, 6)),
+        ];
         rungs[281137] = [  // Shulack_KralA
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SpawnNearForTheFight(281291, 1, 1, 0f, 6)),
@@ -5403,6 +6851,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("debufflich", 0, 1)),
         ];
+    }
+
+    private static void Rungs10(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[281674] = [  // IDCT_Normal_LightWi
             AiPattern.Branch(4, "on_die 0", When.Always,
                 Do.SetSpawnVariable("debufflich", 0, 1)),
@@ -5444,6 +6896,14 @@ internal static class DeathSpawns
                 Do.Say(1500092, 0),
                 Do.SpawnNearForTheFight(702658, 0, 1, 0f, 0),
                 Do.Despawn(1)),
+        ];
+        rungs[281882] = [  // Dread02_SurkanaNm05
+            AiPattern.Branch(7, "on_die 0", [When.TargetRace(Race.ELYOS)],
+                Do.SetSpawnVariable("TELEPORT_L_DESTROYED", 0, 1),
+                Do.SystemMessage(1400652, 0)),
+            AiPattern.Branch(7, "on_die 1", [When.TargetRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("TELEPORT_D_DESTROYED", 0, 1),
+                Do.SystemMessage(1400652, 0)),
         ];
         rungs[281891] = [  // IDAbRe_Core_Cannon
             AiPattern.Branch(5, "on_die 0", When.Always,
@@ -5662,10 +7122,6 @@ internal static class DeathSpawns
                 Do.SpawnAtForTheFight(217236, 0, 0, new SpawnSpot(377.13f, 445.91f, 157.0f)),
                 Do.SpawnAtForTheFight(217235, 0, 0, new SpawnSpot(383.57f, 445.91f, 157.0f))),
         ];
-    }
-
-    private static void Rungs9(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[282262] = [  // IDElemental_Ex4
             AiPattern.Branch(7, "on_die 0", [When.Chance(50)],
                 Do.SpawnAtForTheFight(217246, 0, 0, new SpawnSpot(377.13f, 446.91f, 157.0f)),
@@ -5677,6 +7133,36 @@ internal static class DeathSpawns
         rungs[282265] = [  // IDHouse_Zadra_Phantom
             AiPattern.Branch(3, "on_die 0", When.Always,
                 Do.SpawnNearForTheFight(282252, 1, 1, 0f, 5)),
+        ];
+        rungs[282277] = [  // Station_Shu_FI_B
+            AiPattern.Branch(100, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(702655, 0, 1, 0f, 0)),
+            AiPattern.Branch(99, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(702655, 0, 1, 0f, 0)),
+        ];
+        rungs[282278] = [  // Station_Shu_KN_B
+            AiPattern.Branch(100, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(702655, 0, 1, 0f, 0)),
+            AiPattern.Branch(99, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(702655, 0, 1, 0f, 0)),
+        ];
+        rungs[282279] = [  // Station_Shu_RA_B
+            AiPattern.Branch(100, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(702655, 0, 1, 0f, 0)),
+            AiPattern.Branch(99, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(702655, 0, 1, 0f, 0)),
+        ];
+        rungs[282280] = [  // Station_Shu_WI_B
+            AiPattern.Branch(100, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(702655, 0, 1, 0f, 0)),
+            AiPattern.Branch(99, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(702655, 0, 1, 0f, 0)),
+        ];
+        rungs[282281] = [  // Station_Shu_PR_B
+            AiPattern.Branch(100, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(702655, 0, 1, 0f, 0)),
+            AiPattern.Branch(99, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(702655, 0, 1, 0f, 0)),
         ];
         rungs[282290] = [  // Station_DrakanD
             AiPattern.Branch(7, "on_die 0", When.Always,
@@ -5859,6 +7345,10 @@ internal static class DeathSpawns
                 Do.SetSpawnVariable("Wave_04_Boss", 0, 1),
                 Do.SetSpawnVariable("Wave_Z1_S4_02", 2, 0)),
         ];
+    }
+
+    private static void Rungs11(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[284326] = [  // IDF5_TD_Wave4_Boss3
             AiPattern.Branch(4, "on_die 0", When.Always,
                 Do.SetSpawnVariable("Wave_04_Boss", 0, 1),
@@ -6015,6 +7505,14 @@ internal static class DeathSpawns
                 Do.Broadcast(21102, 50f),
                 Do.SetSpawnVariable("cSetIdPortal", 1, 0)),
         ];
+        rungs[284501] = [  // IDRuneWP_A1_Protection_65_n
+            AiPattern.Branch(98, "on_die 0", [When.FirstTime(0)],
+                Do.SpawnAtForTheFight(855000, 0, 30, new SpawnSpot(124.73f, 137.75f, 114.0f))),
+            AiPattern.Branch(100, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS), When.FirstTime(0)],
+                Do.SpawnAtForTheFight(855000, 4, 30, new SpawnSpot(124.73f, 137.75f, 114.0f))),
+            AiPattern.Branch(90, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS), When.FirstTime(0)],
+                Do.SpawnAtForTheFight(855000, 4, 30, new SpawnSpot(124.73f, 137.75f, 114.0f))),
+        ];
         rungs[284502] = [  // IDRuneWP_A1_VriIU_Wi_SN_65_Ah
             AiPattern.Branch(100, "on_die 0", When.Always,
                 Do.SetSpawnVariable("cProtection01", 0, 1),
@@ -6107,6 +7605,176 @@ internal static class DeathSpawns
             AiPattern.Branch(5, "on_die 0", When.Always,
                 Do.SetSpawnVariable("Namedkilled", 0, 1)),
         ];
+        rungs[284744] = [  // IDDreadgion_03_DrakanGi_NamedC_60_Ae
+            AiPattern.Branch(9, "on_die 0", [When.TargetRace(Race.ELYOS), When.FirstTime(0)],
+                Do.SetSpawnVariable("NAMED_KILLED_L", 1, 0),
+                Do.SetSpawnVariable("Namedkilled", 0, 1),
+                Do.SystemMessage(1401419, 0)),
+            AiPattern.Branch(8, "on_die 1", [When.TargetRace(Race.ASMODIANS), When.FirstTime(0)],
+                Do.SetSpawnVariable("NAMED_KILLED_D", 1, 0),
+                Do.SetSpawnVariable("Namedkilled", 0, 1),
+                Do.SystemMessage(1401419, 0)),
+        ];
+        rungs[284773] = [  // IDF5_TD_War_Dark_Officer_01
+            AiPattern.Branch(17, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v01", 2, 0),
+                Do.SpawnNearForTheFight(855029, 0, 1, 0f, 0)),
+            AiPattern.Branch(16, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v01", 3, 0),
+                Do.SpawnNearForTheFight(855019, 0, 1, 0f, 0)),
+        ];
+        rungs[284774] = [  // IDF5_TD_War_Dark_Officer_02
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v02", 2, 0),
+                Do.SpawnNearForTheFight(855030, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v02", 3, 0),
+                Do.SpawnNearForTheFight(855020, 0, 1, 0f, 0)),
+        ];
+        rungs[284775] = [  // IDF5_TD_War_Dark_Officer_03
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v03", 2, 0),
+                Do.SpawnNearForTheFight(855031, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v03", 3, 0),
+                Do.SpawnNearForTheFight(855021, 0, 1, 0f, 0)),
+        ];
+        rungs[284776] = [  // IDF5_TD_War_Dark_Officer_04
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v04", 2, 0),
+                Do.SpawnNearForTheFight(855032, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v04", 3, 0),
+                Do.SpawnNearForTheFight(855022, 0, 1, 0f, 0)),
+        ];
+        rungs[284777] = [  // IDF5_TD_War_Dark_Officer_05
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v05", 2, 0),
+                Do.SpawnNearForTheFight(855033, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v05", 3, 0),
+                Do.SpawnNearForTheFight(855023, 0, 1, 0f, 0)),
+        ];
+        rungs[284778] = [  // IDF5_TD_War_Dark_Officer_06
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v06", 2, 0),
+                Do.SpawnNearForTheFight(855034, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v06", 3, 0),
+                Do.SpawnNearForTheFight(855024, 0, 1, 0f, 0)),
+        ];
+        rungs[284779] = [  // IDF5_TD_War_Dark_Officer_07
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v07", 2, 0),
+                Do.SpawnNearForTheFight(855035, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v07", 3, 0),
+                Do.SpawnNearForTheFight(855035, 0, 1, 0f, 0)),
+        ];
+        rungs[284780] = [  // IDF5_TD_War_Dark_Officer_08
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v08", 2, 0),
+                Do.SpawnNearForTheFight(855026, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v08", 3, 0),
+                Do.SpawnNearForTheFight(855026, 0, 1, 0f, 0)),
+        ];
+        rungs[284781] = [  // IDF5_TD_War_Dark_Officer_09
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855037, 0, 1, 0f, 0),
+                Do.SetSpawnVariable("v09", 2, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855027, 0, 1, 0f, 0),
+                Do.SetSpawnVariable("v09", 3, 0)),
+        ];
+        rungs[284782] = [  // IDF5_TD_War_Dark_Officer_10
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v10", 2, 0),
+                Do.SpawnNearForTheFight(855038, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v10", 3, 0),
+                Do.SpawnNearForTheFight(855028, 0, 1, 0f, 0)),
+        ];
+        rungs[284787] = [  // IDF5_TD_War_Light_Officer_01
+            AiPattern.Branch(17, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v01", 2, 0),
+                Do.SpawnNearForTheFight(855029, 0, 1, 0f, 0)),
+            AiPattern.Branch(16, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v01", 3, 0),
+                Do.SpawnNearForTheFight(855019, 0, 1, 0f, 0)),
+        ];
+        rungs[284788] = [  // IDF5_TD_War_Light_Officer_02
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v02", 2, 0),
+                Do.SpawnNearForTheFight(855030, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v02", 3, 0),
+                Do.SpawnNearForTheFight(855020, 0, 1, 0f, 0)),
+        ];
+        rungs[284789] = [  // IDF5_TD_War_Light_Officer_03
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v03", 2, 0),
+                Do.SpawnNearForTheFight(855031, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v03", 3, 0),
+                Do.SpawnNearForTheFight(855021, 0, 1, 0f, 0)),
+        ];
+        rungs[284790] = [  // IDF5_TD_War_Light_Officer_04
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v04", 2, 0),
+                Do.SpawnNearForTheFight(855032, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v04", 3, 0),
+                Do.SpawnNearForTheFight(855022, 0, 1, 0f, 0)),
+        ];
+        rungs[284791] = [  // IDF5_TD_War_Light_Officer_05
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v05", 2, 0),
+                Do.SpawnNearForTheFight(855033, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v05", 3, 0),
+                Do.SpawnNearForTheFight(855023, 0, 1, 0f, 0)),
+        ];
+        rungs[284792] = [  // IDF5_TD_War_Light_Officer_06
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v06", 2, 0),
+                Do.SpawnNearForTheFight(855034, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v06", 3, 0),
+                Do.SpawnNearForTheFight(855024, 0, 1, 0f, 0)),
+        ];
+        rungs[284793] = [  // IDF5_TD_War_Light_Officer_07
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v07", 2, 0),
+                Do.SpawnNearForTheFight(855035, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v07", 3, 0),
+                Do.SpawnNearForTheFight(855025, 0, 1, 0f, 0)),
+        ];
+        rungs[284794] = [  // IDF5_TD_War_Light_Officer_08
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v08", 2, 0),
+                Do.SpawnNearForTheFight(855036, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v08", 3, 0),
+                Do.SpawnNearForTheFight(855026, 0, 1, 0f, 0)),
+        ];
+        rungs[284795] = [  // IDF5_TD_War_Light_Officer_09
+            AiPattern.Branch(17, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855037, 0, 1, 0f, 0),
+                Do.SetSpawnVariable("v09", 2, 0)),
+            AiPattern.Branch(16, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855027, 0, 1, 0f, 0),
+                Do.SetSpawnVariable("v09", 3, 0)),
+        ];
+        rungs[284796] = [  // IDF5_TD_War_Light_Officer_10
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v10", 2, 0),
+                Do.SpawnNearForTheFight(855038, 0, 1, 0f, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v10", 3, 0),
+                Do.SpawnNearForTheFight(855028, 0, 1, 0f, 0)),
+        ];
         rungs[284808] = [  // IDF5_TD_War_Vri_Cannon
             AiPattern.Branch(5, "on_killed_by_user 0", [When.KilledByPlayer, When.KilledByPlayer],
                 Do.SpawnNearForTheFight(284802, 0, 1, 0f, 0)),
@@ -6114,6 +7782,66 @@ internal static class DeathSpawns
         rungs[284809] = [  // IDF5_TD_War_Vri_DirectGun
             AiPattern.Branch(5, "on_killed_by_user 0", [When.KilledByPlayer, When.KilledByPlayer],
                 Do.SpawnNearForTheFight(284803, 0, 1, 0f, 0)),
+        ];
+        rungs[284813] = [  // IDF5_TD_War_Vri_Officer_01
+            AiPattern.Branch(19, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v01", 2, 0)),
+            AiPattern.Branch(18, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v01", 3, 0)),
+        ];
+        rungs[284814] = [  // IDF5_TD_War_Vri_Officer_02
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v02", 2, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v02", 3, 0)),
+        ];
+        rungs[284815] = [  // IDF5_TD_War_Vri_Officer_03
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v03", 2, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v03", 3, 0)),
+        ];
+        rungs[284816] = [  // IDF5_TD_War_Vri_Officer_04
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v04", 2, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v04", 3, 0)),
+        ];
+        rungs[284817] = [  // IDF5_TD_War_Vri_Officer_05
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v05", 2, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v05", 3, 0)),
+        ];
+        rungs[284818] = [  // IDF5_TD_War_Vri_Officer_06
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v06", 2, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v06", 3, 0)),
+        ];
+        rungs[284819] = [  // IDF5_TD_War_Vri_Officer_07
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v07", 2, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v07", 3, 0)),
+        ];
+        rungs[284820] = [  // IDF5_TD_War_Vri_Officer_08
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v08", 2, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v08", 3, 0)),
+        ];
+        rungs[284821] = [  // IDF5_TD_War_Vri_Officer_09
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v09", 2, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v09", 3, 0)),
+        ];
+        rungs[284822] = [  // IDF5_TD_War_Vri_Officer_10
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("v10", 2, 0)),
+            AiPattern.Branch(9, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("v10", 3, 0)),
         ];
         rungs[284858] = [  // BIDF5_U3_Boss
             AiPattern.Branch(52, "on_killed_by_user 0", [When.KilledByPlayer],
@@ -6128,6 +7856,20 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.Say(341531, 0),
                 Do.SpawnNear(214599, 0, 1, 0f, 0)),
+        ];
+        rungs[284975] = [  // IDLDF4_Re_01_PhyBoss
+            AiPattern.Branch(9, "on_killed_by_npc 0", [When.KilledByNpc],
+                Do.SetSpawnVariable("Boss_Die", 0, 1)),
+            AiPattern.Branch(7, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.Broadcast(1002, 50f)),
+            AiPattern.Branch(6, "on_killed_by_npc 2", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.Broadcast(1002, 50f)),
+            AiPattern.Branch(9, "on_killed_by_user 0", [When.KilledByPlayer],
+                Do.SetSpawnVariable("Boss_Die", 0, 1)),
+            AiPattern.Branch(7, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.Broadcast(1002, 50f)),
+            AiPattern.Branch(6, "on_killed_by_user 2", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.Broadcast(1002, 50f)),
         ];
         rungs[286787] = [  // Bionic_EhA
             AiPattern.Branch(21, "on_die 0", When.Always,
@@ -6165,10 +7907,6 @@ internal static class DeathSpawns
                 Do.SetSpawnVariable("condition_5", 3, 0),
                 Do.SpawnNearForTheFight(286926, 1, 1, 0f, 0)),
         ];
-    }
-
-    private static void Rungs10(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[286936] = [  // Test_JM_NoAction_1
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("condition_type", 2, 0)),
@@ -6197,6 +7935,10 @@ internal static class DeathSpawns
             AiPattern.Branch(9, "on_die 0", When.Always,
                 Do.SpawnNearForTheFight(286953, 0, 1, 0f, 0)),
         ];
+    }
+
+    private static void Rungs12(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[286968] = [  // SYSTEM1_TestSample_Krall02
             AiPattern.Branch(9, "on_die 0", When.Always,
                 Do.SpawnNearForTheFight(286953, 0, 1, 0f, 0)),
@@ -6488,6 +8230,117 @@ internal static class DeathSpawns
             AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("v04ctrl", -1, 0)),
         ];
+        rungs[297519] = [  // LDF5_Fortress_VGuardBoss_Fi
+            AiPattern.Branch(90, "on_die 0", When.Always,
+                Do.SetSpawnVariable("gb01_ctrl", 1, 0),
+                Do.SetSpawnVariable("GH_Shield_On01", -1, 0)),
+            AiPattern.Branch(100, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("gb01", 2, 0),
+                Do.SetSpawnVariable("gb01_2", -1, 0)),
+            AiPattern.Branch(95, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("gb01", 3, 0),
+                Do.SetSpawnVariable("gb01_2", -1, 0)),
+        ];
+        rungs[297520] = [  // LDF5_Fortress_VGuardBoss_Ra
+            AiPattern.Branch(90, "on_die 0", When.Always,
+                Do.SetSpawnVariable("gb02_ctrl", 1, 0),
+                Do.SetSpawnVariable("GH_Shield_On02", -1, 0)),
+            AiPattern.Branch(100, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("gb02", 2, 0),
+                Do.SetSpawnVariable("gb02_2", -1, 0)),
+            AiPattern.Branch(95, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("gb02", 3, 0),
+                Do.SetSpawnVariable("gb02_2", -1, 0)),
+        ];
+        rungs[297521] = [  // LDF5_Fortress_VGuardBoss_Wi
+            AiPattern.Branch(90, "on_die 0", When.Always,
+                Do.SetSpawnVariable("gb03_ctrl", 1, 0),
+                Do.SetSpawnVariable("GH_Shield_On03", -1, 0)),
+            AiPattern.Branch(100, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("gb03", 2, 0),
+                Do.SetSpawnVariable("gb03_2", -1, 0)),
+            AiPattern.Branch(95, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("gb03", 3, 0),
+                Do.SetSpawnVariable("gb03_2", -1, 0)),
+        ];
+        rungs[297522] = [  // LDF5_Fortress_LGuardBoss_Fi
+            AiPattern.Branch(90, "on_die 0", When.Always,
+                Do.SetSpawnVariable("Li_heal01", 0, -1)),
+            AiPattern.Branch(100, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.DRAKAN)],
+                Do.SetSpawnVariable("gb01", -1, 0),
+                Do.SetSpawnVariable("gb01_2", 1, 0),
+                Do.SetSpawnVariable("gb01_ctrl", -1, 0),
+                Do.SetSpawnVariable("GH_Shield_On01", 1, 0),
+                Do.SetSpawnVariable("GH_Shield_Off01", 0, -1)),
+            AiPattern.Branch(95, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("gb01", 3, 0),
+                Do.SetSpawnVariable("GH_Shield_Off01", 0, -1)),
+        ];
+        rungs[297523] = [  // LDF5_Fortress_LGuardBoss_Ra
+            AiPattern.Branch(90, "on_die 0", When.Always,
+                Do.SetSpawnVariable("Li_heal01", 0, -1)),
+            AiPattern.Branch(100, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.DRAKAN)],
+                Do.SetSpawnVariable("gb02", -1, 0),
+                Do.SetSpawnVariable("gb02_2", 1, 0),
+                Do.SetSpawnVariable("gb02_ctrl", -1, 0),
+                Do.SetSpawnVariable("GH_Shield_On02", 1, 0),
+                Do.SetSpawnVariable("GH_Shield_Off01", 0, -1)),
+            AiPattern.Branch(95, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("gb02", 3, 0),
+                Do.SetSpawnVariable("GH_Shield_Off01", 0, -1)),
+        ];
+        rungs[297524] = [  // LDF5_Fortress_LGuardBoss_Wi
+            AiPattern.Branch(90, "on_die 0", When.Always,
+                Do.SetSpawnVariable("Li_heal01", 0, -1)),
+            AiPattern.Branch(100, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.DRAKAN)],
+                Do.SetSpawnVariable("gb03", -1, 0),
+                Do.SetSpawnVariable("gb03_2", 1, 0),
+                Do.SetSpawnVariable("gb03_ctrl", -1, 0),
+                Do.SetSpawnVariable("GH_Shield_On03", 1, 0),
+                Do.SetSpawnVariable("GH_Shield_Off01", 0, -1)),
+            AiPattern.Branch(95, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("gb03", 3, 0),
+                Do.SetSpawnVariable("GH_Shield_Off01", 0, -1)),
+        ];
+        rungs[297525] = [  // LDF5_Fortress_DGuardBoss_Fi
+            AiPattern.Branch(90, "on_die 0", When.Always,
+                Do.SetSpawnVariable("Da_heal01", 0, -1)),
+            AiPattern.Branch(100, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.DRAKAN)],
+                Do.SetSpawnVariable("gb01", -1, 0),
+                Do.SetSpawnVariable("gb01_2", 1, 0),
+                Do.SetSpawnVariable("gb01_ctrl", -1, 0),
+                Do.SetSpawnVariable("GH_Shield_On01", 1, 0),
+                Do.SetSpawnVariable("GH_Shield_Off01", 0, -1)),
+            AiPattern.Branch(95, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("gb01", 2, 0),
+                Do.SetSpawnVariable("GH_Shield_Off01", 0, -1)),
+        ];
+        rungs[297526] = [  // LDF5_Fortress_DGuardBoss_Ra
+            AiPattern.Branch(90, "on_die 0", When.Always,
+                Do.SetSpawnVariable("Da_heal01", 0, -1)),
+            AiPattern.Branch(100, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.DRAKAN)],
+                Do.SetSpawnVariable("gb02", -1, 0),
+                Do.SetSpawnVariable("gb02_2", 1, 0),
+                Do.SetSpawnVariable("gb02_ctrl", -1, 0),
+                Do.SetSpawnVariable("GH_Shield_On02", 1, 0),
+                Do.SetSpawnVariable("GH_Shield_Off01", 0, -1)),
+            AiPattern.Branch(95, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("gb02", 2, 0),
+                Do.SetSpawnVariable("GH_Shield_Off01", 0, -1)),
+        ];
+        rungs[297527] = [  // LDF5_Fortress_DGuardBoss_Wi
+            AiPattern.Branch(90, "on_die 0", When.Always,
+                Do.SetSpawnVariable("Da_heal01", 0, -1)),
+            AiPattern.Branch(100, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.DRAKAN)],
+                Do.SetSpawnVariable("gb03", -1, 0),
+                Do.SetSpawnVariable("gb03_2", 1, 0),
+                Do.SetSpawnVariable("gb03_ctrl", -1, 0),
+                Do.SetSpawnVariable("GH_Shield_On03", 1, 0),
+                Do.SetSpawnVariable("GH_Shield_Off01", 0, -1)),
+            AiPattern.Branch(95, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("gb03", 2, 0),
+                Do.SetSpawnVariable("GH_Shield_Off01", 0, -1)),
+        ];
         rungs[297553] = [  // LDF5_Fortress_CGate
             AiPattern.Branch(100, "on_die 0", When.Always,
                 Do.SetSpawnVariable("door01", -1, 0)),
@@ -6537,6 +8390,34 @@ internal static class DeathSpawns
                 Do.SpawnAtForTheFight(701778, 0, 0, new SpawnSpot(2601.0f, 2798.0f, 255.0f)),
                 Do.Broadcast(31019, 50f)),
         ];
+        rungs[701719] = [  // LDF5b_6021_Explosion_Box_11
+            AiPattern.Branch(8, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnAtForTheFight(701781, 0, 0, new SpawnSpot(2703.0f, 2652.0f, 255.0f)),
+                Do.Broadcast(31021, 50f)),
+            AiPattern.Branch(7, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnAtForTheFight(701775, 0, 0, new SpawnSpot(2703.0f, 2652.0f, 255.0f)),
+                Do.Broadcast(31021, 50f)),
+            AiPattern.Branch(8, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnAtForTheFight(701781, 0, 0, new SpawnSpot(2703.0f, 2652.0f, 255.0f)),
+                Do.Broadcast(31021, 50f)),
+            AiPattern.Branch(7, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnAtForTheFight(701775, 0, 0, new SpawnSpot(2703.0f, 2652.0f, 255.0f)),
+                Do.Broadcast(31021, 50f)),
+        ];
+        rungs[701720] = [  // LDF5b_6021_Explosion_Box_12
+            AiPattern.Branch(8, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnAtForTheFight(701782, 0, 0, new SpawnSpot(2613.0f, 2734.0f, 255.0f)),
+                Do.Broadcast(31022, 50f)),
+            AiPattern.Branch(7, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnAtForTheFight(701776, 0, 0, new SpawnSpot(2613.0f, 2734.0f, 255.0f)),
+                Do.Broadcast(31022, 50f)),
+            AiPattern.Branch(8, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnAtForTheFight(701782, 0, 0, new SpawnSpot(2613.0f, 2734.0f, 255.0f)),
+                Do.Broadcast(31022, 50f)),
+            AiPattern.Branch(7, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnAtForTheFight(701776, 0, 0, new SpawnSpot(2613.0f, 2734.0f, 255.0f)),
+                Do.Broadcast(31022, 50f)),
+        ];
         rungs[701787] = [  // LDF5b_6021_Explosion_Box_04
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SpawnAtForTheFight(701777, 0, 0, new SpawnSpot(2718.0f, 2588.0f, 255.0f)),
@@ -6547,6 +8428,34 @@ internal static class DeathSpawns
                 Do.SpawnAtForTheFight(701778, 0, 0, new SpawnSpot(2601.0f, 2798.0f, 255.0f)),
                 Do.Broadcast(31019, 50f)),
         ];
+        rungs[701789] = [  // LDF5b_6021_Explosion_Box_11
+            AiPattern.Branch(8, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnAtForTheFight(701781, 0, 0, new SpawnSpot(2703.0f, 2652.0f, 255.0f)),
+                Do.Broadcast(31021, 50f)),
+            AiPattern.Branch(7, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnAtForTheFight(701775, 0, 0, new SpawnSpot(2703.0f, 2652.0f, 255.0f)),
+                Do.Broadcast(31021, 50f)),
+            AiPattern.Branch(8, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnAtForTheFight(701781, 0, 0, new SpawnSpot(2703.0f, 2652.0f, 255.0f)),
+                Do.Broadcast(31021, 50f)),
+            AiPattern.Branch(7, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnAtForTheFight(701775, 0, 0, new SpawnSpot(2703.0f, 2652.0f, 255.0f)),
+                Do.Broadcast(31021, 50f)),
+        ];
+        rungs[701790] = [  // LDF5b_6021_Explosion_Box_12
+            AiPattern.Branch(8, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnAtForTheFight(701782, 0, 0, new SpawnSpot(2613.0f, 2734.0f, 255.0f)),
+                Do.Broadcast(31022, 50f)),
+            AiPattern.Branch(7, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnAtForTheFight(701776, 0, 0, new SpawnSpot(2613.0f, 2734.0f, 255.0f)),
+                Do.Broadcast(31022, 50f)),
+            AiPattern.Branch(8, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnAtForTheFight(701782, 0, 0, new SpawnSpot(2613.0f, 2734.0f, 255.0f)),
+                Do.Broadcast(31022, 50f)),
+            AiPattern.Branch(7, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnAtForTheFight(701776, 0, 0, new SpawnSpot(2613.0f, 2734.0f, 255.0f)),
+                Do.Broadcast(31022, 50f)),
+        ];
         rungs[701791] = [  // LDF5b_6021_Explosion_Box_04
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SpawnAtForTheFight(701777, 0, 0, new SpawnSpot(2718.0f, 2588.0f, 255.0f)),
@@ -6556,6 +8465,34 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SpawnAtForTheFight(701778, 0, 0, new SpawnSpot(2601.0f, 2798.0f, 255.0f)),
                 Do.Broadcast(31019, 50f)),
+        ];
+        rungs[701793] = [  // LDF5b_6021_Explosion_Box_11
+            AiPattern.Branch(8, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnAtForTheFight(701781, 0, 0, new SpawnSpot(2703.0f, 2652.0f, 255.0f)),
+                Do.Broadcast(31021, 50f)),
+            AiPattern.Branch(7, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnAtForTheFight(701775, 0, 0, new SpawnSpot(2703.0f, 2652.0f, 255.0f)),
+                Do.Broadcast(31021, 50f)),
+            AiPattern.Branch(8, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnAtForTheFight(701781, 0, 0, new SpawnSpot(2703.0f, 2652.0f, 255.0f)),
+                Do.Broadcast(31021, 50f)),
+            AiPattern.Branch(7, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnAtForTheFight(701775, 0, 0, new SpawnSpot(2703.0f, 2652.0f, 255.0f)),
+                Do.Broadcast(31021, 50f)),
+        ];
+        rungs[701794] = [  // LDF5b_6021_Explosion_Box_12
+            AiPattern.Branch(8, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnAtForTheFight(701782, 0, 0, new SpawnSpot(2613.0f, 2734.0f, 255.0f)),
+                Do.Broadcast(31022, 50f)),
+            AiPattern.Branch(7, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnAtForTheFight(701776, 0, 0, new SpawnSpot(2613.0f, 2734.0f, 255.0f)),
+                Do.Broadcast(31022, 50f)),
+            AiPattern.Branch(8, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnAtForTheFight(701782, 0, 0, new SpawnSpot(2613.0f, 2734.0f, 255.0f)),
+                Do.Broadcast(31022, 50f)),
+            AiPattern.Branch(7, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnAtForTheFight(701776, 0, 0, new SpawnSpot(2613.0f, 2734.0f, 255.0f)),
+                Do.Broadcast(31022, 50f)),
         ];
         rungs[702311] = [  // Gab1_TurretSwitch_01
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
@@ -6689,6 +8626,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur34", 23, 0)),
         ];
+    }
+
+    private static void Rungs13(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[702367] = [  // Gab1_TurretSwitch_23
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur35", 23, 0)),
@@ -6700,6 +8641,12 @@ internal static class DeathSpawns
                 Do.SetSpawnVariable("Tur36", 23, 0)),
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur36", 23, 0)),
+        ];
+        rungs[702656] = [  // IDStation_B_ZONE_FOBJ_01
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(702657, 0, 1, 0f, 20)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(702657, 0, 1, 0f, 20)),
         ];
         rungs[730612] = [  // IDTiamat_Wave1
             AiPattern.Branch(4, "on_die 0", When.Always,
@@ -6733,10 +8680,6 @@ internal static class DeathSpawns
                 Do.SetSpawnVariable("TSWITCH_1_DESTROYED", 1, 0),
                 Do.SystemMessage(1401415, 0)),
         ];
-    }
-
-    private static void Rungs11(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[802002] = [  // Dread03_Tswitch_2
             AiPattern.Branch(1, "on_die 0", When.Always,
                 Do.SetSpawnVariable("TSWITCH_2_DESTROYED", 1, 0),
@@ -7279,6 +9222,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur27", 23, 0)),
         ];
+    }
+
+    private static void Rungs14(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[832360] = [  // Gab1_TurretSwitch_16
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur28", 23, 0)),
@@ -7333,10 +9280,6 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur36", 23, 0)),
         ];
-    }
-
-    private static void Rungs12(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[832370] = [  // Gab1_TurretSwitch_01
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur13", 23, 0)),
@@ -7883,6 +9826,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur31", 23, 0)),
         ];
+    }
+
+    private static void Rungs15(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[832461] = [  // Gab1_TurretSwitch_20
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur32", 23, 0)),
@@ -7937,10 +9884,6 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur16", 23, 0)),
         ];
-    }
-
-    private static void Rungs13(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[832470] = [  // Gab1_TurretSwitch_05
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur17", 23, 0)),
@@ -8487,6 +10430,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur35", 23, 0)),
         ];
+    }
+
+    private static void Rungs16(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[832561] = [  // Gab1_TurretSwitch_24
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur36", 23, 0)),
@@ -8541,10 +10488,6 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur20", 23, 0)),
         ];
-    }
-
-    private static void Rungs14(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[832570] = [  // Gab1_TurretSwitch_09
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur21", 23, 0)),
@@ -9091,6 +11034,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur15", 23, 0)),
         ];
+    }
+
+    private static void Rungs17(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[832661] = [  // Gab1_TurretSwitch_04
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur16", 23, 0)),
@@ -9145,10 +11092,6 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur24", 23, 0)),
         ];
-    }
-
-    private static void Rungs15(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[832670] = [  // Gab1_TurretSwitch_13
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur25", 23, 0)),
@@ -9509,6 +11452,580 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur36", 23, 0)),
         ];
+        rungs[855077] = [  // LDF4_Advance_village_02
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855376, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855389, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855376, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855389, 0, 1, 0f, 0)),
+        ];
+        rungs[855078] = [  // LDF4_Advance_village_02
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855376, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855389, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855376, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855389, 0, 1, 0f, 0)),
+        ];
+        rungs[855079] = [  // LDF4_Advance_village_02
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855376, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855389, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855376, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855389, 0, 1, 0f, 0)),
+        ];
+        rungs[855080] = [  // LDF4_Advance_village_02
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855376, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855389, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855376, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855389, 0, 1, 0f, 0)),
+        ];
+        rungs[855271] = [  // LDF4_Advance_village_02
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855376, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855389, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855376, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855389, 0, 1, 0f, 0)),
+        ];
+        rungs[855272] = [  // LDF4_Advance_village_04
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855378, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855391, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855378, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855391, 0, 1, 0f, 0)),
+        ];
+        rungs[855273] = [  // LDF4_Advance_village_05
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855379, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855392, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855379, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855392, 0, 1, 0f, 0)),
+        ];
+        rungs[855274] = [  // LDF4_Advance_village_07
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855381, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855394, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855381, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855394, 0, 1, 0f, 0)),
+        ];
+        rungs[855275] = [  // LDF4_Advance_village_02
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855376, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855389, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855376, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855389, 0, 1, 0f, 0)),
+        ];
+        rungs[855276] = [  // LDF4_Advance_village_02
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855376, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855389, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855376, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855389, 0, 1, 0f, 0)),
+        ];
+        rungs[855277] = [  // LDF4_Advance_village_02
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855376, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855389, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855376, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855389, 0, 1, 0f, 0)),
+        ];
+        rungs[855278] = [  // LDF4_Advance_village_02
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855376, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855389, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855376, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855389, 0, 1, 0f, 0)),
+        ];
+        rungs[855279] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[855280] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[855281] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[855282] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[855283] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[855284] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[855285] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[855286] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[855287] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[855288] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[855289] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[855290] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[855291] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[855292] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[855293] = [  // LDF4_Advance_Killer_Dr
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855374, 0, 1, 0f, 0)),
+        ];
+        rungs[855294] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[855295] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[855296] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[855297] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+    }
+
+    private static void Rungs18(Dictionary<int, PatternBranch[]> rungs)
+    {
+        rungs[855298] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[855299] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[855300] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[855301] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[855302] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[855303] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[855304] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[855305] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[855306] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[855307] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[855308] = [  // LDF4_Advance_Killer_Li
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
+        ];
+        rungs[855309] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[855310] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[855311] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[855312] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[855313] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[855314] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[855315] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[855316] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[855317] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[855318] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[855319] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[855320] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[855321] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[855322] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
+        rungs[855323] = [  // LDF4_Advance_Killer_Da
+            AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_npc 1", [When.KilledByNpc, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+            AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855373, 0, 1, 0f, 0)),
+        ];
         rungs[855473] = [  // IDSeal_Wave1_Leader_Lv3
             AiPattern.Branch(98, "on_killed_by_npc 0", [When.KilledByNpc, When.FirstTime(5)],
                 Do.SetSpawnVariable("WAVE_LEADER", 0, 1)),
@@ -9629,6 +12146,36 @@ internal static class DeathSpawns
             AiPattern.Branch(1050, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SpawnNearForTheFight(702659, 0, 1, 0f, 0)),
         ];
+        rungs[855613] = [  // Station_Shu_FI_B
+            AiPattern.Branch(100, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(702655, 0, 1, 0f, 0)),
+            AiPattern.Branch(99, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(702655, 0, 1, 0f, 0)),
+        ];
+        rungs[855614] = [  // Station_Shu_KN_B
+            AiPattern.Branch(100, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(702655, 0, 1, 0f, 0)),
+            AiPattern.Branch(99, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(702655, 0, 1, 0f, 0)),
+        ];
+        rungs[855615] = [  // Station_Shu_RA_B
+            AiPattern.Branch(100, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(702655, 0, 1, 0f, 0)),
+            AiPattern.Branch(99, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(702655, 0, 1, 0f, 0)),
+        ];
+        rungs[855616] = [  // Station_Shu_WI_B
+            AiPattern.Branch(100, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(702655, 0, 1, 0f, 0)),
+            AiPattern.Branch(99, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(702655, 0, 1, 0f, 0)),
+        ];
+        rungs[855617] = [  // Station_Shu_PR_B
+            AiPattern.Branch(100, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(702655, 0, 1, 0f, 0)),
+            AiPattern.Branch(99, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(702655, 0, 1, 0f, 0)),
+        ];
         rungs[855853] = [  // IDRaksha_Re_Boss_KJS
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.FirstTime(18)],
                 Do.SetSpawnVariable("idraksha_clear", 1, 0)),
@@ -9671,6 +12218,18 @@ internal static class DeathSpawns
                 Do.SetSpawnVariable("DISPEL_ARIANA", 1, 0),
                 Do.Broadcast(500, 100f)),
         ];
+        rungs[855904] = [  // IDYun_TheThingFromAnotherWorld_02
+            AiPattern.Branch(5, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855953, 0, 1, 0f, 30)),
+            AiPattern.Branch(4, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855953, 0, 1, 0f, 30)),
+        ];
+        rungs[855970] = [  // IDStation_info_06
+            AiPattern.Branch(9, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855618, 0, 1, 0f, 10)),
+            AiPattern.Branch(8, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855618, 0, 1, 0f, 10)),
+        ];
         rungs[855994] = [  // BIDF5_U01_Runaway_Wi
             AiPattern.Branch(1000, "on_die 0", When.Always,
                 Do.Broadcast(10900, 100f),
@@ -9699,6 +12258,12 @@ internal static class DeathSpawns
             AiPattern.Branch(1000, "on_die 0", When.Always,
                 Do.Broadcast(10900, 100f),
                 Do.SetSpawnVariable("under_01_out", 0, 1)),
+        ];
+        rungs[856019] = [  // IDYun_TheThingFromAnotherWorld_01
+            AiPattern.Branch(5, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SpawnNearForTheFight(855953, 0, 1, 0f, 30)),
+            AiPattern.Branch(4, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SpawnNearForTheFight(855953, 0, 1, 0f, 30)),
         ];
         rungs[856026] = [  // IDTiamat_Hard_Kalrindy
             AiPattern.Branch(16, "on_die 0", When.Always,
@@ -9782,10 +12347,6 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SpawnNearForTheFight(296337, 0, 1, 0f, 12)),
         ];
-    }
-
-    private static void Rungs16(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[880091] = [  // NoAction_AbyssDoor
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SpawnNearForTheFight(296337, 0, 1, 0f, 12)),
@@ -9942,6 +12503,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SpawnNearForTheFight(296337, 0, 1, 0f, 12)),
         ];
+    }
+
+    private static void Rungs19(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[880129] = [  // NoAction_AbyssDoor
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SpawnNearForTheFight(296337, 0, 1, 0f, 12)),
@@ -10019,6 +12584,39 @@ internal static class DeathSpawns
         rungs[880794] = [  // Gab1_Msg_Noshow_06
             AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("v04ctrl", -1, 0)),
+        ];
+        rungs[882298] = [  // LDF5_Fortress_VGuardBoss_Fi
+            AiPattern.Branch(90, "on_die 0", When.Always,
+                Do.SetSpawnVariable("gb01_ctrl", 1, 0),
+                Do.SetSpawnVariable("GH_Shield_On01", -1, 0)),
+            AiPattern.Branch(100, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("gb01", 2, 0),
+                Do.SetSpawnVariable("gb01_2", -1, 0)),
+            AiPattern.Branch(95, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("gb01", 3, 0),
+                Do.SetSpawnVariable("gb01_2", -1, 0)),
+        ];
+        rungs[882299] = [  // LDF5_Fortress_VGuardBoss_Ra
+            AiPattern.Branch(90, "on_die 0", When.Always,
+                Do.SetSpawnVariable("gb02_ctrl", 1, 0),
+                Do.SetSpawnVariable("GH_Shield_On02", -1, 0)),
+            AiPattern.Branch(100, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("gb02", 2, 0),
+                Do.SetSpawnVariable("gb02_2", -1, 0)),
+            AiPattern.Branch(95, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("gb02", 3, 0),
+                Do.SetSpawnVariable("gb02_2", -1, 0)),
+        ];
+        rungs[882300] = [  // LDF5_Fortress_VGuardBoss_Wi
+            AiPattern.Branch(90, "on_die 0", When.Always,
+                Do.SetSpawnVariable("gb03_ctrl", 1, 0),
+                Do.SetSpawnVariable("GH_Shield_On03", -1, 0)),
+            AiPattern.Branch(100, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
+                Do.SetSpawnVariable("gb03", 2, 0),
+                Do.SetSpawnVariable("gb03_2", -1, 0)),
+            AiPattern.Branch(95, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
+                Do.SetSpawnVariable("gb03", 3, 0),
+                Do.SetSpawnVariable("gb03_2", -1, 0)),
         ];
     }
 

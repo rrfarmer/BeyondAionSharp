@@ -38170,3 +38170,60 @@ Unchanged: the eight retail handlers with no engine slot, `control_door`, `enabl
 `change_world_scene_status`, `shout_to_all`, `teleport_target_alias`, `reset_queued_actions`,
 `set_intvar_if_larger_than`, `decrease_intvar`, `GAb1_PvPStatus`, 17 npcs conceded to
 `spawn_helpers.xml`, and retail cast timings.
+
+## `is_race`: the largest condition this port had never read
+
+`Retail-AI-Pattern: faction and race checks`
+
+2,855 uses. Retail leans on it to make one rung answer one faction — a fortress guard that shouts at
+Elyos and ignores Asmodians is a single branch with a race check, not two npcs.
+
+`SeenRace`, `TargetRace`, `CasterRace` and `AttackerRace` were already written for hand-written
+classes. The two biggest subjects had neither: the **killer** (896 uses) and the **talker** (464).
+
+### Exact name or refuse
+
+Retail's `race_type` is uppercased and must name a member of `Race`. Only `pc_light` and `pc_dark`
+are spelled out as aliases, because they are the most-used values and mean `ELYOS` and `ASMODIANS`.
+Everything else matches by name or the branch is refused.
+
+The alternative — a fuzzy or nearest match — would quietly decide that `lizardman` and `ratman` are
+the same thing, and **a guard answering the wrong faction looks exactly like a guard working**. The
+enum is listed in the extractor so a retail value naming nothing is refused rather than approximated.
+
+`OBJI_SELF` (98 uses) is refused on a different ground: an NPC asking its own race is asking about a
+constant, so the branch is decided at build time rather than at run time. Emitting it would emit a
+rung that is always taken or never taken, which is a claim about the data this table has no business
+making.
+
+Patterns 2,756 -> **2,772**; npcs 22,391 -> **22,440**; 178 race-guarded rows in the battle table.
+
+**The death table moved much more** — 1,644 -> **1,921 npcs**, 4,143 -> 5,241 rows — because
+`is_race` on `OBJI_KILLER` is a death-handler idiom, and 896 of the uses are exactly that. Caught by
+`regen_check` rather than noticed, which is the third time this stretch that the shared parser has
+grown a sibling table underneath me.
+
+Backlog unchanged at 189 across 133: race checks gate branches, they do not place adds.
+
+### Still missing
+
+`switch_target` and `add_hate_point` are the next worth doing and are **bigger than they look**:
+1,321 and 1,793 uses, of which this port reads only `OBJI_MESSAGE_PARAM` (397 and 752). The runtime
+already has `HateSeen`, `HateAttacker`, `HateTarget`, `HateCaster`, `HateMessageSender`,
+`HateFriendsAttacker` and `HateFriendsKiller` — so the hate half is another role-mapping job. The
+target-switch half is not: `Do.SwitchTarget` takes an `AggroTarget`, which is a rank in the hate
+list, and switching to *the creature in a role* needs a helper that does not exist yet.
+
+`is_distance_shorter_than` (257) is the mirror of the work two entries ago and now the only one of
+the pair still limited to the current target.
+
+`random_move` (187) still needs timed wandering. `say_to_all_str` (19) carries a literal string where
+this port sends string ids. `is_obj_in_abnormal_state` (12) and `add_intvar` (9) are unread.
+
+The `npc_skills` data gap is unchanged and remains the largest known hole: 59,131 of 74,792 cast
+pairs have no port-side entry, and retail's `npcs.xml` cannot close it.
+
+Unchanged: 102 `on_arrived_at_waypoint` handlers on `MOVETYPE_RUN`, the eight retail handlers with no
+engine slot, `control_door`, `enable_area`, `change_world_scene_status`, `shout_to_all`,
+`teleport_target_alias`, `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`,
+`GAb1_PvPStatus`, 17 npcs conceded to `spawn_helpers.xml`, and retail cast timings.

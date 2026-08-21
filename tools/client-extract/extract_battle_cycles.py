@@ -251,6 +251,76 @@ MULTI_ORDER = {
     "ORDERI_ASCENDING": "Ascending",
 }
 
+#: Retail's `is_race` subjects, and the condition each becomes. `OBJI_SELF` is absent: an npc
+#: asking its own race is asking about a constant, and the branch is decided at build time
+#: rather than at run time -- emitting it would be emitting a rung that is always or never
+#: taken, which is a claim about the data this table has no business making.
+RACE_ROLES = {
+    "OBJI_SEEN": "SeenRace",
+    "OBJI_CUR_TARGET": "TargetRace",
+    "OBJI_CASTER": "CasterRace",
+    "OBJI_ATTACKER": "AttackerRace",
+    "OBJI_KILLER": "KillerRace",
+    "OBJI_TALKER": "TalkerRace",
+    "OBJI_EVENT_TARGET": "EventTargetRace",
+    "OBJI_MESSAGE_PARAM": "MessageParamRace",
+    "OBJI_MESSAGE_SENDER": "MessageSenderRace",
+}
+
+#: The only two retail race names that are not this port's enum name lowercased.
+RACE_ALIASES = {"pc_light": "ELYOS", "pc_dark": "ASMODIANS"}
+
+#: Every member of this port's `Race`, so a retail value that names none is refused.
+PORT_RACES = {
+    "ELYOS",
+    "ASMODIANS",
+    "LYCAN",
+    "CONSTRUCT",
+    "CARRIER",
+    "DRAKAN",
+    "LIZARDMAN",
+    "TELEPORTER",
+    "NAGA",
+    "BROWNIE",
+    "KRALL",
+    "SHULACK",
+    "BARRIER",
+    "PC_LIGHT_CASTLE_DOOR",
+    "PC_DARK_CASTLE_DOOR",
+    "DRAGON_CASTLE_DOOR",
+    "GCHIEF_LIGHT",
+    "GCHIEF_DARK",
+    "DRAGON",
+    "OUTSIDER",
+    "RATMAN",
+    "DEMIHUMANOID",
+    "UNDEAD",
+    "BEAST",
+    "MAGICALMONSTER",
+    "ELEMENTAL",
+    "LIVINGWATER",
+    "NONE",
+    "PC_ALL",
+    "DEFORM",
+    "NEUT",
+    "GHENCHMAN_LIGHT",
+    "GHENCHMAN_DARK",
+    "EVENT_TOWER_DARK",
+    "EVENT_TOWER_LIGHT",
+    "GOBLIN",
+    "TRICODARK",
+    "NPC",
+    "LIGHT",
+    "DARK",
+    "WORLD_EVENT_DEFTOWER",
+    "ORC",
+    "DRAGONET",
+    "SIEGEDRAKAN",
+    "GCHIEF_DRAGON",
+    "WORLD_EVENT_BONFIRE",
+    "DOOR_KILLER",
+}
+
 BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 
 #: Every class an npc may already be on and still acquire generated pattern rows.
@@ -369,6 +439,20 @@ def read_guards(block: str) -> list[str]:
             if not who or who.group(1) not in ENEMY_ROLES:
                 raise Unsayable(f"is_enemy about {who.group(1) if who else '?'}")
             out.append("enemy:" + ENEMY_ROLES[who.group(1)])
+        elif kind == "is_race":
+            # Retail names the race with `race_type`, matched to this port's `Race` by exact name
+            # apart from the two pc aliases. Anything that does not name a member is refused rather
+            # than approximated -- see `When.KillerRace`.
+            who = re.search(r"<from>(\w+)</from>", body)
+            race = re.search(r"<race_type>(\w+)</race_type>", body)
+            if not who or not race:
+                raise Unsayable("is_race with no subject or race")
+            if who.group(1) not in RACE_ROLES:
+                raise Unsayable(f"is_race about {who.group(1)}")
+            name = RACE_ALIASES.get(race.group(1), race.group(1).upper())
+            if name not in PORT_RACES:
+                raise Unsayable(f"is_race of a race this port does not name: {race.group(1)}")
+            out.append(f"race:{RACE_ROLES[who.group(1)]}:{name}")
         elif kind == "is_distance_longer_than":
             who = re.search(r"<who>(\w+)</who>", body)
             metres = re.search(r"<distance>([-\d.]+)</distance>", body)

@@ -668,6 +668,45 @@ public static class When
     public static PatternCondition SeenRace(params Race[] races)
         => ai => ai.SeenCreature is Creature seen && races.Contains(seen.GetRace());
 
+    /// <summary><c>is_race</c> for the roles that had no condition yet.</summary>
+    /// <remarks>
+    /// 2,855 uses, the largest single condition this port had never read. Retail leans on it to make a
+    /// branch answer only one faction: a fortress guard that shouts at Elyos and ignores Asmodians is
+    /// one rung with a race check on it, not two npcs.
+    /// <para>
+    /// <see cref="SeenRace"/>, <see cref="TargetRace"/>, <see cref="CasterRace"/> and
+    /// <see cref="AttackerRace"/> were already here for hand-written classes. The killer (896 uses) and
+    /// the talker (464) are the two biggest subjects and had neither.
+    /// </para>
+    /// <para>
+    /// <b>Retail's <c>race_type</c> is matched to <see cref="Race"/> by exact name, uppercased, and
+    /// nothing else.</b> <c>pc_light</c> and <c>pc_dark</c> are the two aliases spelled out, because
+    /// they are the most-used values and mean <c>ELYOS</c> and <c>ASMODIANS</c>; every other value has
+    /// to name a member of the enum or the branch is refused. That rules out guessing that, say,
+    /// <c>lizardman</c> and <c>ratman</c> are interchangeable, which is the sort of thing a fuzzy match
+    /// would decide silently.
+    /// </para>
+    /// </remarks>
+    /// <summary><c>is_race from=OBJI_KILLER</c>.</summary>
+    public static PatternCondition KillerRace(params Race[] races)
+        => ai => ai.Killer is Creature who && races.Contains(who.GetRace());
+
+    /// <summary><c>is_race from=OBJI_TALKER</c>.</summary>
+    public static PatternCondition TalkerRace(params Race[] races)
+        => ai => ai.Talker is Creature who && races.Contains(who.GetRace());
+
+    /// <summary><c>is_race from=OBJI_EVENT_TARGET</c>.</summary>
+    public static PatternCondition EventTargetRace(params Race[] races)
+        => ai => ai.EventTarget is Creature who && races.Contains(who.GetRace());
+
+    /// <summary><c>is_race from=OBJI_MESSAGE_PARAM</c>.</summary>
+    public static PatternCondition MessageParamRace(params Race[] races)
+        => ai => ai.MessageParam as Creature is Creature who && races.Contains(who.GetRace());
+
+    /// <summary><c>is_race from=OBJI_MESSAGE_SENDER</c>.</summary>
+    public static PatternCondition MessageSenderRace(params Race[] races)
+        => ai => ai.MessageSender is Creature who && races.Contains(who.GetRace());
+
     /// <summary>
     /// <c>is_user_class user=USERI_ATTACKER</c> — the player who just hit this NPC is one of these
     /// classes.

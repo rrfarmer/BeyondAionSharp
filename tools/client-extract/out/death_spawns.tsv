@@ -82,6 +82,10 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 216589	IDCT_Lichkey3	on_die	ANY	0	7		5	spawn	281388	1	10	for_the_fight_absolute	797.0	320.0	221.0	1
 216589	IDCT_Lichkey3	on_die	ANY	0	7		6	spawn	281388	1	10	for_the_fight_absolute	784.0	226.0	225.0	1
 216589	IDCT_Lichkey3	on_die	ANY	0	7		7	spawn	281388	1	10	for_the_fight_absolute	769.3	278.7	222.0	1
+216882	Dread02_SurkanaNm05	on_die	ANY	0	7	race:TargetRace:ELYOS	0	var	0	1	0	TELEPORT_L_DESTROYED	0.0	0.0	0.0	0
+216882	Dread02_SurkanaNm05	on_die	ANY	0	7	race:TargetRace:ELYOS	1	sysmsg	1400652	0	0		0.0	0.0	0.0	0
+216882	Dread02_SurkanaNm05	on_die	ANY	1	7	race:TargetRace:ASMODIANS	0	var	0	1	0	TELEPORT_D_DESTROYED	0.0	0.0	0.0	0
+216882	Dread02_SurkanaNm05	on_die	ANY	1	7	race:TargetRace:ASMODIANS	1	sysmsg	1400652	0	0		0.0	0.0	0.0	0
 216937	Elim_ComadFe2	on_die	ANY	0	7		0	var	0	1	0	IDElim_3F_Heal_Plant_Giant	0.0	0.0	0.0	0
 216938	Elim_ComadFe2	on_die	ANY	0	7		0	var	0	1	0	IDElim_3F_Heal_Plant_Giant	0.0	0.0	0.0	0
 216939	Elim_ComadMe2	on_die	ANY	0	7		0	var	0	1	0	IDElim_3F_Heal_Plant_Giant	0.0	0.0	0.0	0
@@ -148,6 +152,10 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 217301	IDYun_Temp_22	on_die	ANY	0	1	chance:35	0	spawn	282384	3	30	for_the_fight_self	0.0	0.0	0.0	1
 217301	IDYun_Temp_22	on_die	ANY	0	1	chance:35	1	spawn	282382	1	30	for_the_fight_self	0.0	0.0	0.0	1
 217314	IDYun_hiddennm	on_die	ANY	0	7		0	spawn	701009	1	0	for_the_fight_self	0.0	0.0	0.0	0
+217315	IDYun_TheThingFromAnotherWorld_01	on_killed_by_user	KilledByPlayer	0	5	race:KillerRace:ELYOS	0	spawn	855953	1	30	for_the_fight_self	0.0	0.0	0.0	0
+217315	IDYun_TheThingFromAnotherWorld_01	on_killed_by_user	KilledByPlayer	1	4	race:KillerRace:ASMODIANS	0	spawn	855953	1	30	for_the_fight_self	0.0	0.0	0.0	0
+217316	IDYun_TheThingFromAnotherWorld_02	on_killed_by_user	KilledByPlayer	0	5	race:KillerRace:ELYOS	0	spawn	855953	1	30	for_the_fight_self	0.0	0.0	0.0	0
+217316	IDYun_TheThingFromAnotherWorld_02	on_killed_by_user	KilledByPlayer	1	4	race:KillerRace:ASMODIANS	0	spawn	855953	1	30	for_the_fight_self	0.0	0.0	0.0	0
 217327	IDYun_Temp_19	on_die	ANY	0	1		0	spawn	282551	1	10	for_the_fight_self	0.0	0.0	0.0	1
 217330	IDYun_Drakan_ND3	on_die	ANY	0	4		0	spawn	282528	1	10	for_the_fight_self	0.0	0.0	0.0	1
 217370	Station_DrakanD	on_die	ANY	0	7		0	var	0	1	0	IDStation_Score	0.0	0.0	0.0	0
@@ -433,6 +441,12 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 219263	IDDreadgion_03_DrakanCl_Semiboss_Ae	on_die	ANY	0	7		0	var	0	1	0	Namedkilled	0.0	0.0	0.0	0
 219267	IDDreadgion_03_DrakanFiNamedFA_60_Ae	on_die	ANY	0	5		0	var	0	1	0	Namedkilled	0.0	0.0	0.0	0
 219268	IDDreadgion_03_DrakanFiNamedFB_60_Ae	on_die	ANY	0	5		0	var	0	1	0	Namedkilled	0.0	0.0	0.0	0
+219271	IDDreadgion_03_DrakanGi_NamedC_60_Ae	on_die	ANY	0	9	race:TargetRace:ELYOS|set_flag_var:0	0	var	1	0	0	NAMED_KILLED_L	0.0	0.0	0.0	0
+219271	IDDreadgion_03_DrakanGi_NamedC_60_Ae	on_die	ANY	0	9	race:TargetRace:ELYOS|set_flag_var:0	1	var	0	1	0	Namedkilled	0.0	0.0	0.0	0
+219271	IDDreadgion_03_DrakanGi_NamedC_60_Ae	on_die	ANY	0	9	race:TargetRace:ELYOS|set_flag_var:0	2	sysmsg	1401419	0	0		0.0	0.0	0.0	0
+219271	IDDreadgion_03_DrakanGi_NamedC_60_Ae	on_die	ANY	1	8	race:TargetRace:ASMODIANS|set_flag_var:0	0	var	1	0	0	NAMED_KILLED_D	0.0	0.0	0.0	0
+219271	IDDreadgion_03_DrakanGi_NamedC_60_Ae	on_die	ANY	1	8	race:TargetRace:ASMODIANS|set_flag_var:0	1	var	0	1	0	Namedkilled	0.0	0.0	0.0	0
+219271	IDDreadgion_03_DrakanGi_NamedC_60_Ae	on_die	ANY	1	8	race:TargetRace:ASMODIANS|set_flag_var:0	2	sysmsg	1401419	0	0		0.0	0.0	0.0	0
 219311	TiamatDown_TiamatAgent	on_die	ANY	0	6		0	var	2	0	0	Agent_Sum_Spawn	0.0	0.0	0.0	0
 219312	TiamatDown_TiamatAgent	on_die	ANY	0	6		0	var	2	0	0	Agent_Sum_Spawn	0.0	0.0	0.0	0
 219324	Event_Valentine_White_Mon_01	on_die	ANY	0	7		0	spawn	701477	10	600	for_the_fight_self	0.0	0.0	0.0	1
@@ -651,6 +665,12 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 233370	IDDreadgion_03_DrakanCl_Semiboss_Ae	on_die	ANY	0	7		0	var	0	1	0	Namedkilled	0.0	0.0	0.0	0
 233374	IDDreadgion_03_DrakanFiNamedFA_60_Ae	on_die	ANY	0	5		0	var	0	1	0	Namedkilled	0.0	0.0	0.0	0
 233375	IDDreadgion_03_DrakanFiNamedFB_60_Ae	on_die	ANY	0	5		0	var	0	1	0	Namedkilled	0.0	0.0	0.0	0
+233378	IDDreadgion_03_DrakanGi_NamedC_60_Ae	on_die	ANY	0	9	race:TargetRace:ELYOS|set_flag_var:0	0	var	1	0	0	NAMED_KILLED_L	0.0	0.0	0.0	0
+233378	IDDreadgion_03_DrakanGi_NamedC_60_Ae	on_die	ANY	0	9	race:TargetRace:ELYOS|set_flag_var:0	1	var	0	1	0	Namedkilled	0.0	0.0	0.0	0
+233378	IDDreadgion_03_DrakanGi_NamedC_60_Ae	on_die	ANY	0	9	race:TargetRace:ELYOS|set_flag_var:0	2	sysmsg	1401419	0	0		0.0	0.0	0.0	0
+233378	IDDreadgion_03_DrakanGi_NamedC_60_Ae	on_die	ANY	1	8	race:TargetRace:ASMODIANS|set_flag_var:0	0	var	1	0	0	NAMED_KILLED_D	0.0	0.0	0.0	0
+233378	IDDreadgion_03_DrakanGi_NamedC_60_Ae	on_die	ANY	1	8	race:TargetRace:ASMODIANS|set_flag_var:0	1	var	0	1	0	Namedkilled	0.0	0.0	0.0	0
+233378	IDDreadgion_03_DrakanGi_NamedC_60_Ae	on_die	ANY	1	8	race:TargetRace:ASMODIANS|set_flag_var:0	2	sysmsg	1401419	0	0		0.0	0.0	0.0	0
 233380	IDF5_U2_VriRP_Ri_party_N_65_Ae2	on_die	ANY	0	100		0	spawn	702659	1	0	for_the_fight_self	0.0	0.0	0.0	0
 233380	IDF5_U2_VriRP_Ri_party_N_65_Ae2	on_die	ANY	0	100		1	var	0	1	0	cSetPortal	0.0	0.0	0.0	0
 233380	IDF5_U2_VriRP_Ri_party_N_65_Ae2	on_die	ANY	0	100		2	despawn	1	0	0		0.0	0.0	0.0	0
@@ -661,6 +681,106 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 233383	IDF5_U2_VriRP_Ri_party_N_65_Ae2	on_die	ANY	0	100		2	despawn	1	0	0		0.0	0.0	0.0	0
 233384	IDF5_U2_VriRP_As_party_N_65_Ae2	on_die	ANY	0	100		0	var	0	1	0	cSetPortal	0.0	0.0	0.0	0
 233385	IDF5_U2_VriIU_Wi_party_N_65_Ah	on_die	ANY	0	100		0	var	0	1	0	cSetPortal	0.0	0.0	0.0	0
+233498	IDF5_TD_War_Dark_Officer_01	on_killed_by_user	KilledByPlayer	0	17	race:KillerRace:ELYOS	0	var	2	0	0	v01	0.0	0.0	0.0	0
+233498	IDF5_TD_War_Dark_Officer_01	on_killed_by_user	KilledByPlayer	0	17	race:KillerRace:ELYOS	1	spawn	855029	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233498	IDF5_TD_War_Dark_Officer_01	on_killed_by_user	KilledByPlayer	1	16	race:KillerRace:ASMODIANS	0	var	3	0	0	v01	0.0	0.0	0.0	0
+233498	IDF5_TD_War_Dark_Officer_01	on_killed_by_user	KilledByPlayer	1	16	race:KillerRace:ASMODIANS	1	spawn	855019	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233499	IDF5_TD_War_Dark_Officer_02	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v02	0.0	0.0	0.0	0
+233499	IDF5_TD_War_Dark_Officer_02	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855030	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233499	IDF5_TD_War_Dark_Officer_02	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v02	0.0	0.0	0.0	0
+233499	IDF5_TD_War_Dark_Officer_02	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855020	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233500	IDF5_TD_War_Dark_Officer_03	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v03	0.0	0.0	0.0	0
+233500	IDF5_TD_War_Dark_Officer_03	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855031	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233500	IDF5_TD_War_Dark_Officer_03	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v03	0.0	0.0	0.0	0
+233500	IDF5_TD_War_Dark_Officer_03	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855021	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233501	IDF5_TD_War_Dark_Officer_04	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v04	0.0	0.0	0.0	0
+233501	IDF5_TD_War_Dark_Officer_04	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855032	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233501	IDF5_TD_War_Dark_Officer_04	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v04	0.0	0.0	0.0	0
+233501	IDF5_TD_War_Dark_Officer_04	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855022	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233502	IDF5_TD_War_Dark_Officer_05	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v05	0.0	0.0	0.0	0
+233502	IDF5_TD_War_Dark_Officer_05	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855033	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233502	IDF5_TD_War_Dark_Officer_05	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v05	0.0	0.0	0.0	0
+233502	IDF5_TD_War_Dark_Officer_05	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855023	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233503	IDF5_TD_War_Dark_Officer_06	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v06	0.0	0.0	0.0	0
+233503	IDF5_TD_War_Dark_Officer_06	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855034	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233503	IDF5_TD_War_Dark_Officer_06	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v06	0.0	0.0	0.0	0
+233503	IDF5_TD_War_Dark_Officer_06	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855024	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233504	IDF5_TD_War_Dark_Officer_07	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v07	0.0	0.0	0.0	0
+233504	IDF5_TD_War_Dark_Officer_07	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855035	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233504	IDF5_TD_War_Dark_Officer_07	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v07	0.0	0.0	0.0	0
+233504	IDF5_TD_War_Dark_Officer_07	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855035	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233505	IDF5_TD_War_Dark_Officer_08	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v08	0.0	0.0	0.0	0
+233505	IDF5_TD_War_Dark_Officer_08	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855026	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233505	IDF5_TD_War_Dark_Officer_08	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v08	0.0	0.0	0.0	0
+233505	IDF5_TD_War_Dark_Officer_08	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855026	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233506	IDF5_TD_War_Dark_Officer_09	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	spawn	855037	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233506	IDF5_TD_War_Dark_Officer_09	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	var	2	0	0	v09	0.0	0.0	0.0	0
+233506	IDF5_TD_War_Dark_Officer_09	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	spawn	855027	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233506	IDF5_TD_War_Dark_Officer_09	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	var	3	0	0	v09	0.0	0.0	0.0	0
+233507	IDF5_TD_War_Dark_Officer_10	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v10	0.0	0.0	0.0	0
+233507	IDF5_TD_War_Dark_Officer_10	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855038	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233507	IDF5_TD_War_Dark_Officer_10	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v10	0.0	0.0	0.0	0
+233507	IDF5_TD_War_Dark_Officer_10	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855028	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233518	IDF5_TD_War_Light_Officer_01	on_killed_by_user	KilledByPlayer	0	17	race:KillerRace:ELYOS	0	var	2	0	0	v01	0.0	0.0	0.0	0
+233518	IDF5_TD_War_Light_Officer_01	on_killed_by_user	KilledByPlayer	0	17	race:KillerRace:ELYOS	1	spawn	855029	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233518	IDF5_TD_War_Light_Officer_01	on_killed_by_user	KilledByPlayer	1	16	race:KillerRace:ASMODIANS	0	var	3	0	0	v01	0.0	0.0	0.0	0
+233518	IDF5_TD_War_Light_Officer_01	on_killed_by_user	KilledByPlayer	1	16	race:KillerRace:ASMODIANS	1	spawn	855019	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233519	IDF5_TD_War_Light_Officer_02	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v02	0.0	0.0	0.0	0
+233519	IDF5_TD_War_Light_Officer_02	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855030	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233519	IDF5_TD_War_Light_Officer_02	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v02	0.0	0.0	0.0	0
+233519	IDF5_TD_War_Light_Officer_02	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855020	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233520	IDF5_TD_War_Light_Officer_03	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v03	0.0	0.0	0.0	0
+233520	IDF5_TD_War_Light_Officer_03	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855031	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233520	IDF5_TD_War_Light_Officer_03	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v03	0.0	0.0	0.0	0
+233520	IDF5_TD_War_Light_Officer_03	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855021	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233521	IDF5_TD_War_Light_Officer_04	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v04	0.0	0.0	0.0	0
+233521	IDF5_TD_War_Light_Officer_04	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855032	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233521	IDF5_TD_War_Light_Officer_04	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v04	0.0	0.0	0.0	0
+233521	IDF5_TD_War_Light_Officer_04	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855022	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233522	IDF5_TD_War_Light_Officer_05	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v05	0.0	0.0	0.0	0
+233522	IDF5_TD_War_Light_Officer_05	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855033	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233522	IDF5_TD_War_Light_Officer_05	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v05	0.0	0.0	0.0	0
+233522	IDF5_TD_War_Light_Officer_05	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855023	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233523	IDF5_TD_War_Light_Officer_06	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v06	0.0	0.0	0.0	0
+233523	IDF5_TD_War_Light_Officer_06	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855034	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233523	IDF5_TD_War_Light_Officer_06	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v06	0.0	0.0	0.0	0
+233523	IDF5_TD_War_Light_Officer_06	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855024	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233524	IDF5_TD_War_Light_Officer_07	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v07	0.0	0.0	0.0	0
+233524	IDF5_TD_War_Light_Officer_07	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855035	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233524	IDF5_TD_War_Light_Officer_07	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v07	0.0	0.0	0.0	0
+233524	IDF5_TD_War_Light_Officer_07	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855025	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233525	IDF5_TD_War_Light_Officer_08	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v08	0.0	0.0	0.0	0
+233525	IDF5_TD_War_Light_Officer_08	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855036	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233525	IDF5_TD_War_Light_Officer_08	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v08	0.0	0.0	0.0	0
+233525	IDF5_TD_War_Light_Officer_08	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855026	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233526	IDF5_TD_War_Light_Officer_09	on_killed_by_user	KilledByPlayer	0	17	race:KillerRace:ELYOS	0	spawn	855037	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233526	IDF5_TD_War_Light_Officer_09	on_killed_by_user	KilledByPlayer	0	17	race:KillerRace:ELYOS	1	var	2	0	0	v09	0.0	0.0	0.0	0
+233526	IDF5_TD_War_Light_Officer_09	on_killed_by_user	KilledByPlayer	1	16	race:KillerRace:ASMODIANS	0	spawn	855027	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233526	IDF5_TD_War_Light_Officer_09	on_killed_by_user	KilledByPlayer	1	16	race:KillerRace:ASMODIANS	1	var	3	0	0	v09	0.0	0.0	0.0	0
+233527	IDF5_TD_War_Light_Officer_10	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v10	0.0	0.0	0.0	0
+233527	IDF5_TD_War_Light_Officer_10	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855038	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233527	IDF5_TD_War_Light_Officer_10	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v10	0.0	0.0	0.0	0
+233527	IDF5_TD_War_Light_Officer_10	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855028	1	0	for_the_fight_self	0.0	0.0	0.0	0
+233550	IDF5_TD_War_Vri_Officer_01	on_killed_by_user	KilledByPlayer	0	19	race:KillerRace:ELYOS	0	var	2	0	0	v01	0.0	0.0	0.0	0
+233550	IDF5_TD_War_Vri_Officer_01	on_killed_by_user	KilledByPlayer	1	18	race:KillerRace:ASMODIANS	0	var	3	0	0	v01	0.0	0.0	0.0	0
+233551	IDF5_TD_War_Vri_Officer_02	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v02	0.0	0.0	0.0	0
+233551	IDF5_TD_War_Vri_Officer_02	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v02	0.0	0.0	0.0	0
+233552	IDF5_TD_War_Vri_Officer_03	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v03	0.0	0.0	0.0	0
+233552	IDF5_TD_War_Vri_Officer_03	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v03	0.0	0.0	0.0	0
+233553	IDF5_TD_War_Vri_Officer_04	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v04	0.0	0.0	0.0	0
+233553	IDF5_TD_War_Vri_Officer_04	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v04	0.0	0.0	0.0	0
+233554	IDF5_TD_War_Vri_Officer_05	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v05	0.0	0.0	0.0	0
+233554	IDF5_TD_War_Vri_Officer_05	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v05	0.0	0.0	0.0	0
+233555	IDF5_TD_War_Vri_Officer_06	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v06	0.0	0.0	0.0	0
+233555	IDF5_TD_War_Vri_Officer_06	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v06	0.0	0.0	0.0	0
+233556	IDF5_TD_War_Vri_Officer_07	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v07	0.0	0.0	0.0	0
+233556	IDF5_TD_War_Vri_Officer_07	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v07	0.0	0.0	0.0	0
+233557	IDF5_TD_War_Vri_Officer_08	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v08	0.0	0.0	0.0	0
+233557	IDF5_TD_War_Vri_Officer_08	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v08	0.0	0.0	0.0	0
+233558	IDF5_TD_War_Vri_Officer_09	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v09	0.0	0.0	0.0	0
+233558	IDF5_TD_War_Vri_Officer_09	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v09	0.0	0.0	0.0	0
+233559	IDF5_TD_War_Vri_Officer_10	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v10	0.0	0.0	0.0	0
+233559	IDF5_TD_War_Vri_Officer_10	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v10	0.0	0.0	0.0	0
 233884	IDArena_S5_Named_1	on_die	ANY	0	7		0	var	0	1	0	Condition_S4	0.0	0.0	0.0	0
 234128	LDF5_Village_KillerCtrl01_L	on_die	ANY	0	7		0	var	-1	0	0	v01ctrl	0.0	0.0	0.0	0
 234129	LDF5_Village_KillerCtrl01_D	on_die	ANY	0	7		0	var	-1	0	0	v01ctrl	0.0	0.0	0.0	0
@@ -668,6 +788,467 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 234131	LDF5_Village_KillerCtrl02_L	on_die	ANY	0	7		0	var	-1	0	0	v02ctrl	0.0	0.0	0.0	0
 234132	LDF5_Village_KillerCtrl02_D	on_die	ANY	0	7		0	var	-1	0	0	v02ctrl	0.0	0.0	0.0	0
 234133	LDF5_Village_KillerCtrl02_DR	on_die	ANY	0	7		0	var	-1	0	0	v02ctrl	0.0	0.0	0.0	0
+234162	LDF4_Advance_village_19	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:DRAKAN	0	spawn	855567	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234162	LDF4_Advance_village_19	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855566	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234162	LDF4_Advance_village_19	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ASMODIANS	0	spawn	855566	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234164	LDF4_Advance_village_01	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855375	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234164	LDF4_Advance_village_01	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855388	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234164	LDF4_Advance_village_01	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855375	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234164	LDF4_Advance_village_01	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855388	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234166	LDF4_Advance_village_10	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855384	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234166	LDF4_Advance_village_10	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855397	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234166	LDF4_Advance_village_10	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855384	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234166	LDF4_Advance_village_10	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855397	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234216	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234216	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234216	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234216	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234217	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234217	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234217	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234217	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234218	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234218	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234218	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234218	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234542	IDLDF4_Re_01_PhyBoss	on_killed_by_npc	KilledByNpc	0	9		0	var	0	1	0	Boss_Die	0.0	0.0	0.0	0
+234542	IDLDF4_Re_01_PhyBoss	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	0	broadcast	1002	50	0		0.0	0.0	0.0	0
+234542	IDLDF4_Re_01_PhyBoss	on_killed_by_npc	KilledByNpc	2	6	race:KillerRace:ASMODIANS	0	broadcast	1002	50	0		0.0	0.0	0.0	0
+234542	IDLDF4_Re_01_PhyBoss	on_killed_by_user	KilledByPlayer	0	9		0	var	0	1	0	Boss_Die	0.0	0.0	0.0	0
+234542	IDLDF4_Re_01_PhyBoss	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	0	broadcast	1002	50	0		0.0	0.0	0.0	0
+234542	IDLDF4_Re_01_PhyBoss	on_killed_by_user	KilledByPlayer	2	6	race:KillerRace:ASMODIANS	0	broadcast	1002	50	0		0.0	0.0	0.0	0
+234646	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234646	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234646	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+234646	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235221	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235221	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235221	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235221	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235222	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235222	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235222	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235222	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235223	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235223	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235223	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235223	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235224	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235224	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235224	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235224	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235225	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235225	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235225	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235225	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235226	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235226	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235226	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235226	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235227	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235227	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235227	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235227	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235228	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235228	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235228	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235228	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235229	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235229	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235229	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235229	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235230	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235230	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235230	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235230	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235231	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235231	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235231	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235231	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235232	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235232	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235232	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235232	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235233	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235233	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235233	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235233	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235234	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235234	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235234	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235234	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235235	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235235	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235235	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235235	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235236	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235236	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235236	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235236	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235237	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235237	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235237	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235237	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235238	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235238	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235238	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235238	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235239	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235239	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235239	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235239	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235240	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235240	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235240	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235240	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235241	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235241	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235241	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235241	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235242	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235242	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235242	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235242	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235243	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235243	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235243	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235243	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235244	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235244	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235244	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235244	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235245	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235245	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235245	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235245	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235246	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235246	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235246	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235246	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235247	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235247	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235247	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235247	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235248	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235248	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235248	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235248	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235249	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235249	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235249	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235249	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235250	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235250	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235250	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235250	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235251	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235251	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235251	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235251	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235252	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235252	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235252	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235252	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235253	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235253	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235253	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235253	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235254	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235254	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235254	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235254	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235255	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235255	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235255	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235255	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235256	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235256	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235256	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235256	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235257	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235257	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235257	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235257	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235258	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235258	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235258	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235258	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235259	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235259	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235259	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235259	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235260	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235260	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235260	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235260	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235261	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235261	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235261	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235261	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235262	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235262	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235262	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235262	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235263	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235263	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235263	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235263	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235264	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235264	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235264	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235264	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235265	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235265	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235265	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235265	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235266	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235266	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235266	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235266	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235267	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235267	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235267	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235267	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235268	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235268	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235268	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235268	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235269	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235269	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235269	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235269	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235270	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235270	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235270	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235270	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235271	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235271	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235271	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235271	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235272	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235272	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235272	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235272	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235273	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235273	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235273	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235273	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235274	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235274	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235274	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235274	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235275	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235275	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235275	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235275	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235276	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235276	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235276	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235276	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235277	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235277	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235277	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235277	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235278	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235278	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235278	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235278	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235279	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235279	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235279	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235279	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235280	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235280	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235280	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235280	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235281	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235281	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235281	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235281	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235282	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235282	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235282	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235282	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235283	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235283	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235283	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235283	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235284	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235284	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235284	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235284	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235285	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235285	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235285	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235285	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235286	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235286	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235286	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235286	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235287	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235287	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235287	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235287	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235288	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235288	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235288	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235288	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235289	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235289	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235289	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235289	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235290	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235290	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235290	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235290	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235291	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235291	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235291	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235291	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235292	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235292	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235292	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235292	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235293	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235293	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235293	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235293	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235294	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235294	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235294	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235294	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235295	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235295	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235295	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235295	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235296	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235296	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235296	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235296	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235297	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235297	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235297	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235297	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235298	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235298	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235298	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235298	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235299	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235299	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235299	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235299	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235300	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235300	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235300	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235300	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235301	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235301	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235301	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235301	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235302	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235302	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235302	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235302	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235303	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235303	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235303	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235303	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235304	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235304	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235304	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235304	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235305	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235305	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235305	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235305	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235306	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235306	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235306	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235306	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235307	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235307	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235307	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235307	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235308	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235308	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235308	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235308	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235309	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235309	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235309	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235309	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235310	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235310	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235310	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235310	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235311	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235311	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235311	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235311	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235312	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235312	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235312	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235312	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235313	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235313	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235313	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235313	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235314	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235314	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235314	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235314	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235315	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235315	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235315	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235315	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235316	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235316	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235316	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235316	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235317	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235317	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235317	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235317	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235318	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235318	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235318	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235318	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235319	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235319	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235319	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235319	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235320	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235320	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235320	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235320	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235321	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235321	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235321	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235321	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235322	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235322	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235322	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235322	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235323	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235323	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235323	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235323	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235324	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235324	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235324	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235324	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235325	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235325	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235325	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235325	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235326	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235326	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235326	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235326	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235327	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235327	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235327	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235327	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
 235619	IDLDF5_Under_02_Boss_Wi	on_die	ANY	0	1000		0	var	3	0	0	cSetPortal	0.0	0.0	0.0	0
 235621	IDLDF5_Under_02_Boss_As	on_die	ANY	0	1000		0	var	3	0	0	cSetPortal	0.0	0.0	0.0	0
 235624	IDLDF5_Under_02_Summon04	on_die	ANY	0	1000		0	var	3	0	0	cSetPortal	0.0	0.0	0.0	0
@@ -720,6 +1301,10 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 236267	IDYun_Temp_31	on_die	ANY	0	1		0	spawn	282551	1	10	for_the_fight_self	0.0	0.0	0.0	1
 236283	IDYun_Drakan_ND3	on_die	ANY	0	4		0	spawn	282528	1	10	for_the_fight_self	0.0	0.0	0.0	1
 236290	IDYun_info_07	on_die	ANY	0	4		0	spawn	856481	1	10	for_the_fight_self	0.0	0.0	0.0	1
+236299	IDYun_TheThingFromAnotherWorld_01	on_killed_by_user	KilledByPlayer	0	5	race:KillerRace:ELYOS	0	spawn	855953	1	30	for_the_fight_self	0.0	0.0	0.0	0
+236299	IDYun_TheThingFromAnotherWorld_01	on_killed_by_user	KilledByPlayer	1	4	race:KillerRace:ASMODIANS	0	spawn	855953	1	30	for_the_fight_self	0.0	0.0	0.0	0
+236301	IDYun_TheThingFromAnotherWorld_02	on_killed_by_user	KilledByPlayer	0	5	race:KillerRace:ELYOS	0	spawn	855953	1	30	for_the_fight_self	0.0	0.0	0.0	0
+236301	IDYun_TheThingFromAnotherWorld_02	on_killed_by_user	KilledByPlayer	1	4	race:KillerRace:ASMODIANS	0	spawn	855953	1	30	for_the_fight_self	0.0	0.0	0.0	0
 236306	IDRaksha_Re_Boss_KJS	on_killed_by_npc	KilledByNpc	0	7	set_flag_var:18	0	var	1	0	0	idraksha_clear	0.0	0.0	0.0	0
 236306	IDRaksha_Re_Boss_KJS	on_killed_by_user	KilledByPlayer	0	7	set_flag_var:18	0	var	1	0	0	idraksha_clear	0.0	0.0	0.0	0
 236526	IDYun_Nmd3_FallOff	on_die	ANY	0	5		0	var	1	0	0	DISPEL_ARIANA	0.0	0.0	0.0	0
@@ -2445,6 +3030,12 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 281117	Bionic_EhA	on_killed_by_user	KilledByPlayer	0	20	hp_below:0	2	spawn	281230	1	0	for_the_fight_absolute	227.0	420.0	107.0	3
 281124	IDSlk_KK	on_die	ANY	0	7		0	spawn	281197	1	6	for_the_fight_self	0.0	0.0	0.0	1
 281124	IDSlk_KK	on_die	ANY	0	7		1	var	2	0	0	Lever	0.0	0.0	0.0	0
+281128	IDSlk_KKFoodA	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:SHULACK	0	spawn	281126	1	6	for_the_fight_self	0.0	0.0	0.0	1
+281128	IDSlk_KKFoodA	on_killed_by_npc	KilledByNpc	1	6		0	spawn	281196	1	6	for_the_fight_self	0.0	0.0	0.0	1
+281128	IDSlk_KKFoodA	on_killed_by_user	KilledByPlayer	0	7		0	spawn	281196	1	6	for_the_fight_self	0.0	0.0	0.0	1
+281129	IDSlk_KKFoodB	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:SHULACK	0	spawn	281127	1	6	for_the_fight_self	0.0	0.0	0.0	1
+281129	IDSlk_KKFoodB	on_killed_by_npc	KilledByNpc	1	6		0	spawn	281196	1	6	for_the_fight_self	0.0	0.0	0.0	1
+281129	IDSlk_KKFoodB	on_killed_by_user	KilledByPlayer	0	7		0	spawn	281196	1	6	for_the_fight_self	0.0	0.0	0.0	1
 281137	Shulack_KralA	on_killed_by_npc	KilledByNpc	0	7		0	spawn	281291	1	6	for_the_fight_self	0.0	0.0	0.0	1
 281137	Shulack_KralA	on_killed_by_user	KilledByPlayer	0	7		0	spawn	281291	1	6	for_the_fight_self	0.0	0.0	0.0	1
 281195	ND2_H50_3	on_die	ANY	0	4		0	spawn	215453	1	300	absolute	310.0	983.0	111.0	3
@@ -2527,6 +3118,10 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 281772	IDCTH_Rudra	on_die	ANY	0	7		1	say	1500092	0	0		0.0	0.0	0.0	0
 281772	IDCTH_Rudra	on_die	ANY	0	7		2	spawn	702658	1	0	for_the_fight_self	0.0	0.0	0.0	0
 281772	IDCTH_Rudra	on_die	ANY	0	7		3	despawn	1	0	0		0.0	0.0	0.0	0
+281882	Dread02_SurkanaNm05	on_die	ANY	0	7	race:TargetRace:ELYOS	0	var	0	1	0	TELEPORT_L_DESTROYED	0.0	0.0	0.0	0
+281882	Dread02_SurkanaNm05	on_die	ANY	0	7	race:TargetRace:ELYOS	1	sysmsg	1400652	0	0		0.0	0.0	0.0	0
+281882	Dread02_SurkanaNm05	on_die	ANY	1	7	race:TargetRace:ASMODIANS	0	var	0	1	0	TELEPORT_D_DESTROYED	0.0	0.0	0.0	0
+281882	Dread02_SurkanaNm05	on_die	ANY	1	7	race:TargetRace:ASMODIANS	1	sysmsg	1400652	0	0		0.0	0.0	0.0	0
 281891	IDAbRe_Core_Cannon	on_die	ANY	0	5		0	spawn	700863	5	0	for_the_fight_self	0.0	0.0	0.0	1
 281891	IDAbRe_Core_Cannon	on_die	ANY	0	5		1	spawn	282106	1	3	for_the_fight_self	0.0	0.0	0.0	1
 281897	IDAbRe_Core_NamedA1	on_die	ANY	0	9		0	spawn	282011	1	60	for_the_fight_absolute	448.99	694.32	433.06	1
@@ -2612,6 +3207,16 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 282262	IDElemental_Ex4	on_die	ANY	1	6		0	spawn	217247	1	0	for_the_fight_absolute	377.13	445.91	157.0	0
 282262	IDElemental_Ex4	on_die	ANY	1	6		1	spawn	217246	1	0	for_the_fight_absolute	383.57	445.91	157.0	0
 282265	IDHouse_Zadra_Phantom	on_die	ANY	0	3		0	spawn	282252	1	5	for_the_fight_self	0.0	0.0	0.0	1
+282277	Station_Shu_FI_B	on_killed_by_user	KilledByPlayer	0	100	race:KillerRace:ELYOS	0	spawn	702655	1	0	for_the_fight_self	0.0	0.0	0.0	0
+282277	Station_Shu_FI_B	on_killed_by_user	KilledByPlayer	1	99	race:KillerRace:ASMODIANS	0	spawn	702655	1	0	for_the_fight_self	0.0	0.0	0.0	0
+282278	Station_Shu_KN_B	on_killed_by_user	KilledByPlayer	0	100	race:KillerRace:ELYOS	0	spawn	702655	1	0	for_the_fight_self	0.0	0.0	0.0	0
+282278	Station_Shu_KN_B	on_killed_by_user	KilledByPlayer	1	99	race:KillerRace:ASMODIANS	0	spawn	702655	1	0	for_the_fight_self	0.0	0.0	0.0	0
+282279	Station_Shu_RA_B	on_killed_by_user	KilledByPlayer	0	100	race:KillerRace:ELYOS	0	spawn	702655	1	0	for_the_fight_self	0.0	0.0	0.0	0
+282279	Station_Shu_RA_B	on_killed_by_user	KilledByPlayer	1	99	race:KillerRace:ASMODIANS	0	spawn	702655	1	0	for_the_fight_self	0.0	0.0	0.0	0
+282280	Station_Shu_WI_B	on_killed_by_user	KilledByPlayer	0	100	race:KillerRace:ELYOS	0	spawn	702655	1	0	for_the_fight_self	0.0	0.0	0.0	0
+282280	Station_Shu_WI_B	on_killed_by_user	KilledByPlayer	1	99	race:KillerRace:ASMODIANS	0	spawn	702655	1	0	for_the_fight_self	0.0	0.0	0.0	0
+282281	Station_Shu_PR_B	on_killed_by_user	KilledByPlayer	0	100	race:KillerRace:ELYOS	0	spawn	702655	1	0	for_the_fight_self	0.0	0.0	0.0	0
+282281	Station_Shu_PR_B	on_killed_by_user	KilledByPlayer	1	99	race:KillerRace:ASMODIANS	0	spawn	702655	1	0	for_the_fight_self	0.0	0.0	0.0	0
 282290	Station_DrakanD	on_die	ANY	0	7		0	var	0	1	0	IDStation_Score	0.0	0.0	0.0	0
 282302	IDForest_ManduriT_Sum1	on_die	ANY	0	5		0	spawn	282252	1	2	for_the_fight_self	0.0	0.0	0.0	1
 282303	IDForest_ManduriT_Sum2	on_die	ANY	0	5		0	spawn	282252	1	2	for_the_fight_self	0.0	0.0	0.0	1
@@ -2747,6 +3352,9 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 284500	IDRuneWp_AncientArm_N_65_Al	on_die	ANY	0	900		2	broadcast	21101	50	0		0.0	0.0	0.0	0
 284500	IDRuneWp_AncientArm_N_65_Al	on_die	ANY	0	900		3	broadcast	21102	50	0		0.0	0.0	0.0	0
 284500	IDRuneWp_AncientArm_N_65_Al	on_die	ANY	0	900		4	var	1	0	0	cSetIdPortal	0.0	0.0	0.0	0
+284501	IDRuneWP_A1_Protection_65_n	on_die	ANY	0	98	set_flag_var:0	0	spawn	855000	1	30	for_the_fight_absolute	124.73	137.75	114.0	0
+284501	IDRuneWP_A1_Protection_65_n	on_killed_by_user	KilledByPlayer	0	100	race:KillerRace:ELYOS|set_flag_var:0	0	spawn	855000	1	30	for_the_fight_absolute	124.73	137.75	114.0	4
+284501	IDRuneWP_A1_Protection_65_n	on_killed_by_user	KilledByPlayer	1	90	race:KillerRace:ASMODIANS|set_flag_var:0	0	spawn	855000	1	30	for_the_fight_absolute	124.73	137.75	114.0	4
 284502	IDRuneWP_A1_VriIU_Wi_SN_65_Ah	on_die	ANY	0	100		0	var	0	1	0	cProtection01	0.0	0.0	0.0	0
 284502	IDRuneWP_A1_VriIU_Wi_SN_65_Ah	on_die	ANY	0	100		1	broadcast	21131	50	0		0.0	0.0	0.0	0
 284503	IDRuneWP_A3_VriIU_Wi_65_Ae	on_die	ANY	0	100		0	var	0	1	0	cProtection03	0.0	0.0	0.0	0
@@ -2776,8 +3384,114 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 284736	IDDreadgion_03_DrakanCl_Semiboss_Ae	on_die	ANY	0	7		0	var	0	1	0	Namedkilled	0.0	0.0	0.0	0
 284740	IDDreadgion_03_DrakanFiNamedFA_60_Ae	on_die	ANY	0	5		0	var	0	1	0	Namedkilled	0.0	0.0	0.0	0
 284741	IDDreadgion_03_DrakanFiNamedFB_60_Ae	on_die	ANY	0	5		0	var	0	1	0	Namedkilled	0.0	0.0	0.0	0
+284744	IDDreadgion_03_DrakanGi_NamedC_60_Ae	on_die	ANY	0	9	race:TargetRace:ELYOS|set_flag_var:0	0	var	1	0	0	NAMED_KILLED_L	0.0	0.0	0.0	0
+284744	IDDreadgion_03_DrakanGi_NamedC_60_Ae	on_die	ANY	0	9	race:TargetRace:ELYOS|set_flag_var:0	1	var	0	1	0	Namedkilled	0.0	0.0	0.0	0
+284744	IDDreadgion_03_DrakanGi_NamedC_60_Ae	on_die	ANY	0	9	race:TargetRace:ELYOS|set_flag_var:0	2	sysmsg	1401419	0	0		0.0	0.0	0.0	0
+284744	IDDreadgion_03_DrakanGi_NamedC_60_Ae	on_die	ANY	1	8	race:TargetRace:ASMODIANS|set_flag_var:0	0	var	1	0	0	NAMED_KILLED_D	0.0	0.0	0.0	0
+284744	IDDreadgion_03_DrakanGi_NamedC_60_Ae	on_die	ANY	1	8	race:TargetRace:ASMODIANS|set_flag_var:0	1	var	0	1	0	Namedkilled	0.0	0.0	0.0	0
+284744	IDDreadgion_03_DrakanGi_NamedC_60_Ae	on_die	ANY	1	8	race:TargetRace:ASMODIANS|set_flag_var:0	2	sysmsg	1401419	0	0		0.0	0.0	0.0	0
+284773	IDF5_TD_War_Dark_Officer_01	on_killed_by_user	KilledByPlayer	0	17	race:KillerRace:ELYOS	0	var	2	0	0	v01	0.0	0.0	0.0	0
+284773	IDF5_TD_War_Dark_Officer_01	on_killed_by_user	KilledByPlayer	0	17	race:KillerRace:ELYOS	1	spawn	855029	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284773	IDF5_TD_War_Dark_Officer_01	on_killed_by_user	KilledByPlayer	1	16	race:KillerRace:ASMODIANS	0	var	3	0	0	v01	0.0	0.0	0.0	0
+284773	IDF5_TD_War_Dark_Officer_01	on_killed_by_user	KilledByPlayer	1	16	race:KillerRace:ASMODIANS	1	spawn	855019	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284774	IDF5_TD_War_Dark_Officer_02	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v02	0.0	0.0	0.0	0
+284774	IDF5_TD_War_Dark_Officer_02	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855030	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284774	IDF5_TD_War_Dark_Officer_02	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v02	0.0	0.0	0.0	0
+284774	IDF5_TD_War_Dark_Officer_02	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855020	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284775	IDF5_TD_War_Dark_Officer_03	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v03	0.0	0.0	0.0	0
+284775	IDF5_TD_War_Dark_Officer_03	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855031	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284775	IDF5_TD_War_Dark_Officer_03	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v03	0.0	0.0	0.0	0
+284775	IDF5_TD_War_Dark_Officer_03	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855021	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284776	IDF5_TD_War_Dark_Officer_04	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v04	0.0	0.0	0.0	0
+284776	IDF5_TD_War_Dark_Officer_04	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855032	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284776	IDF5_TD_War_Dark_Officer_04	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v04	0.0	0.0	0.0	0
+284776	IDF5_TD_War_Dark_Officer_04	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855022	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284777	IDF5_TD_War_Dark_Officer_05	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v05	0.0	0.0	0.0	0
+284777	IDF5_TD_War_Dark_Officer_05	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855033	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284777	IDF5_TD_War_Dark_Officer_05	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v05	0.0	0.0	0.0	0
+284777	IDF5_TD_War_Dark_Officer_05	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855023	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284778	IDF5_TD_War_Dark_Officer_06	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v06	0.0	0.0	0.0	0
+284778	IDF5_TD_War_Dark_Officer_06	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855034	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284778	IDF5_TD_War_Dark_Officer_06	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v06	0.0	0.0	0.0	0
+284778	IDF5_TD_War_Dark_Officer_06	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855024	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284779	IDF5_TD_War_Dark_Officer_07	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v07	0.0	0.0	0.0	0
+284779	IDF5_TD_War_Dark_Officer_07	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855035	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284779	IDF5_TD_War_Dark_Officer_07	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v07	0.0	0.0	0.0	0
+284779	IDF5_TD_War_Dark_Officer_07	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855035	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284780	IDF5_TD_War_Dark_Officer_08	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v08	0.0	0.0	0.0	0
+284780	IDF5_TD_War_Dark_Officer_08	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855026	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284780	IDF5_TD_War_Dark_Officer_08	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v08	0.0	0.0	0.0	0
+284780	IDF5_TD_War_Dark_Officer_08	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855026	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284781	IDF5_TD_War_Dark_Officer_09	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	spawn	855037	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284781	IDF5_TD_War_Dark_Officer_09	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	var	2	0	0	v09	0.0	0.0	0.0	0
+284781	IDF5_TD_War_Dark_Officer_09	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	spawn	855027	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284781	IDF5_TD_War_Dark_Officer_09	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	var	3	0	0	v09	0.0	0.0	0.0	0
+284782	IDF5_TD_War_Dark_Officer_10	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v10	0.0	0.0	0.0	0
+284782	IDF5_TD_War_Dark_Officer_10	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855038	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284782	IDF5_TD_War_Dark_Officer_10	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v10	0.0	0.0	0.0	0
+284782	IDF5_TD_War_Dark_Officer_10	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855028	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284787	IDF5_TD_War_Light_Officer_01	on_killed_by_user	KilledByPlayer	0	17	race:KillerRace:ELYOS	0	var	2	0	0	v01	0.0	0.0	0.0	0
+284787	IDF5_TD_War_Light_Officer_01	on_killed_by_user	KilledByPlayer	0	17	race:KillerRace:ELYOS	1	spawn	855029	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284787	IDF5_TD_War_Light_Officer_01	on_killed_by_user	KilledByPlayer	1	16	race:KillerRace:ASMODIANS	0	var	3	0	0	v01	0.0	0.0	0.0	0
+284787	IDF5_TD_War_Light_Officer_01	on_killed_by_user	KilledByPlayer	1	16	race:KillerRace:ASMODIANS	1	spawn	855019	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284788	IDF5_TD_War_Light_Officer_02	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v02	0.0	0.0	0.0	0
+284788	IDF5_TD_War_Light_Officer_02	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855030	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284788	IDF5_TD_War_Light_Officer_02	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v02	0.0	0.0	0.0	0
+284788	IDF5_TD_War_Light_Officer_02	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855020	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284789	IDF5_TD_War_Light_Officer_03	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v03	0.0	0.0	0.0	0
+284789	IDF5_TD_War_Light_Officer_03	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855031	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284789	IDF5_TD_War_Light_Officer_03	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v03	0.0	0.0	0.0	0
+284789	IDF5_TD_War_Light_Officer_03	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855021	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284790	IDF5_TD_War_Light_Officer_04	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v04	0.0	0.0	0.0	0
+284790	IDF5_TD_War_Light_Officer_04	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855032	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284790	IDF5_TD_War_Light_Officer_04	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v04	0.0	0.0	0.0	0
+284790	IDF5_TD_War_Light_Officer_04	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855022	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284791	IDF5_TD_War_Light_Officer_05	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v05	0.0	0.0	0.0	0
+284791	IDF5_TD_War_Light_Officer_05	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855033	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284791	IDF5_TD_War_Light_Officer_05	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v05	0.0	0.0	0.0	0
+284791	IDF5_TD_War_Light_Officer_05	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855023	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284792	IDF5_TD_War_Light_Officer_06	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v06	0.0	0.0	0.0	0
+284792	IDF5_TD_War_Light_Officer_06	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855034	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284792	IDF5_TD_War_Light_Officer_06	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v06	0.0	0.0	0.0	0
+284792	IDF5_TD_War_Light_Officer_06	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855024	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284793	IDF5_TD_War_Light_Officer_07	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v07	0.0	0.0	0.0	0
+284793	IDF5_TD_War_Light_Officer_07	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855035	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284793	IDF5_TD_War_Light_Officer_07	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v07	0.0	0.0	0.0	0
+284793	IDF5_TD_War_Light_Officer_07	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855025	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284794	IDF5_TD_War_Light_Officer_08	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v08	0.0	0.0	0.0	0
+284794	IDF5_TD_War_Light_Officer_08	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855036	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284794	IDF5_TD_War_Light_Officer_08	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v08	0.0	0.0	0.0	0
+284794	IDF5_TD_War_Light_Officer_08	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855026	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284795	IDF5_TD_War_Light_Officer_09	on_killed_by_user	KilledByPlayer	0	17	race:KillerRace:ELYOS	0	spawn	855037	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284795	IDF5_TD_War_Light_Officer_09	on_killed_by_user	KilledByPlayer	0	17	race:KillerRace:ELYOS	1	var	2	0	0	v09	0.0	0.0	0.0	0
+284795	IDF5_TD_War_Light_Officer_09	on_killed_by_user	KilledByPlayer	1	16	race:KillerRace:ASMODIANS	0	spawn	855027	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284795	IDF5_TD_War_Light_Officer_09	on_killed_by_user	KilledByPlayer	1	16	race:KillerRace:ASMODIANS	1	var	3	0	0	v09	0.0	0.0	0.0	0
+284796	IDF5_TD_War_Light_Officer_10	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v10	0.0	0.0	0.0	0
+284796	IDF5_TD_War_Light_Officer_10	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	1	spawn	855038	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284796	IDF5_TD_War_Light_Officer_10	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v10	0.0	0.0	0.0	0
+284796	IDF5_TD_War_Light_Officer_10	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	1	spawn	855028	1	0	for_the_fight_self	0.0	0.0	0.0	0
 284808	IDF5_TD_War_Vri_Cannon	on_killed_by_user	KilledByPlayer	0	5	who:KilledByPlayer	0	spawn	284802	1	0	for_the_fight_self	0.0	0.0	0.0	0
 284809	IDF5_TD_War_Vri_DirectGun	on_killed_by_user	KilledByPlayer	0	5	who:KilledByPlayer	0	spawn	284803	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284813	IDF5_TD_War_Vri_Officer_01	on_killed_by_user	KilledByPlayer	0	19	race:KillerRace:ELYOS	0	var	2	0	0	v01	0.0	0.0	0.0	0
+284813	IDF5_TD_War_Vri_Officer_01	on_killed_by_user	KilledByPlayer	1	18	race:KillerRace:ASMODIANS	0	var	3	0	0	v01	0.0	0.0	0.0	0
+284814	IDF5_TD_War_Vri_Officer_02	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v02	0.0	0.0	0.0	0
+284814	IDF5_TD_War_Vri_Officer_02	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v02	0.0	0.0	0.0	0
+284815	IDF5_TD_War_Vri_Officer_03	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v03	0.0	0.0	0.0	0
+284815	IDF5_TD_War_Vri_Officer_03	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v03	0.0	0.0	0.0	0
+284816	IDF5_TD_War_Vri_Officer_04	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v04	0.0	0.0	0.0	0
+284816	IDF5_TD_War_Vri_Officer_04	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v04	0.0	0.0	0.0	0
+284817	IDF5_TD_War_Vri_Officer_05	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v05	0.0	0.0	0.0	0
+284817	IDF5_TD_War_Vri_Officer_05	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v05	0.0	0.0	0.0	0
+284818	IDF5_TD_War_Vri_Officer_06	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v06	0.0	0.0	0.0	0
+284818	IDF5_TD_War_Vri_Officer_06	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v06	0.0	0.0	0.0	0
+284819	IDF5_TD_War_Vri_Officer_07	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v07	0.0	0.0	0.0	0
+284819	IDF5_TD_War_Vri_Officer_07	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v07	0.0	0.0	0.0	0
+284820	IDF5_TD_War_Vri_Officer_08	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v08	0.0	0.0	0.0	0
+284820	IDF5_TD_War_Vri_Officer_08	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v08	0.0	0.0	0.0	0
+284821	IDF5_TD_War_Vri_Officer_09	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v09	0.0	0.0	0.0	0
+284821	IDF5_TD_War_Vri_Officer_09	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v09	0.0	0.0	0.0	0
+284822	IDF5_TD_War_Vri_Officer_10	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v10	0.0	0.0	0.0	0
+284822	IDF5_TD_War_Vri_Officer_10	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v10	0.0	0.0	0.0	0
 284858	BIDF5_U3_Boss	on_killed_by_user	KilledByPlayer	0	52		0	var	10	0	0	BOSS	0.0	0.0	0.0	0
 284858	BIDF5_U3_Boss	on_killed_by_user	KilledByPlayer	0	52		1	broadcast	22542	50	0		0.0	0.0	0.0	0
 284858	BIDF5_U3_Boss	on_killed_by_user	KilledByPlayer	0	52		2	spawn	702659	1	0	for_the_fight_self	0.0	0.0	0.0	0
@@ -2786,6 +3500,12 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 284858	BIDF5_U3_Boss	on_killed_by_user	KilledByPlayer	0	52		5	despawn	3	0	0		0.0	0.0	0.0	0
 284919	ND2_AhC_1	on_die	ANY	0	7		0	say	341531	0	0		0.0	0.0	0.0	0
 284919	ND2_AhC_1	on_die	ANY	0	7		1	spawn	214599	1	0	self	0.0	0.0	0.0	0
+284975	IDLDF4_Re_01_PhyBoss	on_killed_by_npc	KilledByNpc	0	9		0	var	0	1	0	Boss_Die	0.0	0.0	0.0	0
+284975	IDLDF4_Re_01_PhyBoss	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	0	broadcast	1002	50	0		0.0	0.0	0.0	0
+284975	IDLDF4_Re_01_PhyBoss	on_killed_by_npc	KilledByNpc	2	6	race:KillerRace:ASMODIANS	0	broadcast	1002	50	0		0.0	0.0	0.0	0
+284975	IDLDF4_Re_01_PhyBoss	on_killed_by_user	KilledByPlayer	0	9		0	var	0	1	0	Boss_Die	0.0	0.0	0.0	0
+284975	IDLDF4_Re_01_PhyBoss	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	0	broadcast	1002	50	0		0.0	0.0	0.0	0
+284975	IDLDF4_Re_01_PhyBoss	on_killed_by_user	KilledByPlayer	2	6	race:KillerRace:ASMODIANS	0	broadcast	1002	50	0		0.0	0.0	0.0	0
 286787	Bionic_EhA	on_die	ANY	0	21		0	despawn	1	0	0		0.0	0.0	0.0	0
 286787	Bionic_EhA	on_die	ANY	0	21		1	despawn	2	0	0		0.0	0.0	0.0	0
 286787	Bionic_EhA	on_die	ANY	0	21		2	spawn	281230	1	0	for_the_fight_absolute	227.0	420.0	107.0	3
@@ -2926,6 +3646,72 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 297274	BGuard_Teleporter	on_killed_by_npc	KilledByNpc	0	7		0	spawn	296339	1	12	for_the_fight_self	0.0	0.0	0.0	0
 297274	BGuard_Teleporter	on_killed_by_user	KilledByPlayer	0	7		0	spawn	296339	1	12	for_the_fight_self	0.0	0.0	0.0	0
 297503	Gab1_VritraGuard_BossKiller_01	on_killed_by_user	KilledByPlayer	0	10		0	var	-1	0	0	v04ctrl	0.0	0.0	0.0	0
+297519	LDF5_Fortress_VGuardBoss_Fi	on_die	ANY	0	90		0	var	1	0	0	gb01_ctrl	0.0	0.0	0.0	0
+297519	LDF5_Fortress_VGuardBoss_Fi	on_die	ANY	0	90		1	var	-1	0	0	GH_Shield_On01	0.0	0.0	0.0	0
+297519	LDF5_Fortress_VGuardBoss_Fi	on_killed_by_user	KilledByPlayer	0	100	race:KillerRace:ELYOS	0	var	2	0	0	gb01	0.0	0.0	0.0	0
+297519	LDF5_Fortress_VGuardBoss_Fi	on_killed_by_user	KilledByPlayer	0	100	race:KillerRace:ELYOS	1	var	-1	0	0	gb01_2	0.0	0.0	0.0	0
+297519	LDF5_Fortress_VGuardBoss_Fi	on_killed_by_user	KilledByPlayer	1	95	race:KillerRace:ASMODIANS	0	var	3	0	0	gb01	0.0	0.0	0.0	0
+297519	LDF5_Fortress_VGuardBoss_Fi	on_killed_by_user	KilledByPlayer	1	95	race:KillerRace:ASMODIANS	1	var	-1	0	0	gb01_2	0.0	0.0	0.0	0
+297520	LDF5_Fortress_VGuardBoss_Ra	on_die	ANY	0	90		0	var	1	0	0	gb02_ctrl	0.0	0.0	0.0	0
+297520	LDF5_Fortress_VGuardBoss_Ra	on_die	ANY	0	90		1	var	-1	0	0	GH_Shield_On02	0.0	0.0	0.0	0
+297520	LDF5_Fortress_VGuardBoss_Ra	on_killed_by_user	KilledByPlayer	0	100	race:KillerRace:ELYOS	0	var	2	0	0	gb02	0.0	0.0	0.0	0
+297520	LDF5_Fortress_VGuardBoss_Ra	on_killed_by_user	KilledByPlayer	0	100	race:KillerRace:ELYOS	1	var	-1	0	0	gb02_2	0.0	0.0	0.0	0
+297520	LDF5_Fortress_VGuardBoss_Ra	on_killed_by_user	KilledByPlayer	1	95	race:KillerRace:ASMODIANS	0	var	3	0	0	gb02	0.0	0.0	0.0	0
+297520	LDF5_Fortress_VGuardBoss_Ra	on_killed_by_user	KilledByPlayer	1	95	race:KillerRace:ASMODIANS	1	var	-1	0	0	gb02_2	0.0	0.0	0.0	0
+297521	LDF5_Fortress_VGuardBoss_Wi	on_die	ANY	0	90		0	var	1	0	0	gb03_ctrl	0.0	0.0	0.0	0
+297521	LDF5_Fortress_VGuardBoss_Wi	on_die	ANY	0	90		1	var	-1	0	0	GH_Shield_On03	0.0	0.0	0.0	0
+297521	LDF5_Fortress_VGuardBoss_Wi	on_killed_by_user	KilledByPlayer	0	100	race:KillerRace:ELYOS	0	var	2	0	0	gb03	0.0	0.0	0.0	0
+297521	LDF5_Fortress_VGuardBoss_Wi	on_killed_by_user	KilledByPlayer	0	100	race:KillerRace:ELYOS	1	var	-1	0	0	gb03_2	0.0	0.0	0.0	0
+297521	LDF5_Fortress_VGuardBoss_Wi	on_killed_by_user	KilledByPlayer	1	95	race:KillerRace:ASMODIANS	0	var	3	0	0	gb03	0.0	0.0	0.0	0
+297521	LDF5_Fortress_VGuardBoss_Wi	on_killed_by_user	KilledByPlayer	1	95	race:KillerRace:ASMODIANS	1	var	-1	0	0	gb03_2	0.0	0.0	0.0	0
+297522	LDF5_Fortress_LGuardBoss_Fi	on_die	ANY	0	90		0	var	0	-1	0	Li_heal01	0.0	0.0	0.0	0
+297522	LDF5_Fortress_LGuardBoss_Fi	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	0	var	-1	0	0	gb01	0.0	0.0	0.0	0
+297522	LDF5_Fortress_LGuardBoss_Fi	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	1	var	1	0	0	gb01_2	0.0	0.0	0.0	0
+297522	LDF5_Fortress_LGuardBoss_Fi	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	2	var	-1	0	0	gb01_ctrl	0.0	0.0	0.0	0
+297522	LDF5_Fortress_LGuardBoss_Fi	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	3	var	1	0	0	GH_Shield_On01	0.0	0.0	0.0	0
+297522	LDF5_Fortress_LGuardBoss_Fi	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	4	var	0	-1	0	GH_Shield_Off01	0.0	0.0	0.0	0
+297522	LDF5_Fortress_LGuardBoss_Fi	on_killed_by_user	KilledByPlayer	0	95	race:KillerRace:ASMODIANS	0	var	3	0	0	gb01	0.0	0.0	0.0	0
+297522	LDF5_Fortress_LGuardBoss_Fi	on_killed_by_user	KilledByPlayer	0	95	race:KillerRace:ASMODIANS	1	var	0	-1	0	GH_Shield_Off01	0.0	0.0	0.0	0
+297523	LDF5_Fortress_LGuardBoss_Ra	on_die	ANY	0	90		0	var	0	-1	0	Li_heal01	0.0	0.0	0.0	0
+297523	LDF5_Fortress_LGuardBoss_Ra	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	0	var	-1	0	0	gb02	0.0	0.0	0.0	0
+297523	LDF5_Fortress_LGuardBoss_Ra	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	1	var	1	0	0	gb02_2	0.0	0.0	0.0	0
+297523	LDF5_Fortress_LGuardBoss_Ra	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	2	var	-1	0	0	gb02_ctrl	0.0	0.0	0.0	0
+297523	LDF5_Fortress_LGuardBoss_Ra	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	3	var	1	0	0	GH_Shield_On02	0.0	0.0	0.0	0
+297523	LDF5_Fortress_LGuardBoss_Ra	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	4	var	0	-1	0	GH_Shield_Off01	0.0	0.0	0.0	0
+297523	LDF5_Fortress_LGuardBoss_Ra	on_killed_by_user	KilledByPlayer	0	95	race:KillerRace:ASMODIANS	0	var	3	0	0	gb02	0.0	0.0	0.0	0
+297523	LDF5_Fortress_LGuardBoss_Ra	on_killed_by_user	KilledByPlayer	0	95	race:KillerRace:ASMODIANS	1	var	0	-1	0	GH_Shield_Off01	0.0	0.0	0.0	0
+297524	LDF5_Fortress_LGuardBoss_Wi	on_die	ANY	0	90		0	var	0	-1	0	Li_heal01	0.0	0.0	0.0	0
+297524	LDF5_Fortress_LGuardBoss_Wi	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	0	var	-1	0	0	gb03	0.0	0.0	0.0	0
+297524	LDF5_Fortress_LGuardBoss_Wi	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	1	var	1	0	0	gb03_2	0.0	0.0	0.0	0
+297524	LDF5_Fortress_LGuardBoss_Wi	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	2	var	-1	0	0	gb03_ctrl	0.0	0.0	0.0	0
+297524	LDF5_Fortress_LGuardBoss_Wi	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	3	var	1	0	0	GH_Shield_On03	0.0	0.0	0.0	0
+297524	LDF5_Fortress_LGuardBoss_Wi	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	4	var	0	-1	0	GH_Shield_Off01	0.0	0.0	0.0	0
+297524	LDF5_Fortress_LGuardBoss_Wi	on_killed_by_user	KilledByPlayer	0	95	race:KillerRace:ASMODIANS	0	var	3	0	0	gb03	0.0	0.0	0.0	0
+297524	LDF5_Fortress_LGuardBoss_Wi	on_killed_by_user	KilledByPlayer	0	95	race:KillerRace:ASMODIANS	1	var	0	-1	0	GH_Shield_Off01	0.0	0.0	0.0	0
+297525	LDF5_Fortress_DGuardBoss_Fi	on_die	ANY	0	90		0	var	0	-1	0	Da_heal01	0.0	0.0	0.0	0
+297525	LDF5_Fortress_DGuardBoss_Fi	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	0	var	-1	0	0	gb01	0.0	0.0	0.0	0
+297525	LDF5_Fortress_DGuardBoss_Fi	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	1	var	1	0	0	gb01_2	0.0	0.0	0.0	0
+297525	LDF5_Fortress_DGuardBoss_Fi	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	2	var	-1	0	0	gb01_ctrl	0.0	0.0	0.0	0
+297525	LDF5_Fortress_DGuardBoss_Fi	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	3	var	1	0	0	GH_Shield_On01	0.0	0.0	0.0	0
+297525	LDF5_Fortress_DGuardBoss_Fi	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	4	var	0	-1	0	GH_Shield_Off01	0.0	0.0	0.0	0
+297525	LDF5_Fortress_DGuardBoss_Fi	on_killed_by_user	KilledByPlayer	0	95	race:KillerRace:ELYOS	0	var	2	0	0	gb01	0.0	0.0	0.0	0
+297525	LDF5_Fortress_DGuardBoss_Fi	on_killed_by_user	KilledByPlayer	0	95	race:KillerRace:ELYOS	1	var	0	-1	0	GH_Shield_Off01	0.0	0.0	0.0	0
+297526	LDF5_Fortress_DGuardBoss_Ra	on_die	ANY	0	90		0	var	0	-1	0	Da_heal01	0.0	0.0	0.0	0
+297526	LDF5_Fortress_DGuardBoss_Ra	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	0	var	-1	0	0	gb02	0.0	0.0	0.0	0
+297526	LDF5_Fortress_DGuardBoss_Ra	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	1	var	1	0	0	gb02_2	0.0	0.0	0.0	0
+297526	LDF5_Fortress_DGuardBoss_Ra	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	2	var	-1	0	0	gb02_ctrl	0.0	0.0	0.0	0
+297526	LDF5_Fortress_DGuardBoss_Ra	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	3	var	1	0	0	GH_Shield_On02	0.0	0.0	0.0	0
+297526	LDF5_Fortress_DGuardBoss_Ra	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	4	var	0	-1	0	GH_Shield_Off01	0.0	0.0	0.0	0
+297526	LDF5_Fortress_DGuardBoss_Ra	on_killed_by_user	KilledByPlayer	0	95	race:KillerRace:ELYOS	0	var	2	0	0	gb02	0.0	0.0	0.0	0
+297526	LDF5_Fortress_DGuardBoss_Ra	on_killed_by_user	KilledByPlayer	0	95	race:KillerRace:ELYOS	1	var	0	-1	0	GH_Shield_Off01	0.0	0.0	0.0	0
+297527	LDF5_Fortress_DGuardBoss_Wi	on_die	ANY	0	90		0	var	0	-1	0	Da_heal01	0.0	0.0	0.0	0
+297527	LDF5_Fortress_DGuardBoss_Wi	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	0	var	-1	0	0	gb03	0.0	0.0	0.0	0
+297527	LDF5_Fortress_DGuardBoss_Wi	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	1	var	1	0	0	gb03_2	0.0	0.0	0.0	0
+297527	LDF5_Fortress_DGuardBoss_Wi	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	2	var	-1	0	0	gb03_ctrl	0.0	0.0	0.0	0
+297527	LDF5_Fortress_DGuardBoss_Wi	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	3	var	1	0	0	GH_Shield_On03	0.0	0.0	0.0	0
+297527	LDF5_Fortress_DGuardBoss_Wi	on_killed_by_npc	KilledByNpc	0	100	race:KillerRace:DRAKAN	4	var	0	-1	0	GH_Shield_Off01	0.0	0.0	0.0	0
+297527	LDF5_Fortress_DGuardBoss_Wi	on_killed_by_user	KilledByPlayer	0	95	race:KillerRace:ELYOS	0	var	2	0	0	gb03	0.0	0.0	0.0	0
+297527	LDF5_Fortress_DGuardBoss_Wi	on_killed_by_user	KilledByPlayer	0	95	race:KillerRace:ELYOS	1	var	0	-1	0	GH_Shield_Off01	0.0	0.0	0.0	0
 297553	LDF5_Fortress_CGate	on_die	ANY	0	100		0	var	-1	0	0	door01	0.0	0.0	0.0	0
 297557	LDF5_Fortress_Barricade_Ctrl	on_die	ANY	0	100		0	var	-1	0	0	Barricade01	0.0	0.0	0.0	0
 297561	LDF5_Fortress_Barricade_Ctrl	on_die	ANY	0	100		0	var	-1	0	0	Barricade01	0.0	0.0	0.0	0
@@ -2946,14 +3732,62 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 701712	LDF5b_6021_Explosion_Box_04	on_die	ANY	0	7		1	broadcast	31014	50	0		0.0	0.0	0.0	0
 701717	LDF5b_6021_Explosion_Box_09	on_die	ANY	0	7		0	spawn	701778	1	0	for_the_fight_absolute	2601.0	2798.0	255.0	0
 701717	LDF5b_6021_Explosion_Box_09	on_die	ANY	0	7		1	broadcast	31019	50	0		0.0	0.0	0.0	0
+701719	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	0	spawn	701781	1	0	for_the_fight_absolute	2703.0	2652.0	255.0	0
+701719	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	1	broadcast	31021	50	0		0.0	0.0	0.0	0
+701719	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	0	spawn	701775	1	0	for_the_fight_absolute	2703.0	2652.0	255.0	0
+701719	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	1	broadcast	31021	50	0		0.0	0.0	0.0	0
+701719	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	0	spawn	701781	1	0	for_the_fight_absolute	2703.0	2652.0	255.0	0
+701719	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	1	broadcast	31021	50	0		0.0	0.0	0.0	0
+701719	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	0	spawn	701775	1	0	for_the_fight_absolute	2703.0	2652.0	255.0	0
+701719	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	1	broadcast	31021	50	0		0.0	0.0	0.0	0
+701720	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	0	spawn	701782	1	0	for_the_fight_absolute	2613.0	2734.0	255.0	0
+701720	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	1	broadcast	31022	50	0		0.0	0.0	0.0	0
+701720	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	0	spawn	701776	1	0	for_the_fight_absolute	2613.0	2734.0	255.0	0
+701720	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	1	broadcast	31022	50	0		0.0	0.0	0.0	0
+701720	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	0	spawn	701782	1	0	for_the_fight_absolute	2613.0	2734.0	255.0	0
+701720	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	1	broadcast	31022	50	0		0.0	0.0	0.0	0
+701720	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	0	spawn	701776	1	0	for_the_fight_absolute	2613.0	2734.0	255.0	0
+701720	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	1	broadcast	31022	50	0		0.0	0.0	0.0	0
 701787	LDF5b_6021_Explosion_Box_04	on_die	ANY	0	7		0	spawn	701777	1	0	for_the_fight_absolute	2718.0	2588.0	255.0	0
 701787	LDF5b_6021_Explosion_Box_04	on_die	ANY	0	7		1	broadcast	31014	50	0		0.0	0.0	0.0	0
 701788	LDF5b_6021_Explosion_Box_09	on_die	ANY	0	7		0	spawn	701778	1	0	for_the_fight_absolute	2601.0	2798.0	255.0	0
 701788	LDF5b_6021_Explosion_Box_09	on_die	ANY	0	7		1	broadcast	31019	50	0		0.0	0.0	0.0	0
+701789	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	0	spawn	701781	1	0	for_the_fight_absolute	2703.0	2652.0	255.0	0
+701789	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	1	broadcast	31021	50	0		0.0	0.0	0.0	0
+701789	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	0	spawn	701775	1	0	for_the_fight_absolute	2703.0	2652.0	255.0	0
+701789	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	1	broadcast	31021	50	0		0.0	0.0	0.0	0
+701789	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	0	spawn	701781	1	0	for_the_fight_absolute	2703.0	2652.0	255.0	0
+701789	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	1	broadcast	31021	50	0		0.0	0.0	0.0	0
+701789	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	0	spawn	701775	1	0	for_the_fight_absolute	2703.0	2652.0	255.0	0
+701789	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	1	broadcast	31021	50	0		0.0	0.0	0.0	0
+701790	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	0	spawn	701782	1	0	for_the_fight_absolute	2613.0	2734.0	255.0	0
+701790	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	1	broadcast	31022	50	0		0.0	0.0	0.0	0
+701790	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	0	spawn	701776	1	0	for_the_fight_absolute	2613.0	2734.0	255.0	0
+701790	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	1	broadcast	31022	50	0		0.0	0.0	0.0	0
+701790	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	0	spawn	701782	1	0	for_the_fight_absolute	2613.0	2734.0	255.0	0
+701790	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	1	broadcast	31022	50	0		0.0	0.0	0.0	0
+701790	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	0	spawn	701776	1	0	for_the_fight_absolute	2613.0	2734.0	255.0	0
+701790	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	1	broadcast	31022	50	0		0.0	0.0	0.0	0
 701791	LDF5b_6021_Explosion_Box_04	on_die	ANY	0	7		0	spawn	701777	1	0	for_the_fight_absolute	2718.0	2588.0	255.0	0
 701791	LDF5b_6021_Explosion_Box_04	on_die	ANY	0	7		1	broadcast	31014	50	0		0.0	0.0	0.0	0
 701792	LDF5b_6021_Explosion_Box_09	on_die	ANY	0	7		0	spawn	701778	1	0	for_the_fight_absolute	2601.0	2798.0	255.0	0
 701792	LDF5b_6021_Explosion_Box_09	on_die	ANY	0	7		1	broadcast	31019	50	0		0.0	0.0	0.0	0
+701793	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	0	spawn	701781	1	0	for_the_fight_absolute	2703.0	2652.0	255.0	0
+701793	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	1	broadcast	31021	50	0		0.0	0.0	0.0	0
+701793	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	0	spawn	701775	1	0	for_the_fight_absolute	2703.0	2652.0	255.0	0
+701793	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	1	broadcast	31021	50	0		0.0	0.0	0.0	0
+701793	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	0	spawn	701781	1	0	for_the_fight_absolute	2703.0	2652.0	255.0	0
+701793	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	1	broadcast	31021	50	0		0.0	0.0	0.0	0
+701793	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	0	spawn	701775	1	0	for_the_fight_absolute	2703.0	2652.0	255.0	0
+701793	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	1	broadcast	31021	50	0		0.0	0.0	0.0	0
+701794	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	0	spawn	701782	1	0	for_the_fight_absolute	2613.0	2734.0	255.0	0
+701794	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	1	broadcast	31022	50	0		0.0	0.0	0.0	0
+701794	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	0	spawn	701776	1	0	for_the_fight_absolute	2613.0	2734.0	255.0	0
+701794	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	1	broadcast	31022	50	0		0.0	0.0	0.0	0
+701794	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	0	spawn	701782	1	0	for_the_fight_absolute	2613.0	2734.0	255.0	0
+701794	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	1	broadcast	31022	50	0		0.0	0.0	0.0	0
+701794	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	0	spawn	701776	1	0	for_the_fight_absolute	2613.0	2734.0	255.0	0
+701794	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	1	broadcast	31022	50	0		0.0	0.0	0.0	0
 702311	Gab1_TurretSwitch_01	on_killed_by_npc	KilledByNpc	0	7		0	var	23	0	0	Tur13	0.0	0.0	0.0	0
 702311	Gab1_TurretSwitch_01	on_killed_by_user	KilledByPlayer	0	7		0	var	23	0	0	Tur13	0.0	0.0	0.0	0
 702346	Gab1_TurretSwitch_02	on_killed_by_npc	KilledByNpc	0	7		0	var	23	0	0	Tur14	0.0	0.0	0.0	0
@@ -3002,6 +3836,8 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 702367	Gab1_TurretSwitch_23	on_killed_by_user	KilledByPlayer	0	7		0	var	23	0	0	Tur35	0.0	0.0	0.0	0
 702368	Gab1_TurretSwitch_24	on_killed_by_npc	KilledByNpc	0	7		0	var	23	0	0	Tur36	0.0	0.0	0.0	0
 702368	Gab1_TurretSwitch_24	on_killed_by_user	KilledByPlayer	0	7		0	var	23	0	0	Tur36	0.0	0.0	0.0	0
+702656	IDStation_B_ZONE_FOBJ_01	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	702657	1	20	for_the_fight_self	0.0	0.0	0.0	0
+702656	IDStation_B_ZONE_FOBJ_01	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	702657	1	20	for_the_fight_self	0.0	0.0	0.0	0
 730612	IDTiamat_Wave1	on_die	ANY	0	4		0	var	1	0	0	IDTIAMAT_WAVE1	0.0	0.0	0.0	0
 730612	IDTiamat_Wave1	on_die	ANY	0	4		1	broadcast	2000	90	0		0.0	0.0	0.0	0
 799674	IDYun_Merops4	on_die	ANY	0	99		0	say	1500437	0	0		0.0	0.0	0.0	0
@@ -3934,6 +4770,234 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 832728	Gab1_TurretSwitch_23	on_killed_by_user	KilledByPlayer	0	7		0	var	23	0	0	Tur35	0.0	0.0	0.0	0
 832729	Gab1_TurretSwitch_24	on_killed_by_npc	KilledByNpc	0	7		0	var	23	0	0	Tur36	0.0	0.0	0.0	0
 832729	Gab1_TurretSwitch_24	on_killed_by_user	KilledByPlayer	0	7		0	var	23	0	0	Tur36	0.0	0.0	0.0	0
+855077	LDF4_Advance_village_02	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855376	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855077	LDF4_Advance_village_02	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855389	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855077	LDF4_Advance_village_02	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855376	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855077	LDF4_Advance_village_02	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855389	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855078	LDF4_Advance_village_02	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855376	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855078	LDF4_Advance_village_02	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855389	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855078	LDF4_Advance_village_02	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855376	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855078	LDF4_Advance_village_02	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855389	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855079	LDF4_Advance_village_02	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855376	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855079	LDF4_Advance_village_02	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855389	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855079	LDF4_Advance_village_02	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855376	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855079	LDF4_Advance_village_02	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855389	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855080	LDF4_Advance_village_02	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855376	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855080	LDF4_Advance_village_02	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855389	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855080	LDF4_Advance_village_02	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855376	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855080	LDF4_Advance_village_02	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855389	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855271	LDF4_Advance_village_02	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855376	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855271	LDF4_Advance_village_02	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855389	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855271	LDF4_Advance_village_02	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855376	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855271	LDF4_Advance_village_02	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855389	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855272	LDF4_Advance_village_04	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855378	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855272	LDF4_Advance_village_04	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855391	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855272	LDF4_Advance_village_04	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855378	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855272	LDF4_Advance_village_04	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855391	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855273	LDF4_Advance_village_05	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855379	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855273	LDF4_Advance_village_05	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855392	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855273	LDF4_Advance_village_05	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855379	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855273	LDF4_Advance_village_05	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855392	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855274	LDF4_Advance_village_07	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855381	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855274	LDF4_Advance_village_07	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855394	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855274	LDF4_Advance_village_07	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855381	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855274	LDF4_Advance_village_07	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855394	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855275	LDF4_Advance_village_02	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855376	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855275	LDF4_Advance_village_02	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855389	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855275	LDF4_Advance_village_02	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855376	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855275	LDF4_Advance_village_02	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855389	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855276	LDF4_Advance_village_02	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855376	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855276	LDF4_Advance_village_02	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855389	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855276	LDF4_Advance_village_02	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855376	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855276	LDF4_Advance_village_02	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855389	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855277	LDF4_Advance_village_02	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855376	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855277	LDF4_Advance_village_02	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855389	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855277	LDF4_Advance_village_02	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855376	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855277	LDF4_Advance_village_02	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855389	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855278	LDF4_Advance_village_02	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855376	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855278	LDF4_Advance_village_02	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855389	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855278	LDF4_Advance_village_02	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855376	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855278	LDF4_Advance_village_02	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855389	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855279	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855279	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855279	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855279	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855280	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855280	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855280	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855280	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855281	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855281	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855281	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855281	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855282	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855282	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855282	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855282	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855283	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855283	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855283	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855283	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855284	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855284	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855284	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855284	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855285	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855285	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855285	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855285	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855286	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855286	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855286	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855286	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855287	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855287	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855287	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855287	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855288	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855288	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855288	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855288	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855289	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855289	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855289	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855289	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855290	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855290	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855290	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855290	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855291	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855291	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855291	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855291	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855292	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855292	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855292	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855292	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855293	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855293	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855293	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855293	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855294	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855294	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855294	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855294	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855295	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855295	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855295	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855295	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855296	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855296	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855296	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855296	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855297	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855297	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855297	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855297	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855298	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855298	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855298	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855298	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855299	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855299	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855299	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855299	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855300	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855300	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855300	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855300	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855301	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855301	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855301	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855301	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855302	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855302	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855302	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855302	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855303	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855303	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855303	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855303	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855304	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855304	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855304	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855304	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855305	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855305	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855305	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855305	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855306	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855306	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855306	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855306	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855307	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855307	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855307	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855307	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855308	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855308	LDF4_Advance_Killer_Li	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855308	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855308	LDF4_Advance_Killer_Li	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855372	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855309	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855309	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855309	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855309	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855310	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855310	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855310	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855310	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855311	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855311	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855311	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855311	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855312	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855312	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855312	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855312	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855313	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855313	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855313	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855313	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855314	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855314	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855314	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855314	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855315	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855315	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855315	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855315	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855316	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855316	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855316	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855316	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855317	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855317	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855317	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855317	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855318	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855318	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855318	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855318	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855319	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855319	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855319	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855319	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855320	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855320	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855320	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855320	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855321	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855321	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855321	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855321	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855322	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855322	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855322	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855322	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855323	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855323	LDF4_Advance_Killer_Da	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855323	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855323	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
 855473	IDSeal_Wave1_Leader_Lv3	on_killed_by_npc	KilledByNpc	0	98	set_flag_var:5	0	var	0	1	0	WAVE_LEADER	0.0	0.0	0.0	0
 855473	IDSeal_Wave1_Leader_Lv3	on_killed_by_user	KilledByPlayer	0	99	set_flag_var:5	0	var	0	1	0	WAVE_LEADER	0.0	0.0	0.0	0
 855474	IDSeal_Wave2_Leader_Lv3	on_killed_by_npc	KilledByNpc	0	98	set_flag_var:5	0	var	0	1	0	WAVE_LEADER	0.0	0.0	0.0	0
@@ -3995,6 +5059,16 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 855536	IDLDF5_Under_02_Summon03	on_killed_by_user	KilledByPlayer	0	1050		0	spawn	702659	1	0	for_the_fight_self	0.0	0.0	0.0	0
 855537	IDLDF5_Under_02_Summon04	on_die	ANY	0	1000		0	var	3	0	0	cSetPortal	0.0	0.0	0.0	0
 855537	IDLDF5_Under_02_Summon04	on_killed_by_user	KilledByPlayer	0	1050		0	spawn	702659	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855613	Station_Shu_FI_B	on_killed_by_user	KilledByPlayer	0	100	race:KillerRace:ELYOS	0	spawn	702655	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855613	Station_Shu_FI_B	on_killed_by_user	KilledByPlayer	1	99	race:KillerRace:ASMODIANS	0	spawn	702655	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855614	Station_Shu_KN_B	on_killed_by_user	KilledByPlayer	0	100	race:KillerRace:ELYOS	0	spawn	702655	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855614	Station_Shu_KN_B	on_killed_by_user	KilledByPlayer	1	99	race:KillerRace:ASMODIANS	0	spawn	702655	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855615	Station_Shu_RA_B	on_killed_by_user	KilledByPlayer	0	100	race:KillerRace:ELYOS	0	spawn	702655	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855615	Station_Shu_RA_B	on_killed_by_user	KilledByPlayer	1	99	race:KillerRace:ASMODIANS	0	spawn	702655	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855616	Station_Shu_WI_B	on_killed_by_user	KilledByPlayer	0	100	race:KillerRace:ELYOS	0	spawn	702655	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855616	Station_Shu_WI_B	on_killed_by_user	KilledByPlayer	1	99	race:KillerRace:ASMODIANS	0	spawn	702655	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855617	Station_Shu_PR_B	on_killed_by_user	KilledByPlayer	0	100	race:KillerRace:ELYOS	0	spawn	702655	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855617	Station_Shu_PR_B	on_killed_by_user	KilledByPlayer	1	99	race:KillerRace:ASMODIANS	0	spawn	702655	1	0	for_the_fight_self	0.0	0.0	0.0	0
 855853	IDRaksha_Re_Boss_KJS	on_killed_by_npc	KilledByNpc	0	7	set_flag_var:18	0	var	1	0	0	idraksha_clear	0.0	0.0	0.0	0
 855853	IDRaksha_Re_Boss_KJS	on_killed_by_user	KilledByPlayer	0	7	set_flag_var:18	0	var	1	0	0	idraksha_clear	0.0	0.0	0.0	0
 855865	IDForest_Wave_Laphilima_Normal	on_die	ANY	0	2		0	spawn	282250	1	2	for_the_fight_self	0.0	0.0	0.0	1
@@ -4012,6 +5086,10 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 855899	IDYun_Nmd3	on_die	ANY	0	13		2	despawn	1	0	0		0.0	0.0	0.0	0
 855900	IDYun_Nmd3_FallOff	on_die	ANY	0	5		0	var	1	0	0	DISPEL_ARIANA	0.0	0.0	0.0	0
 855900	IDYun_Nmd3_FallOff	on_die	ANY	0	5		1	broadcast	500	100	0		0.0	0.0	0.0	0
+855904	IDYun_TheThingFromAnotherWorld_02	on_killed_by_user	KilledByPlayer	0	5	race:KillerRace:ELYOS	0	spawn	855953	1	30	for_the_fight_self	0.0	0.0	0.0	0
+855904	IDYun_TheThingFromAnotherWorld_02	on_killed_by_user	KilledByPlayer	1	4	race:KillerRace:ASMODIANS	0	spawn	855953	1	30	for_the_fight_self	0.0	0.0	0.0	0
+855970	IDStation_info_06	on_killed_by_user	KilledByPlayer	0	9	race:KillerRace:ELYOS	0	spawn	855618	1	10	for_the_fight_self	0.0	0.0	0.0	0
+855970	IDStation_info_06	on_killed_by_user	KilledByPlayer	1	8	race:KillerRace:ASMODIANS	0	spawn	855618	1	10	for_the_fight_self	0.0	0.0	0.0	0
 855994	BIDF5_U01_Runaway_Wi	on_die	ANY	0	1000		0	broadcast	10900	100	0		0.0	0.0	0.0	0
 855994	BIDF5_U01_Runaway_Wi	on_die	ANY	0	1000		1	var	0	1	0	under_01_out	0.0	0.0	0.0	0
 856002	BIDF5_U01_Runaway_As	on_die	ANY	0	1000		0	var	0	1	0	under_01_out	0.0	0.0	0.0	0
@@ -4023,6 +5101,8 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 856005	BIDF5_U01_Boss_Wi	on_die	ANY	0	1000		1	var	0	1	0	under_01_out	0.0	0.0	0.0	0
 856006	BIDF5_U01_Monster_01	on_die	ANY	0	1000		0	broadcast	10900	100	0		0.0	0.0	0.0	0
 856006	BIDF5_U01_Monster_01	on_die	ANY	0	1000		1	var	0	1	0	under_01_out	0.0	0.0	0.0	0
+856019	IDYun_TheThingFromAnotherWorld_01	on_killed_by_user	KilledByPlayer	0	5	race:KillerRace:ELYOS	0	spawn	855953	1	30	for_the_fight_self	0.0	0.0	0.0	0
+856019	IDYun_TheThingFromAnotherWorld_01	on_killed_by_user	KilledByPlayer	1	4	race:KillerRace:ASMODIANS	0	spawn	855953	1	30	for_the_fight_self	0.0	0.0	0.0	0
 856026	IDTiamat_Hard_Kalrindy	on_die	ANY	0	16		0	spawn	283187	1	10	for_the_fight_absolute	467.8	514.3	418.0	1
 856026	IDTiamat_Hard_Kalrindy	on_die	ANY	0	16		1	var	0	1	0	IDTIAMAT_TELEPORT_T2	0.0	0.0	0.0	0
 856026	IDTiamat_Hard_Kalrindy	on_die	ANY	0	16		2	var	0	1	0	TIAMATSHEILD_SPAWN	0.0	0.0	0.0	0
@@ -4142,3 +5222,21 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 880786	Gab1_Vritra_08	on_killed_by_user	KilledByPlayer	0	10		0	var	-1	0	0	v04ctrl	0.0	0.0	0.0	0
 880790	Gab1_Msg_Noshow_02	on_killed_by_user	KilledByPlayer	0	10		0	var	-1	0	0	v04ctrl	0.0	0.0	0.0	0
 880794	Gab1_Msg_Noshow_06	on_killed_by_user	KilledByPlayer	0	10		0	var	-1	0	0	v04ctrl	0.0	0.0	0.0	0
+882298	LDF5_Fortress_VGuardBoss_Fi	on_die	ANY	0	90		0	var	1	0	0	gb01_ctrl	0.0	0.0	0.0	0
+882298	LDF5_Fortress_VGuardBoss_Fi	on_die	ANY	0	90		1	var	-1	0	0	GH_Shield_On01	0.0	0.0	0.0	0
+882298	LDF5_Fortress_VGuardBoss_Fi	on_killed_by_user	KilledByPlayer	0	100	race:KillerRace:ELYOS	0	var	2	0	0	gb01	0.0	0.0	0.0	0
+882298	LDF5_Fortress_VGuardBoss_Fi	on_killed_by_user	KilledByPlayer	0	100	race:KillerRace:ELYOS	1	var	-1	0	0	gb01_2	0.0	0.0	0.0	0
+882298	LDF5_Fortress_VGuardBoss_Fi	on_killed_by_user	KilledByPlayer	1	95	race:KillerRace:ASMODIANS	0	var	3	0	0	gb01	0.0	0.0	0.0	0
+882298	LDF5_Fortress_VGuardBoss_Fi	on_killed_by_user	KilledByPlayer	1	95	race:KillerRace:ASMODIANS	1	var	-1	0	0	gb01_2	0.0	0.0	0.0	0
+882299	LDF5_Fortress_VGuardBoss_Ra	on_die	ANY	0	90		0	var	1	0	0	gb02_ctrl	0.0	0.0	0.0	0
+882299	LDF5_Fortress_VGuardBoss_Ra	on_die	ANY	0	90		1	var	-1	0	0	GH_Shield_On02	0.0	0.0	0.0	0
+882299	LDF5_Fortress_VGuardBoss_Ra	on_killed_by_user	KilledByPlayer	0	100	race:KillerRace:ELYOS	0	var	2	0	0	gb02	0.0	0.0	0.0	0
+882299	LDF5_Fortress_VGuardBoss_Ra	on_killed_by_user	KilledByPlayer	0	100	race:KillerRace:ELYOS	1	var	-1	0	0	gb02_2	0.0	0.0	0.0	0
+882299	LDF5_Fortress_VGuardBoss_Ra	on_killed_by_user	KilledByPlayer	1	95	race:KillerRace:ASMODIANS	0	var	3	0	0	gb02	0.0	0.0	0.0	0
+882299	LDF5_Fortress_VGuardBoss_Ra	on_killed_by_user	KilledByPlayer	1	95	race:KillerRace:ASMODIANS	1	var	-1	0	0	gb02_2	0.0	0.0	0.0	0
+882300	LDF5_Fortress_VGuardBoss_Wi	on_die	ANY	0	90		0	var	1	0	0	gb03_ctrl	0.0	0.0	0.0	0
+882300	LDF5_Fortress_VGuardBoss_Wi	on_die	ANY	0	90		1	var	-1	0	0	GH_Shield_On03	0.0	0.0	0.0	0
+882300	LDF5_Fortress_VGuardBoss_Wi	on_killed_by_user	KilledByPlayer	0	100	race:KillerRace:ELYOS	0	var	2	0	0	gb03	0.0	0.0	0.0	0
+882300	LDF5_Fortress_VGuardBoss_Wi	on_killed_by_user	KilledByPlayer	0	100	race:KillerRace:ELYOS	1	var	-1	0	0	gb03_2	0.0	0.0	0.0	0
+882300	LDF5_Fortress_VGuardBoss_Wi	on_killed_by_user	KilledByPlayer	1	95	race:KillerRace:ASMODIANS	0	var	3	0	0	gb03	0.0	0.0	0.0	0
+882300	LDF5_Fortress_VGuardBoss_Wi	on_killed_by_user	KilledByPlayer	1	95	race:KillerRace:ASMODIANS	1	var	-1	0	0	gb03_2	0.0	0.0	0.0	0
