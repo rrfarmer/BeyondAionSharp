@@ -38341,3 +38341,63 @@ Unchanged: the eight retail handlers with no engine slot, `control_door`, `enabl
 `change_world_scene_status`, `shout_to_all`, `teleport_target_alias`, `reset_queued_actions`,
 `set_intvar_if_larger_than`, `decrease_intvar`, `GAb1_PvPStatus`, 17 npcs conceded to
 `spawn_helpers.xml`, and retail cast timings.
+
+## The `npc_skills` gap, measured: mostly not a gap
+
+`Retail-AI-Pattern: none — this entry corrects a claim rather than changing behaviour`
+
+Four entries running have called this "the largest known fidelity hole" and the last one called it
+"the most valuable remaining piece of work in this area". **Measured properly, it is neither.** No
+behaviour changes here; what changes is where the next person should spend their time.
+
+### What was actually checked
+
+The claim was that 59,131 of 74,792 cast pairs have no port-side `npc_skills` entry, and that this
+matters because `When.SkillReady` consults that entry for a cooldown. Both halves are true. What was
+never checked is whether the retail dump can supply the missing cooldowns.
+
+It can, in principle: `skill_base.xml` carries `delay_time` in milliseconds, the same unit as this
+port's `cd`, for **5,037 of its 14,457 skills** — a field earlier entries said did not exist, having
+looked only at `npcs.xml`. So the first correction is that the data is not simply absent.
+
+The second correction is that it does not help. Of the **5,636** `SkillReady` pairs with no port-side
+entry, **13** name a skill that has a retail cooldown at all. The rest declare none.
+
+And a skill with no cooldown is not different from a skill with no entry. `HasCooldown()` is
+`cd > (now - lastTimeUsed)`, so `cd = 0` is always false — never on cooldown, always ready — which is
+exactly what the missing-entry fallback already answers. **Porting those 5,623 entries would change
+nothing at all.**
+
+### What the gap really is
+
+Retail's `<skills>` block is primarily the index table `SKILLI_INDEX_N` reads, and `skill_rate` marks
+which of them the NPC also uses on its own. Streaming the whole of `npcs.xml`: **59,058 npcs have a
+skill list, and 24,822 of them have at least one skill with a rate above zero.** A rate of zero means
+the skill exists for the pattern to point at and is never chosen autonomously — so for the majority
+of entries, an empty port-side list and a faithful one behave identically.
+
+The real gap is those 24,822 npcs' autonomous casting, and it is blocked on one unresolved question
+rather than on missing data: **retail's `skill_rate` scale is not known.** This port's `prob` is a
+percentage — `ChanceReady` is `Rnd.Chance() < prob` and `Rnd.Chance()` returns 0–100 — while retail's
+values run 50, 100, 150, 200, 500, 1000, 2000. Per-mille reads cleanly (1000 = certain, 2000 =
+certain twice over) but it is a reading, and getting it wrong by a factor of ten produces npcs that
+either spam their skills or never use them. Neither looks like a bug from a test.
+
+**So this is a decision, not an extraction**, and it is a smaller and more specific decision than
+four entries have implied: pick the scale for `skill_rate`, and the 24,822 npcs can have their retail
+casting. Everything else about the "gap" is noise.
+
+### What is still worth doing, in order
+
+1. **Settle the `skill_rate` scale** — one question, unblocks autonomous casting for 24,822 npcs.
+   Play-testing or a per-mille assumption verified against a few known encounters would both do it.
+2. `random_move` (187 uses) — needs timed wandering, which is real movement work.
+3. `say_to_all_str` (19) — a literal string where this port sends string ids; there is nowhere for an
+   unlocalised string to go, so this needs a decision about whether to add one.
+4. `is_obj_in_abnormal_state` (12), `add_intvar` (9) — unread, small.
+5. 102 `on_arrived_at_waypoint` handlers on `MOVETYPE_RUN` — one route speed.
+6. The eight retail handlers with no engine slot, none of which spawn or cast in any quantity.
+
+Unchanged refusals: `control_door`, `enable_area`, `change_world_scene_status`, `shout_to_all`,
+`teleport_target_alias`, `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`,
+`GAb1_PvPStatus`, 17 npcs conceded to `spawn_helpers.xml`, and retail cast timings.
