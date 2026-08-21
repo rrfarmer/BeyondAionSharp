@@ -39030,3 +39030,71 @@ Patterns 2,852 -> **2,892**; npcs 22,682 -> **22,824**; casts 94,331 -> **95,032
 
 The `npc_skills` work stands: 42,390 npcs with a port-side list, **per-mille reading evidence-backed
 but wanting play-testing**.
+
+## The gated patterns, reviewed in full
+
+`Retail-AI-Pattern: none — review only, no behaviour change`
+
+The previous entry left "~1,600 patterns still gated by a hand-written class" as the top item, each
+needing the same reading. **That list has now been read end to end**, and the answer is that
+`aggressive_no_loot` was the only clean case. This entry records the shape so the item can stop being
+carried as outstanding work.
+
+### What the list is made of
+
+126 distinct classes gate a pattern. Sorted by how many they hold, the distribution is a very short
+head and a very long tail: after the first dozen, **almost every remaining class gates one or two
+patterns and is named after the thing it models** -- `takun_gojira`, `mistressviloa`,
+`captain_lakhara`, `tahabataaltar`, `sematariux_egg`. A class written for one boss is not a candidate
+for a generic table by construction.
+
+The head divides three ways:
+
+* **Already pattern-driven.** `guard_reinforcement` (198), `gate_squad` (61),
+  `panesterra_artifact_protector` (35), `reward_guard_call` (30), `simple_abyssguard` (20) all
+  descend from `PatternAi` and have generated tables of their own. Composing a second would double
+  their mechanics, not add any.
+* **Modelled behaviour.** `useitem` (117), `base_protector` (77), `siege_cannon` (69),
+  `conquest_offering_spot` (48) and the rest of the middle carry real overrides -- damage handling,
+  siege state, item use.
+* **Small enough to look generic, and not.** Four were worth reading closely, and three failed:
+
+| class | patterns | why not |
+|---|---|---|
+| `noaction` | 66 | exists **so that its npcs do not react**; a pattern table is a list of reactions |
+| `onedmg_passive` | 22 | caps damage and modifies stats |
+| `aggressive_stonespear` | 22 | its own `HandleSpawned` and `HandleDied` |
+| `eternal_bastion_aggressive` | 11 | overrides `HandleCreatureAggro` -- deliberate siege targeting |
+| `infiltrator` | 7 | overrides `HandleDied` |
+| `siege_raceprotector` | 7 | `Ask`-only like the one that qualified, but on `SiegeNpcAI`; rebasing to
+  `PatternAi` would drop the siege base |
+
+`eternal_bastion_aggressive` is the closest miss. Rebasing it would preserve aggression and both
+overrides, and 11 patterns is not nothing -- but its instance runs a scripted flow, and a generated
+table that spawns what the instance handler also spawns doubles the encounter. There is no way to
+check that here, and guessing is the thing this project does not do.
+
+### What that means for the item
+
+The 1,708 figure was never 1,708 pieces of work. **109 of them were one class**, now done. The
+remainder is a long tail of encounters somebody has already written by hand, plus a middle of system
+classes where a second table conflicts rather than helps.
+
+**So this item is closed, not deferred.** If it reopens it will be per encounter -- "this hand-written
+class is short an add that its retail pattern places" -- which is a different and much narrower
+question than "which classes could take a table".
+
+### Still missing, in order
+
+1. **170 fully self-contained adds** across ~128 encounters -- ordinary porting, no blocker. Now the
+   largest actionable item in the backlog.
+2. **16 waypoint paths** absent from `retail_pattern_paths.xml` (172 spawn uses, 5 backlog adds).
+3. `control_door` (691) -- one in-game observation away.
+4. `random_move` (187) -- a combat reposition this port has no notion of.
+5. The abnormal-state groups (108) and `CASTER_GROUP` / `MELEE_GROUP` (59) -- no source in the dump.
+6. `switch_target_by_class_indicator` (53); the 8 waypoint-fired adds; 102 `on_arrived_at_waypoint`
+   handlers on `MOVETYPE_RUN`; the eight handlers with no engine slot.
+7. **3,291 patterns whose npcs this port does not have** -- a version boundary, not a backlog.
+
+The `npc_skills` work stands: 42,390 npcs with a port-side list, **per-mille reading evidence-backed
+but wanting play-testing**.
