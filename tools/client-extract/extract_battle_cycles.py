@@ -205,6 +205,21 @@ NPC_ROLES = {
     "OBJI_SEEN": "SeenIsNpc",
 }
 
+#: Retail's `flee_from` subjects, and the action each becomes. `OBJI_SELF` is absent on purpose;
+#: see PatternAi's flee members.
+FLEE_ROLES = {
+    "OBJI_CUR_TARGET": "flee_Flee",
+    "OBJI_SEEN": "flee_FleeFromSeen",
+    "OBJI_MESSAGE_PARAM": "flee_FleeFromMessageParam",
+    "OBJI_ATTACKER": "flee_FleeFromAttacker",
+    "OBJI_FRIENDS_ATTACKER": "flee_FleeFromFriendsAttacker",
+    "OBJI_CASTER": "flee_FleeFromCaster",
+    "OBJI_KILLER": "flee_FleeFromKiller",
+    "OBJI_EVENT_TARGET": "flee_FleeFromEventTarget",
+    "OBJI_MESSAGE_SENDER": "flee_FleeFromMessageSender",
+    "OBJI_TALKER": "flee_FleeFromTalker",
+}
+
 BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 
 #: Every class an npc may already be on and still acquire generated pattern rows.
@@ -365,7 +380,7 @@ def read_guards(block: str) -> list[str]:
 
 
 def read_actions(block: str, dev: dict[str, int], known: set[int],
-                 strings: dict[str, int]) -> list[tuple] | None:
+                 strings: dict[str, int], handler: str = "") -> list[tuple] | None:
     """The branch's actions in retail's order, or None if one cannot be said."""
     out: list[tuple] = []
     for element in re.finditer(r"<(\w+)>(.*?)</\1>", block, re.S):
@@ -493,6 +508,34 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
             # Carried rather than skipped: branch lists are first-match-wins, so a matching do-nothing
             # branch is retail saying "this case, and none of the ones below".
             out.append(("nothing", 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
+        elif kind == "flee_from":
+            # `push_state` is carried by retail on every one of these and is **not modelled**: this
+            # port has a single flee behaviour that runs for the given time and then stops, and there
+            # is no state stack for a TRUE to push onto. 232 uses say TRUE and 121 FALSE, and both are
+            # read the same way here. Recorded rather than silently flattened.
+            who = re.search(r"<from>(\w+)</from>", body)
+            seconds = re.search(r"<seconds>(\d+)</seconds>", body)
+            if not who:
+                raise Unsayable("flee_from with no subject")
+            role = who.group(1)
+            # **The role means different creatures in different handlers.** `OBJI_ATTACKER` on
+            # `on_attacked` is whoever hit *me*; on `on_see_friend_attacked` it is whoever hit my
+            # friend, and this port keeps those in separate fields. Reading the second as the first
+            # would make a rescuer flee its own last attacker -- often nobody, so the mechanic would
+            # simply not happen, which is the quietest kind of wrong.
+            if role == "OBJI_ATTACKER" and handler == "on_see_friend_attacked":
+                role = "OBJI_FRIENDS_ATTACKER"
+            # The same shift for the caster has nowhere to land: this port tracks a friend's attacker
+            # and not a friend's caster, so those 3 uses are refused rather than aimed at the wrong
+            # creature.
+            if role == "OBJI_CASTER" and handler in ("on_friend_spelled", "on_friend_spelling"):
+                raise Unsayable("flee_from the caster who spelled a friend")
+            if role not in FLEE_ROLES:
+                raise Unsayable(f"flee_from {role}")
+            if not seconds or int(seconds.group(1)) <= 0:
+                raise Unsayable("flee_from with no time to run")
+            out.append((FLEE_ROLES[role], int(seconds.group(1)), 0, 0, "",
+                        0.0, 0.0, 0.0, 0))
         elif kind == "goto_next_waypoint":
             # 669 uses, all of them carrying nothing but a move type. A run is refused for the same
             # reason `goto_waypoint` refuses one -- this port's route walking has a single speed --
@@ -555,7 +598,7 @@ def read_handler(body: str, name: str, dev, known, strings):
         actions: list[tuple] = []
         found = re.search(r"<actions>(.*?)</actions>", branch.group(1), re.S)
         if found:
-            actions = read_actions(found.group(1), dev, known, strings)
+            actions = read_actions(found.group(1), dev, known, strings, handler=name)
             if actions is None:
                 return None
         if not actions:

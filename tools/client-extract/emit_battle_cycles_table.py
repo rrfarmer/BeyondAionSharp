@@ -278,6 +278,9 @@ def action_code(row: dict) -> str:
         return f"Do.SetIdleTimer({row['a1']})"
     if kind == "waypoint":
         return f"Do.GotoWaypoint({row['a1']})"
+    if kind.startswith("flee_"):
+        # The parser resolved the role to its action name.
+        return f"Do.{kind[len('flee_'):]}({row['a1']})"
     if kind == "nothing":
         return "Do.Nothing()"
     if kind == "next_waypoint":

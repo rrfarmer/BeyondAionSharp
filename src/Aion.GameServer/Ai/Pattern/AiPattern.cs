@@ -870,6 +870,28 @@ public static class Do
     public static PatternAction FleeFromMessageParam(int seconds)
         => ai => ai.FleeFromMessageParam(seconds);
 
+    /// <summary><c>flee_from from=OBJI_ATTACKER</c>.</summary>
+    public static PatternAction FleeFromAttacker(int seconds) => ai => ai.FleeFromAttacker(seconds);
+
+    /// <summary>The same, on <c>on_see_friend_attacked</c>, where the attacker is the friend's.</summary>
+    public static PatternAction FleeFromFriendsAttacker(int seconds)
+        => ai => ai.FleeFromFriendsAttacker(seconds);
+
+    /// <summary><c>flee_from from=OBJI_CASTER</c>.</summary>
+    public static PatternAction FleeFromCaster(int seconds) => ai => ai.FleeFromCaster(seconds);
+
+    /// <summary><c>flee_from from=OBJI_KILLER</c>.</summary>
+    public static PatternAction FleeFromKiller(int seconds) => ai => ai.FleeFromKiller(seconds);
+
+    /// <summary><c>flee_from from=OBJI_EVENT_TARGET</c>.</summary>
+    public static PatternAction FleeFromEventTarget(int seconds) => ai => ai.FleeFromEventTarget(seconds);
+
+    /// <summary><c>flee_from from=OBJI_MESSAGE_SENDER</c>.</summary>
+    public static PatternAction FleeFromMessageSender(int seconds) => ai => ai.FleeFromMessageSender(seconds);
+
+    /// <summary><c>flee_from from=OBJI_TALKER</c>.</summary>
+    public static PatternAction FleeFromTalker(int seconds) => ai => ai.FleeFromTalker(seconds);
+
     /// <summary><c>despawn</c> of everything spawned under one spawn id.</summary>
     /// <summary><c>goto_waypoint</c> — start down the route this NPC's spawn names.</summary>
     /// <remarks>

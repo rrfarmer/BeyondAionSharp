@@ -324,7 +324,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 78,050 casts across 20,871 npcs, none of them read by a human. The index they came from is only
+	/// 81,589 casts across 21,716 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -343,7 +343,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(78050, casts);
+		Assert.Equal(81589, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -384,7 +384,7 @@ public sealed class BattleCycleAiTests
 				lowest++;
 		}
 
-		Assert.Equal(420, lowest);
+		Assert.Equal(568, lowest);
 	}
 
 	/// <summary><b>A weakest-target cast actually lands on the weakest creature.</b></summary>
@@ -785,7 +785,7 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(1500, spawns);
+		Assert.Equal(1659, spawns);
 	}
 	/// <summary><b>Getting home runs the handler retail hangs there, and starting to go home does not.</b></summary>
 	/// <remarks>
@@ -1071,6 +1071,12 @@ public sealed class BattleCycleAiTests
 				["who:EventTargetIsPlayer"] = 10,
 				["who:TargetIsNpc"] = 4,
 				["who:AttackedByPlayer"] = 1,
+
+				// Arrived when `flee_from` was read: two patterns that had been refused for that
+				// element carry a talker guard as well, so `TalkerIsPlayer` stopped being a mapping
+				// with no data. This is the pin doing its job -- the number moved because the table
+				// grew, and it moved here as a visible edit rather than as silence.
+				["who:TalkerIsPlayer"] = 2,
 			}.OrderBy(e => e.Key),
 			seen.OrderBy(e => e.Key));
 	}
@@ -1119,6 +1125,51 @@ public sealed class BattleCycleAiTests
 		entry.SetLastTimeUsed();
 		Assert.False(When.SkillReady(GuardSkill)(guardAi),
 			"a skill used a moment ago is still counted as ready");
+	}
+
+	/// <summary><b>Fleeing from a role the npc has not met does nothing at all.</b></summary>
+	/// <remarks>
+	/// <c>flee_from</c> is 353 uses across ten subjects, and the three the port had covered 262. The
+	/// rest read roles <see cref="PatternAi"/> already tracks, so they are one line each over the same
+	/// <c>FleeFrom</c> helper.
+	/// <para>
+	/// <b>What has to hold is that an unset role is a no-op rather than a random run.</b> <c>FleeFrom</c>
+	/// has a fallback for the case where the npc and the creature it flees stand on the same spot: it
+	/// picks a direction from the npc's own heading. Reached with a <i>null</i> creature that fallback
+	/// would send the npc running forwards for the full duration, which looks exactly like a working
+	/// skittish mechanic and is not one -- so the null check in front of it is load-bearing, and
+	/// <c>OBJI_SELF</c> is refused by the extractor for the same reason.
+	/// </para>
+	/// <para>
+	/// <b>One role means two creatures depending on the handler.</b> <c>OBJI_ATTACKER</c> on
+	/// <c>on_attacked</c> is whoever hit this npc; on <c>on_see_friend_attacked</c> it is whoever hit
+	/// the friend, and those are separate fields here. Every one of the 34 rows that landed is in the
+	/// second handler, so reading it as the first would have made a rescuer flee its own last attacker
+	/// -- usually nobody, so the mechanic simply would not happen. The same shift for the caster has
+	/// nowhere to land, since this port tracks a friend's attacker and not a friend's caster, and those
+	/// three uses are refused rather than aimed at the wrong creature.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void FleeingFromNobodyLeavesTheNpcWhereItIs()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc worm = harness.Spawn(Worm, 300f, 300f, 200f);
+		PatternAi ai = Assert.IsAssignableFrom<PatternAi>(worm.GetAi());
+		float x = worm.GetX(), y = worm.GetY();
+
+		// Nothing has attacked, cast on, or been seen by it, so every one of these roles is empty.
+		ai.FleeFromAttacker(5);
+		ai.FleeFromFriendsAttacker(5);
+		ai.FleeFromCaster(5);
+		ai.FleeFromEventTarget(5);
+		ai.FleeFromSeen(5);
+		harness.Clock.Advance(TimeSpan.FromSeconds(6));
+
+		Assert.Equal(x, worm.GetX());
+		Assert.Equal(y, worm.GetY());
+		Assert.False(worm.GetAi().IsInState(Aion.GameServer.Ai.AIState.FEAR),
+			"an npc with nothing to flee from went into a flee state anyway");
 	}
 
 }

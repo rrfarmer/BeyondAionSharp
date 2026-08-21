@@ -37856,3 +37856,67 @@ Unchanged: the eight retail handlers with no engine slot (`on_see_user_move` 254
 `change_world_scene_status`, `goto_waypoint` with `MOVETYPE_RUN`, `shout_to_all`,
 `teleport_target_alias`, `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`,
 `GAb1_PvPStatus`, 17 npcs conceded to `spawn_helpers.xml`, and retail cast timings.
+
+## `flee_from`, and one role that means two creatures
+
+`Retail-AI-Pattern: flee_from for every subject that resolves`
+
+353 uses across ten subjects. The port already had three of them — `Flee`, `FleeFromSeen`,
+`FleeFromMessageParam` — covering 262, all sitting behind one `FleeFrom(seconds, creature)` helper,
+and the extractor refused the element outright. That is the fourth entry running where the runtime
+knew more than the parser, so it is now the expectation rather than a surprise.
+
+The remaining subjects read roles `PatternAi` already tracks and are one line each. `OBJI_SELF`
+(3 uses) is refused: fleeing from yourself has no direction, and `FleeFrom` would fall through to its
+same-position fallback and run the NPC forwards on its own heading — a mechanic that looks like it
+works and does not.
+
+Patterns 2,574 -> **2,671**; npcs 20,871 -> **21,716**; 890 flee rows; 808 npcs newly bound.
+**Adds backlog 206 -> 195 across 148 -> 137 encounters.**
+
+`push_state` is carried by retail on every use — 232 TRUE, 121 FALSE — and is **not modelled**. This
+port has one flee behaviour that runs for the given time and stops; there is no state stack for a
+TRUE to push onto. Recorded rather than silently flattened.
+
+### The mutation that found a real bug
+
+`attacker flee reads the caster instead` survived, because the pin had both roles empty and could not
+tell them apart. Chasing that turned up something worse than a weak pin.
+
+**`OBJI_ATTACKER` means a different creature depending on the handler it sits in.** On `on_attacked`
+it is whoever hit this NPC. On `on_see_friend_attacked` it is whoever hit the *friend* — and this
+port keeps those in separate fields, `LastAttacker` and `FriendsAttacker`. Across the dump the split
+is 35 uses in `on_attacked` and 3 in `on_see_friend_attacked`, so a single mapping looks defensible;
+but **every one of the 34 rows that actually landed came from the second handler**, because the
+`on_attacked` patterns are refused for other reasons. A rescuer would have fled its own last
+attacker, which is usually nobody — the mechanic would simply not happen, and nothing would look
+broken.
+
+So `read_actions` now takes the handler and picks the field from it. The same shift for the caster
+has nowhere to land — this port tracks a friend's attacker and not a friend's caster — so those 3
+uses are refused rather than aimed at the wrong creature.
+
+The pin covers the null case for five roles: an NPC that has met nobody must not move, because
+`FleeFrom`'s same-position fallback would otherwise send it running on its heading for the full
+duration. That mutation is caught. The role-to-field wiring itself is not behaviourally pinned —
+these roles are cleared in a `finally` the moment their handler returns, so observing one from
+outside a branch is impossible — and it rests on the handler census above.
+
+### Still missing
+
+`random_move` (187 uses) is refused and stays refused: retail asks for a timed wander, and this
+port's random walking is private to `WalkManager`, gated on the spawn's own `IsRandomWalker` flag,
+with no duration. Giving an arbitrary NPC a timed wander is new movement machinery.
+
+The `npc_skills` data gap from the previous entry is unchanged and remains the largest known hole:
+59,131 of 74,792 cast pairs have no port-side entry.
+
+Next refused: `spawn_on_multi_target` (33), `is_distance_longer_than` (32),
+`use_skill_by_attacker_indicator` restricted to a range (28), `reset_hatepoints` (25). 102
+`on_see_friend_attacked` handlers drop on `is_hp_lower_than` about somebody other than self.
+
+Unchanged: the eight retail handlers with no engine slot, `control_door`, `enable_area`,
+`change_world_scene_status`, `goto_waypoint`/`goto_next_waypoint` with `MOVETYPE_RUN`,
+`shout_to_all`, `teleport_target_alias`, `reset_queued_actions`, `set_intvar_if_larger_than`,
+`decrease_intvar`, `GAb1_PvPStatus`, 17 npcs conceded to `spawn_helpers.xml`, and retail cast
+timings.

@@ -1590,6 +1590,38 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// </remarks>
     public void FleeFromMessageParam(int seconds) => FleeFrom(seconds, MessageParam as Creature);
 
+    /// <summary>The remaining <c>flee_from</c> subjects, all reading a role this class already tracks.</summary>
+    /// <remarks>
+    /// <c>flee_from</c> is 353 uses. The three above covered 262 of them and the rest named the
+    /// attacker, the caster, the killer, the event target, the message sender or the talker — every one
+    /// a creature <see cref="PatternAi"/> already holds, so these are one line apiece over the same
+    /// <c>FleeFrom</c> helper.
+    /// <para>
+    /// <c>OBJI_SELF</c> (3 uses) is refused by the extractor: fleeing from yourself has no direction,
+    /// and <c>FleeFrom</c> would fall through to its heading fallback and run the NPC forwards, which
+    /// looks like a working mechanic and is not one.
+    /// </para>
+    /// </remarks>
+    public void FleeFromAttacker(int seconds) => FleeFrom(seconds, LastAttacker);
+
+    /// <summary><c>flee_from from=OBJI_ATTACKER</c> read on <c>on_see_friend_attacked</c>.</summary>
+    /// <remarks>
+    /// Retail reuses one role name for two creatures. On <c>on_attacked</c> the attacker is whoever hit
+    /// this NPC; on <c>on_see_friend_attacked</c> it is whoever hit the friend, and those are separate
+    /// fields here. The extractor picks between them by handler.
+    /// </remarks>
+    public void FleeFromFriendsAttacker(int seconds) => FleeFrom(seconds, FriendsAttacker);
+
+    public void FleeFromCaster(int seconds) => FleeFrom(seconds, LastCaster);
+
+    public void FleeFromKiller(int seconds) => FleeFrom(seconds, Killer);
+
+    public void FleeFromEventTarget(int seconds) => FleeFrom(seconds, EventTarget);
+
+    public void FleeFromMessageSender(int seconds) => FleeFrom(seconds, MessageSender);
+
+    public void FleeFromTalker(int seconds) => FleeFrom(seconds, Talker);
+
     private void FleeFrom(int seconds, Creature? fleeFrom)
     {
         if (seconds <= 0 || IsDead() || fleeFrom is not Creature from)
