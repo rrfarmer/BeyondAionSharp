@@ -39961,3 +39961,72 @@ census above.
 6. `random_move` (187); abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
    `switch_target_by_class_indicator` (53).
 7. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** — boundaries, not backlog.
+
+## The runners that never left the line
+
+Last entry booked a debt: 105 npcs gained `on_see_user_move` rungs that nobody had read. Reading them
+starts with the largest — `BIDF5_R2_Runner`, nine npcs, **36 of the 208 new rungs** — and it turns out
+not to be about the new handler at all.
+
+### What the runner is
+
+| handler | what it does |
+|---|---|
+| `on_wake_up` | **nothing** |
+| `on_see_user` / `on_see_user_move` | display `STR_MSG_IDF5_R2_RUNNER_START`, shout 22131, `goto_next_waypoint` |
+| `on_arrived_at_waypoint` + `is_last_waypoint` | display a message, `despawn_self` |
+
+A player walks up, a message announces the start, and the runner sets off down its route and vanishes
+at the end. **The whole race is that one `goto_next_waypoint`.**
+
+### Which this port implemented as doing nothing
+
+`Do.ContinueRoute()` was `static ai => { }`, and the remark explaining why is careful and correct:
+
+> **Deliberately does nothing, and the nothing is the point.** This port already advances the route by
+> itself … a rung that advanced the route itself would advance it a second time and the patrol would
+> visit every other point.
+
+That is true of an npc **already walking**, which is what all 45 single-action branches are. It says
+nothing about an npc **standing still**, where `goto_next_waypoint` is not a description of what is
+already happening but an instruction to start. Against a no-op the runner stood on the line, the
+message never showed, and nothing read as broken.
+
+`ContinueRoute` now starts the route when the npc is a path walker and is not in `WALKING`. **The
+guard is what preserves the old reasoning** — an npc mid-patrol still falls through to nothing, so no
+patrol skips a point. `WalkManager.StartRouteWalking` became `internal` to be reachable: going through
+`StartWalking` tries random walking first, and an npc may carry both a walker id and a random-walk
+range, so a route npc could have been set wandering instead.
+
+### What cannot be claimed
+
+**The nine runners are not spawned in this port.** They exist in `npc_templates.xml` and nowhere else —
+no spawn rows, no walker routes — so the encounter that motivated this cannot be driven here and is
+**not** verified. Of the 158 npcs carrying a `goto_next_waypoint` rung, **five** are placed with a
+route, and the most interesting is 216433 in Gelkmaros, whose rung sits on `on_stop_to_flee`: an npc
+that fled and, when the flight ends, resumes its patrol. Against a no-op it stood where it stopped
+fleeing for good.
+
+So the mechanism is pinned on a real routed npc rather than through the encounter: a stopped path
+walker is sent back down its route, and an npc with no route is left where it is. Mutating the call
+back to the no-op reddens the first alone.
+
+**Verification.** Full suite **2,927 passing**, 1 skipped — and this one mattered more than the count
+suggests, because the change turns 187 branches from doing nothing into moving npcs, in every
+encounter that carries the element.
+
+### Still missing, in order
+
+1. **The runner encounter is unverifiable until it is spawned.** Nine npcs, no spawn rows, no routes.
+   If Kamar's race is ever wanted, that data has to come from somewhere before any of this is real.
+2. **The other 67 move-rung patterns.** `IDLDF4_Re_01_check` (12 rungs), `IDHouse_Butler_RollingGolem`
+   (8), `Elim_EventC`/`D` (spawns on movement) are the next largest. Same debt, now one entry smaller.
+3. **Kaidan's low-health rung** — indices for thirteen shamans first.
+4. **The 18 `--implemented` candidates**, plus the fifth copy of the skill-index claim in
+   `SealWaveLeaderAI`.
+5. **The guards' two broadcasts** (22696 waking, 22658 second clock) — no listener found in our tree.
+6. `control_door` (691) — one in-game observation; `enable_area` (575); `change_world_scene_status`
+   (101) — no runtime packet in either tree.
+7. `random_move` (187); abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
+   `switch_target_by_class_indicator` (53).
+8. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** — boundaries, not backlog.

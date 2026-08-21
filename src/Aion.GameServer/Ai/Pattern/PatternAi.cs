@@ -1693,6 +1693,37 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     }
 
     /// <summary>
+    /// <c>goto_next_waypoint</c> for an npc that is <b>not walking</b> — the case where the element is
+    /// an instruction rather than a description.
+    /// </summary>
+    /// <remarks>
+    /// <b>This action was a deliberate no-op, and the reasoning behind that was right about the case it
+    /// considered and silent about this one.</b> For an npc already on its route, arriving advances the
+    /// route by itself, so a rung that advanced it again would make the patrol visit every other point;
+    /// that argument still holds, and the <c>WALKING</c> test below is what keeps it holding.
+    /// <para>
+    /// But <c>BIDF5_R2_Runner</c> — nine npcs — stands still. Its <c>on_wake_up</c> is empty, its
+    /// <c>on_see_user</c> and <c>on_see_user_move</c> rungs display <c>STR_MSG_IDF5_R2_RUNNER_START</c>
+    /// and call <c>goto_next_waypoint</c>, and its <c>on_arrived_at_waypoint</c> despawns it at the last
+    /// point. <b>The whole race is that call.</b> Against a no-op the runner never left the line, the
+    /// message never showed, and nothing about it read as broken — it simply stood there.
+    /// </para>
+    /// <para>
+    /// The route is started rather than <see cref="StartWalking"/> called, because that tries random
+    /// walking first and an npc may carry both a walker id and a random-walk range.
+    /// </para>
+    /// </remarks>
+    public void ContinueRoute()
+    {
+        if (IsDead() || IsInState(AIState.WALKING) || !GetOwner().IsPathWalker())
+        {
+            return;
+        }
+
+        WalkManager.StartRouteWalking(this);
+    }
+
+    /// <summary>
     /// Retail's <c>attack_most_hating</c> with <c>SKILLI_NONE</c>: stop whatever you are doing and fight
     /// the top of your hate list.
     /// </summary>

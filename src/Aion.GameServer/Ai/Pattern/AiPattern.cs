@@ -1219,12 +1219,16 @@ public static class Do
 
     /// <summary><c>goto_next_waypoint</c> — carry on to the next point of the route.</summary>
     /// <remarks>
-    /// <b>Deliberately does nothing, and the nothing is the point.</b> This port already advances the
-    /// route by itself: arriving fires <c>MoveEventHandler.OnMoveArrived</c> ->
+    /// <b>Does nothing for an npc already walking, and that nothing is still the point.</b> This port
+    /// advances the route by itself: arriving fires <c>MoveEventHandler.OnMoveArrived</c> ->
     /// <c>TargetEventHandler.OnTargetReached</c> -> <c>WalkManager.TargetReached</c> ->
     /// <c>ChooseNextRouteStep</c>, all of it ported from the Java. <see cref="PatternAi"/> evaluates
     /// <c>OnArrivedAtWaypoint</c> <i>before</i> the base handler, so a rung that advanced the route
     /// itself would advance it a second time and the patrol would visit every other point.
+    /// <para>
+    /// <b>For an npc standing still it is an instruction, and this used to ignore that.</b> See
+    /// <see cref="PatternAi.ContinueRoute"/>: nine runners whose entire race is this element never left
+    /// the start line.
     /// <para>
     /// <b>Which leaves the question of why read it at all, and the first answer was wrong.</b> The
     /// obvious argument is the <c>do_nothing</c> one — branch lists are first-match-wins, so a
@@ -1240,7 +1244,7 @@ public static class Do
     /// so the table still records which retail element was there.
     /// </para>
     /// </remarks>
-    public static PatternAction ContinueRoute() => static ai => { };
+    public static PatternAction ContinueRoute() => static ai => ai.ContinueRoute();
 
     public static PatternAction StartWalking() => ai => ai.StartWalking();
 

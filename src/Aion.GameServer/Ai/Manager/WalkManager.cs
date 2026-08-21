@@ -76,7 +76,13 @@ public class WalkManager
         return true;
     }
 
-    private static bool StartRouteWalking(NpcAI npcAI)
+    /// <summary>Starts the npc down its own route from wherever the walker template says it is.</summary>
+    /// <remarks>
+    /// <c>internal</c> rather than <c>private</c> so <c>PatternAi.ContinueRoute</c> can ask for the
+    /// route specifically. <see cref="StartWalking"/> tries random walking first, and an npc may carry
+    /// both a walker id and a random-walk range, so going through it could set a route npc wandering.
+    /// </remarks>
+    internal static bool StartRouteWalking(NpcAI npcAI)
     {
         Npc owner = npcAI.GetOwner();
         if (!owner.IsPathWalker())
