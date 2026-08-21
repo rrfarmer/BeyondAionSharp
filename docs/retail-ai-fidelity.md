@@ -38852,3 +38852,63 @@ for the entry that revisits the audit rather than patched in passing.
 
 The `npc_skills` work stands: 42,390 npcs with a port-side list, **per-mille reading evidence-backed
 but wanting play-testing**.
+
+## The backlog was not blocked; the audit was out of date
+
+`Retail-AI-Pattern: none — the audit now reads the walker data the extractor already reads`
+
+The previous entry fixed the extractor and left `audit_missing_adds.py` reporting the old story,
+saying the note "now understates what is available rather than overstating it, so it is left for the
+entry that revisits the audit". This is that entry, and leaving it was the wrong call: the audit is
+how this work is *prioritised*, so a stale flag there does not just misreport, it misdirects.
+
+Two flags carried the same dead assumption:
+
+* **`BLOCKED: waypoint-placed`** -- an add at a named designer path was counted unplaceable.
+* **`walks a server-side path`** -- any add whose spawn named *any* path was counted as walking a
+  route we could not give it.
+
+Both predate `npc_walker/retail_pattern_paths.xml`, which carries 344 routes and covers 225 of the
+241 paths these spawns name. Both now consult it.
+
+### What the backlog actually looks like
+
+| | before | after |
+|---|---|---|
+| fully self-contained | 135 | **170** |
+| positionable, walks a path we lack | 40 | **5** |
+| positionable, only a waypoint arrival fires it | 10 | 10 |
+| blocked on server-side waypoint paths | **35** | **0** |
+
+Same 185 adds across 130 encounters. **Nothing in the backlog is blocked on data we do not have.**
+Fifteen entries have described a third of it as blocked on missing server-side paths, and it has not
+been true since the routes were extracted.
+
+That changes what the list is for. It is not "35 impossible, 150 hard"; it is 170 pieces of ordinary
+porting work, 5 that want a route, and 10 that want a boss to walk before its adds can appear.
+
+### The tool for this exists and did not cover the tool
+
+`audit_stale_claims.py` was written for precisely this failure -- "a stale claim reads as a decision
+somebody already made" -- and its decidable checks are clean: no AI class claiming to lack a route
+runs a pattern naming one this repo has. **It only scans the AI classes.** Both stale claims found in
+the last two entries were in an extractor comment and in this document, which it does not read.
+
+Recorded rather than fixed in passing, because widening it means deciding what an absence claim looks
+like in a Python comment, and that is its own piece of work.
+
+### Still missing, in order
+
+1. **170 fully self-contained adds across ~130 encounters** -- ordinary porting, no blocker. This is
+   now the largest actionable item in the whole backlog, and it was hidden behind the stale flags.
+2. **16 waypoint paths** absent from the walker file, costing 172 spawn uses and 5 backlog adds.
+   `NPCPathIDSweep_1` to `_4` are 32 uses each.
+3. `control_door` (691) -- one in-game observation away.
+4. `random_move` (187) -- a combat reposition this port has no notion of.
+5. The abnormal-state groups (108) and `CASTER_GROUP` / `MELEE_GROUP` (59) -- no source in the dump.
+6. `switch_target_by_class_indicator` (53); the ten waypoint-fired adds, which need their boss to
+   walk; 102 `on_arrived_at_waypoint` handlers on `MOVETYPE_RUN`; the eight handlers with no engine
+   slot.
+
+The `npc_skills` work stands: 42,390 npcs with a port-side list, **per-mille reading evidence-backed
+but wanting play-testing**.

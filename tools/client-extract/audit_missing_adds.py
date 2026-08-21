@@ -582,11 +582,29 @@ def spawned_via_constants(text: str) -> set[str]:
 LOCATION_RE = re.compile(r"<spawn_location_type>([^<]*)</spawn_location_type>")
 PATHNAME_RE = re.compile(r"<pathname>([^<]*)</pathname>")
 
-# Adds placed at a named designer waypoint path cannot be positioned: those paths were
-# server-side data and appear in neither the client's level files nor our repos. Every other
-# placement is self-contained -- at the spawner, at a target, or at coordinates the pattern
-# itself carries.
+# Adds placed at a named designer waypoint path are positioned by that path's first step.
+#
+# **This note used to say those paths "appear in neither the client's level files nor our repos", and
+# that had been false for a long time.** `npc_walker/retail_pattern_paths.xml` holds 344 routes and
+# covers 225 of the 241 paths these spawns name. The claim was true when written, later
+# route-extraction work made it false, and nothing re-checked it -- so the audit went on reporting
+# placeable adds as blocked, and the extractor went on emitting them at (0, 0, 0). See the doc entry
+# and `audit_stale_claims.py`, which exists for exactly this failure and does not cover this file.
+#
+# A spawn is unpositionable only when it names a path that file does not carry.
 BLOCKED_LOCATION = "SPAWN_LOCATION_WAY_POINT_START"
+
+#: Filled in by `main` from the walker file. Empty means "this repo carries no routes", which is the
+#: state the old note assumed permanently.
+KNOWN_PATHS: set[str] = set()
+
+
+def waypoint_starts(repo: pathlib.Path) -> set[str]:
+    """Every route id this repo can place an add at."""
+    paths = repo / "game-server/data/static_data/npc_walker/retail_pattern_paths.xml"
+    if not paths.exists():
+        return set()
+    return set(re.findall(r'<walker_template route_id="([^"]+)"', read_text(paths)))
 
 
 # Which event handler a spawn sits under. `on_arrived_at_waypoint` only ever fires for an NPC that
@@ -615,7 +633,10 @@ def pattern_spawn_targets(patterns_dir: pathlib.Path) -> dict[str, dict[str, tup
             spans = [(h.group(1), h.start(2), h.end(2)) for h in HANDLER_RE.finditer(body)]
             for action in SPAWN_RE.finditer(body):
                 loc = LOCATION_RE.search(action.group(2))
-                positionable = not (loc and loc.group(1).strip() == BLOCKED_LOCATION)
+                at_path = PATHNAME_RE.search(action.group(2))
+                named = at_path.group(1).strip() if at_path else ""
+                positionable = (not (loc and loc.group(1).strip() == BLOCKED_LOCATION)
+                                or named in KNOWN_PATHS)
                 event = next((name for name, lo, hi in spans if lo <= action.start() < hi), "")
                 for dev in NAMEID_RE.findall(action.group(2)):
                     dev = dev.strip()
@@ -624,9 +645,12 @@ def pattern_spawn_targets(patterns_dir: pathlib.Path) -> dict[str, dict[str, tup
                     # If any spawn of this add is positionable, the add is implementable -- and if any
                     # one of them hangs off something other than a waypoint arrival, it is reachable.
                     was, walked, waypoint_only = out[m.group(1)].get(dev, (False, False, True))
-                    pn = PATHNAME_RE.search(action.group(2))
+                    # "Walks a server-side path" means a path *this repo does not carry*. It used to
+                    # mean any named path at all, which was the same stale assumption as the blocked
+                    # flag above: 225 of the 241 named paths are in the walker file, so an add on one
+                    # of those walks a route we can give it.
                     out[m.group(1)][dev] = (was or positionable,
-                                            walked or bool(pn and pn.group(1).strip()),
+                                            walked or bool(named and named not in KNOWN_PATHS),
                                             waypoint_only and event == WAYPOINT_EVENT)
     return out
 
@@ -667,6 +691,8 @@ def main() -> None:
     args = ap.parse_args()
 
     repo = pathlib.Path(args.repo)
+    global KNOWN_PATHS
+    KNOWN_PATHS = waypoint_starts(repo)
     by_pattern = load_binding(pathlib.Path(args.binding_tsv))
     pattern_of = {npc: pat for pat, npcs in by_pattern.items() for npc in npcs}
     dev2id = client_devname_to_id(pathlib.Path(args.client_root))
