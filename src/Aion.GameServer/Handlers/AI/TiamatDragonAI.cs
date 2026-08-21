@@ -37,16 +37,17 @@ public class TiamatDragonAI : AggressiveNpcAI
     /// route's first step and start an npc down it walking or running
     /// (<see cref="AiPattern"/>'s <c>Do.GotoWaypoint</c> and <c>Do.GotoWaypointRunning</c>).
     /// <para>
-    /// What retail's branch actually sends: four <c>NobleDrakanFi</c>, four <c>SardhaDrakanFi</c>,
-    /// three <c>NobleDrakanSc</c>, three <c>NobleDrakanWi</c>, two <c>NobleDrakanCl</c> and one each
-    /// of the three remaining Sardha classes — eighteen drakan spread over the twelve routes, two to
-    /// a route on seven of them.
+    /// What retail's branch sends: four <c>NobleDrakanFi</c>, four <c>SardhaDrakanFi</c>, three
+    /// <c>NobleDrakanSc</c>, three <c>NobleDrakanWi</c>, two <c>NobleDrakanCl</c> and one each of the
+    /// three remaining Sardha classes — <b>nineteen</b> drakan spread over the twelve routes, two to
+    /// a route on seven of them. That is <see cref="RushWave"/>, and it is checked against retail's
+    /// own itemised branch: same nineteen (npc, route) pairs, in retail's order.
     /// </para>
     /// <para>
-    /// It stays unbuilt because npc 219361 is bound to this class, so the generated tables do not
-    /// speak for it; porting the wave means writing those rungs here. That is per-encounter work, not
-    /// a missing capability. Found by <c>audit_stale_claims.py</c> once it was widened past the AI
-    /// classes — the claim had outlived its reason by several months.
+    /// <b>The paragraph that stood here said the wave was unbuilt, and it was wrong when written.</b>
+    /// The stale-claim audit flagged the *waypoint-support* sentence above, which really had outlived
+    /// its reason; rewriting it without reading as far as <see cref="SpawnRushWave"/> turned one
+    /// dead claim into a fresher one. Both halves — the routes and the rungs — are present.
     /// </para>
     /// </remarks>
     private static readonly (int NpcId, float X, float Y, float Z, byte Heading)[] Mages =

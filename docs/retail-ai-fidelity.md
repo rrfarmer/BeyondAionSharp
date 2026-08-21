@@ -39551,18 +39551,33 @@ Both halves are now false. All **twelve** `path_tiamatdrakan_*` routes are in
 an npc down it at either pace. The note had outlived its reason by months and would have stopped
 anyone who read it.
 
-The wave is still unbuilt, so the comment now says the true thing instead: what retail actually sends
--- four `NobleDrakanFi`, four `SardhaDrakanFi`, three `NobleDrakanSc`, three `NobleDrakanWi`, two
-`NobleDrakanCl`, one each of three Sardha classes, **eighteen drakan across the twelve routes** -- and
-why it is still missing, which is that npc 219361 is bound to a hand-written class so the generated
-tables do not speak for it. **Per-encounter work, not a missing capability.**
+So the comment was rewritten to say what retail sends -- four `NobleDrakanFi`, four
+`SardhaDrakanFi`, three `NobleDrakanSc`, three `NobleDrakanWi`, two `NobleDrakanCl`, one each of
+three Sardha classes -- and that the wave was still missing.
+
+**Both of those were wrong, and this entry is the correction.**
+
+The count is **nineteen**, not eighteen: the itemisation immediately above it sums to nineteen, and
+retail's branch contains nineteen `<spawn>` elements. And the wave is **not missing** -- it is forty
+lines further down the same file, a nineteen-entry `RushWave` table and a `SpawnRushWave` that spawns
+each drakan and starts it walking its route. An earlier pass built it, and documented it correctly in
+*Dragon Lord's Refuge: nineteen drakan that never charged* in this same log.
+
+Checked properly this time, against retail's own branch rather than against a comment: the built
+table and retail's nineteen `(npc, pathname)` pairs are identical, in the same order.
+
+**The failure worth recording is the shape of it.** The stale-claim audit flagged a sentence that had
+genuinely outlived its reason -- the waypoint-support half was dead. Rewriting the paragraph around it
+without reading as far as the method that already did the work replaced one dead claim with a fresher
+one, and a fresher claim is worse: it carries a recent date and reads as though somebody just checked.
+**An audit that finds a stale claim has established that one sentence is false, not that the
+surrounding paragraph is true.** The rest of the file is evidence and has to be read as evidence.
 
 ### Still missing, in order
 
 1. **304 absence claims** now visible, of which the audit can decide only the route-shaped ones
-   (clean). The rest need reading, and the four found by accident suggest the hit rate is not low.
-2. **Tiamat's rush wave** -- eighteen drakan, all routes present, needs the rungs written into
-   `TiamatDragonAI`.
+   (clean). The rest need reading -- **and reading the code, not just the claim**, which is what the
+   Tiamat correction above cost. The four found by accident suggest the hit rate is not low.
 3. `control_door` (691 uses + 10 lost adds + 38 wake patterns) -- one in-game observation.
 4. `enable_area` (575) -- needs runtime zone toggling; `change_world_scene_status` (101) -- checked,
    no runtime packet in either tree.
