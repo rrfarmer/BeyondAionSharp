@@ -135,7 +135,7 @@ EMITTERS = [
      lambda out: [str(HERE / "out" / "death_spawns.tsv"), out]),
     ("emit_wake_variables_table.py", GEN / "WakeVariables.cs",
      lambda out: [str(HERE / "out" / "wake_variables.tsv"), out]),
-    ("emit_wake_idle_patterns_table.py", GEN / "WakeIdlePatterns.g.cs",
+    ("emit_wake_idle_patterns_table.py", STATIC / "pattern_tables" / "wake_idle_patterns.xml",
      lambda out: [str(HERE / "out" / "wake_idle_patterns.tsv"), out]),
     ("emit_fortress_killers_table.py", GEN / "FortressKillers.cs",
      lambda out: [str(HERE / "out" / "fortress_killers.tsv"), out]),

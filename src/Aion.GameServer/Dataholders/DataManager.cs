@@ -67,6 +67,9 @@ public sealed class DataManager
 
 	/// <summary>What a retail npc leaves behind when it dies. See PatternTableData.</summary>
 	public static PatternTableData DEATH_SPAWN_TABLE => SD.DeathSpawnTableDh;
+
+	/// <summary>What a retail npc does on appearing and on its idle timer.</summary>
+	public static PatternTableData WAKE_IDLE_TABLE => SD.WakeIdleTableDh;
 	public static CosmeticItemsData COSMETIC_ITEMS_DATA => SD.CosmeticItemsDataDh;
 	public static ChallengeData CHALLENGE_DATA => SD.ChallengeDataDh;
 	public static WindstreamData WINDSTREAM_DATA => SD.WindstreamDataDh;

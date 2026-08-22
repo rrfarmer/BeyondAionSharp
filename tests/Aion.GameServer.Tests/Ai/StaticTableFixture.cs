@@ -40,6 +40,8 @@ internal static class StaticTableFixture
                 Load<GuardAnswerData>("guard_answers", "guard_answers.xml"));
             Set(staticData, nameof(StaticData.DeathSpawnTableDh),
                 Load<PatternTableData>("pattern_tables", "death_spawns.xml"));
+            Set(staticData, nameof(StaticData.WakeIdleTableDh),
+                Load<PatternTableData>("pattern_tables", "wake_idle_patterns.xml"));
 
             ConstructorInfo constructor = typeof(DataManager).GetConstructor(
                 BindingFlags.Instance | BindingFlags.NonPublic, binder: null,

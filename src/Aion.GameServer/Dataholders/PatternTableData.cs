@@ -40,6 +40,24 @@ public class PatternTableData
             ? branches
             : [];
 
+    /// <summary>Every npc this table drives, across every handler.</summary>
+    public IEnumerable<int> AllNpcs
+    {
+        get
+        {
+            HashSet<int> seen = new();
+            foreach (Dictionary<int, PatternBranch[]> table in byHandler.Values)
+            {
+                foreach (int npc in table.Keys)
+                {
+                    seen.Add(npc);
+                }
+            }
+
+            return seen;
+        }
+    }
+
     /// <summary>Every npc this table drives, for one handler.</summary>
     public IEnumerable<int> Npcs(string handler = "")
         => byHandler.TryGetValue(handler, out Dictionary<int, PatternBranch[]>? table)
