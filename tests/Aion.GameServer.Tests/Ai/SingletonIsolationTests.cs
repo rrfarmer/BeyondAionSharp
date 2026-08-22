@@ -56,9 +56,13 @@ public sealed class SingletonIsolationTests
 
 		foreach (string path in Directory.EnumerateFiles(TestSourceRoot(), "*.cs", SearchOption.AllDirectories))
 		{
-			// The collection definition and the harness are the machinery, not users of it.
+			// The collection definition, the harness and the static-table fixture are the machinery,
+			// not users of it. The fixture registers a DataManager for tests that read a table without
+			// building a world; every class that calls it is itself in the collection, which is the
+			// property this test is really about.
 			string name = Path.GetFileName(path);
-			if (name is "GoldenDataManagerCollection.cs" or "BossAiHarness.cs" or "SingletonIsolationTests.cs")
+			if (name is "GoldenDataManagerCollection.cs" or "BossAiHarness.cs"
+				or "SingletonIsolationTests.cs" or "StaticTableFixture.cs")
 				continue;
 
 			string text = File.ReadAllText(path);

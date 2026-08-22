@@ -232,6 +232,8 @@ public sealed partial class StaticData
 	public AIData AiDataDh { get; private set; } = new();
 
 	public GuardAnswerData GuardAnswerDataDh { get; private set; } = new();
+
+	public PatternTableData DeathSpawnTableDh { get; private set; } = new();
 	public ChestData ChestDataDh { get; private set; } = new();
 	public BindPointData BindPointDataDh { get; private set; } = new();
 	public ItemData ItemDataDh { get; private set; } = new();
@@ -364,6 +366,10 @@ public sealed partial class StaticData
 		// expects every file under it to be an <ai_templates> root -- dropping a different root in
 		// there fails the merge and takes the whole DataManager down with it.
 		GuardAnswerDataDh = TryLoadHolder(GuardAnswerDataDh, Path.Combine(staticDataDirectory, "guard_answers", "guard_answers.xml"), logger);
+		// <pattern_table> roots (one file per table): retail's pattern branches, which used to be
+		// generated C#. Feeds DataManager.DEATH_SPAWN_TABLE. PatternTableLoader turns each stored token
+		// back into a guard or an action and throws on one it cannot translate.
+		DeathSpawnTableDh = TryLoadHolder(DeathSpawnTableDh, Path.Combine(staticDataDirectory, "pattern_tables", "death_spawns.xml"), logger);
 		// Standalone <quests> root (~82k lines, self-contained, no imports / no IDREF resolution): the faithful
 		// QuestsData holder feeds DataManager.QUEST_DATA (the 1025 ported quest handlers).
 		Quests = TryLoadHolder(Quests, Path.Combine(staticDataDirectory, "quest_data", "quest_data.xml"), logger);

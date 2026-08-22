@@ -1,4 +1,6 @@
 using System.IO;
+using System.Text.RegularExpressions;
+using System.Collections.Generic;
 using System;
 using System.Linq;
 using Aion.GameServer.Handlers.AI;
@@ -25,6 +27,8 @@ namespace Aion.GameServer.Tests.Ai;
 [Collection("GoldenDataManager")]
 public sealed class DeathSpawnTableTests
 {
+	static DeathSpawnTableTests() => StaticTableFixture.EnsureLoaded();
+
 	private const int AnyMap = 300520000;
 
 	/// <summary><c>LF2A_TBox</c>: leaves something only when a <i>player</i> kills it.</summary>
@@ -152,17 +156,26 @@ public sealed class DeathSpawnTableTests
 	{
 		string path = Path.Combine(BossAiHarness.RepoRoot(),
 			"game-server", "data", "static_data", "npcs", "npc_templates.xml");
-		string templates = File.ReadAllText(path);
+
+		// One pass, not one per npc. This used to scan a 36MB string twice for each of the 1,927 npcs
+		// in the table -- about 140GB of searching, and most of this suite's running time.
+		Dictionary<int, string> elements = new();
+		foreach (Match element in Regex.Matches(File.ReadAllText(path), "<npc_template [^>]*>"))
+		{
+			Match id = Regex.Match(element.Value, "npc_id=\"([0-9]+)\"");
+			if (id.Success)
+			{
+				elements[int.Parse(id.Groups[1].Value)] = element.Value;
+			}
+		}
 
 		foreach (int npc in DeathSpawns.Npcs)
 		{
-			Assert.Contains($"npc_id=\"{npc}\"", templates);
-			int at = templates.IndexOf($"npc_id=\"{npc}\"", StringComparison.Ordinal);
-			int end = templates.IndexOf('>', at);
-			string element = templates[at..end];
+			Assert.True(elements.TryGetValue(npc, out string? element),
+				$"npc {npc} has death rungs but no npc_template");
 			// Any class that composes GeneratedPattern runs these rungs now, not death_spawn alone.
 			Assert.True(
-				Composing.Any(name => element.Contains($"ai=\"{name}\"")),
+				Composing.Any(name => element!.Contains($"ai=\"{name}\"")),
 				$"npc {npc} has death rungs but is not bound to a class that runs them: {element}");
 		}
 	}

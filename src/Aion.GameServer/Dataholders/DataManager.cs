@@ -64,6 +64,9 @@ public sealed class DataManager
 
 	/// <summary>Retail's guard call/answer table. See GuardAnswerData.</summary>
 	public static GuardAnswerData GUARD_ANSWER_DATA => SD.GuardAnswerDataDh;
+
+	/// <summary>What a retail npc leaves behind when it dies. See PatternTableData.</summary>
+	public static PatternTableData DEATH_SPAWN_TABLE => SD.DeathSpawnTableDh;
 	public static CosmeticItemsData COSMETIC_ITEMS_DATA => SD.CosmeticItemsDataDh;
 	public static ChallengeData CHALLENGE_DATA => SD.ChallengeDataDh;
 	public static WindstreamData WINDSTREAM_DATA => SD.WindstreamDataDh;

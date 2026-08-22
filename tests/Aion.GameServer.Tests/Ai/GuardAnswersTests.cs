@@ -35,25 +35,7 @@ public sealed class GuardAnswersTests
 	/// holder. A harness-built <c>DataManager</c> already carries them; this fills in for the tests
 	/// that assert on the table without building a world.
 	/// </remarks>
-	static GuardAnswersTests()
-	{
-		if (DataManager.GetRegisteredInstance() is not null)
-		{
-			return;
-		}
-
-		string path = Path.Combine(BossAiHarness.RepoRoot(), "game-server", "data", "static_data",
-			"guard_answers", "guard_answers.xml");
-		using FileStream stream = File.OpenRead(path);
-		GuardAnswerData holder = (GuardAnswerData)new XmlSerializer(typeof(GuardAnswerData)).Deserialize(stream)!;
-		holder.AfterUnmarshal(null!);
-
-		StaticData staticData = (StaticData)RuntimeHelpers.GetUninitializedObject(typeof(StaticData));
-		typeof(StaticData).GetProperty(nameof(StaticData.GuardAnswerDataDh))!.SetValue(staticData, holder);
-		ConstructorInfo constructor = typeof(DataManager).GetConstructor(
-			BindingFlags.Instance | BindingFlags.NonPublic, binder: null, [typeof(StaticData)], modifiers: null)!;
-		DataManager.RegisterInstance((DataManager)constructor.Invoke([staticData]));
-	}
+	static GuardAnswersTests() => StaticTableFixture.EnsureLoaded();
 
 	private const int Reshanta = 400010000;
 
