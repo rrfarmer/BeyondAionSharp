@@ -1,6 +1,11 @@
+using System.IO;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Xml.Serialization;
 using System.Text.RegularExpressions;
 using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Pattern;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
@@ -20,6 +25,36 @@ namespace Aion.GameServer.Tests.Ai;
 [Collection("GoldenDataManager")]
 public sealed class GuardAnswersTests
 {
+	/// <summary>
+	/// The table is data now, so a test that reads it has to have the data loaded.
+	/// </summary>
+	/// <remarks>
+	/// <b>This is the cost of the move out of C#, and it is worth stating.</b> The rows used to be a
+	/// compiled dictionary, so any test could read them with no setup at all. They live in
+	/// <c>ai/guard_answers.xml</c> now and reach the port through <c>DataManager</c> like every other
+	/// holder. A harness-built <c>DataManager</c> already carries them; this fills in for the tests
+	/// that assert on the table without building a world.
+	/// </remarks>
+	static GuardAnswersTests()
+	{
+		if (DataManager.GetRegisteredInstance() is not null)
+		{
+			return;
+		}
+
+		string path = Path.Combine(BossAiHarness.RepoRoot(), "game-server", "data", "static_data",
+			"guard_answers", "guard_answers.xml");
+		using FileStream stream = File.OpenRead(path);
+		GuardAnswerData holder = (GuardAnswerData)new XmlSerializer(typeof(GuardAnswerData)).Deserialize(stream)!;
+		holder.AfterUnmarshal(null!);
+
+		StaticData staticData = (StaticData)RuntimeHelpers.GetUninitializedObject(typeof(StaticData));
+		typeof(StaticData).GetProperty(nameof(StaticData.GuardAnswerDataDh))!.SetValue(staticData, holder);
+		ConstructorInfo constructor = typeof(DataManager).GetConstructor(
+			BindingFlags.Instance | BindingFlags.NonPublic, binder: null, [typeof(StaticData)], modifiers: null)!;
+		DataManager.RegisterInstance((DataManager)constructor.Invoke([staticData]));
+	}
+
 	private const int Reshanta = 400010000;
 
 	/// <summary>A dread remnant lieutenant: an artifact protector that answers 23100.</summary>
@@ -85,9 +120,9 @@ public sealed class GuardAnswersTests
 	{
 		int silent = 0;
 		int heavy = 0;
-		foreach ((int _, GuardAnswers.Answer[] answers) in GuardAnswers.ByNpc)
+		foreach ((int _, GuardAnswerRow[] answers) in GuardAnswers.ByNpc)
 		{
-			foreach (GuardAnswers.Answer answer in answers)
+			foreach (GuardAnswerRow answer in answers)
 			{
 				// The npc-versus-npc half is a different mechanic -- a different target, a millionfold
 				// hate value, and in 30003's case no hate at all -- and has its own pins.
@@ -115,7 +150,7 @@ public sealed class GuardAnswersTests
 	public void ADoNothingAnswerEmitsNoRung()
 	{
 		int quiet = 0;
-		foreach ((int npcId, GuardAnswers.Answer[] answers) in GuardAnswers.ByNpc)
+		foreach ((int npcId, GuardAnswerRow[] answers) in GuardAnswers.ByNpc)
 		{
 			if (answers.Length != 1 || answers[0].Call >= 30000)
 				continue;
@@ -155,7 +190,7 @@ public sealed class GuardAnswersTests
 		Assert.False(GuardAnswers.Answers(235543, FortressKillerAI.ProtectorDown));
 
 		// The despawn order is membership only: no hate, and no rung.
-		GuardAnswers.Answer down = Assert.Single(
+		GuardAnswerRow down = Assert.Single(
 			GuardAnswers.ByNpc[251160], a => a.Call == FortressKillerAI.ProtectorDown);
 		Assert.Equal(-1, down.Idle);
 		Assert.Equal(-1, down.Busy);
@@ -274,9 +309,9 @@ public sealed class GuardAnswersTests
 	[Fact]
 	public void AnOutlierKeepsItsOwnNumbers()
 	{
-		GuardAnswers.Answer[] answers = GuardAnswers.ByNpc[Outlier];
+		GuardAnswerRow[] answers = GuardAnswers.ByNpc[Outlier];
 
-		GuardAnswers.Answer only = Assert.Single(answers);
+		GuardAnswerRow only = Assert.Single(answers);
 		Assert.Equal(23100, only.Call);
 		Assert.Equal(1000, only.Idle);
 		Assert.Equal(-1, only.Busy);

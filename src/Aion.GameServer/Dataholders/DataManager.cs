@@ -61,6 +61,9 @@ public sealed class DataManager
 	public static PortalLocData PORTAL_LOC_DATA => SD.PortalLocDataDh;
 	public static PetFeedData PET_FEED_DATA => SD.PetFeedDataDh;
 	public static NpcSkillData NPC_SKILL_DATA => SD.NpcSkillDataDh;
+
+	/// <summary>Retail's guard call/answer table. See GuardAnswerData.</summary>
+	public static GuardAnswerData GUARD_ANSWER_DATA => SD.GuardAnswerDataDh;
 	public static CosmeticItemsData COSMETIC_ITEMS_DATA => SD.CosmeticItemsDataDh;
 	public static ChallengeData CHALLENGE_DATA => SD.ChallengeDataDh;
 	public static WindstreamData WINDSTREAM_DATA => SD.WindstreamDataDh;

@@ -230,6 +230,8 @@ public sealed partial class StaticData
 	public TitleData TitleDataDh { get; private set; } = new();
 	public NpcData NpcDataDh { get; private set; } = new();
 	public AIData AiDataDh { get; private set; } = new();
+
+	public GuardAnswerData GuardAnswerDataDh { get; private set; } = new();
 	public ChestData ChestDataDh { get; private set; } = new();
 	public BindPointData BindPointDataDh { get; private set; } = new();
 	public ItemData ItemDataDh { get; private set; } = new();
@@ -356,6 +358,12 @@ public sealed partial class StaticData
 		// graph merges every <ai_templates> source into one holder; here we deserialize each ai/*.xml raw, merge
 		// their pending <ai> rows, then run AfterUnmarshal once (fires SummonGroup min/maxCount validation).
 		AiDataDh = TryLoadAiData(AiDataDh, Path.Combine(staticDataDirectory, "ai"), logger);
+		// <guard_answers> root (single file): retail's guard call/answer table, extracted from the 5.8
+		// pattern dump. No Java counterpart. Feeds DataManager.GUARD_ANSWER_DATA.
+		// **Its own folder, deliberately.** The ai/ directory is merged wholesale into AIData, which
+		// expects every file under it to be an <ai_templates> root -- dropping a different root in
+		// there fails the merge and takes the whole DataManager down with it.
+		GuardAnswerDataDh = TryLoadHolder(GuardAnswerDataDh, Path.Combine(staticDataDirectory, "guard_answers", "guard_answers.xml"), logger);
 		// Standalone <quests> root (~82k lines, self-contained, no imports / no IDREF resolution): the faithful
 		// QuestsData holder feeds DataManager.QUEST_DATA (the 1025 ported quest handlers).
 		Quests = TryLoadHolder(Quests, Path.Combine(staticDataDirectory, "quest_data", "quest_data.xml"), logger);

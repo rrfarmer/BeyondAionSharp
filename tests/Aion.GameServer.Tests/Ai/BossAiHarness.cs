@@ -1010,6 +1010,8 @@ public sealed class BossAiHarness : IDisposable
 			// claims like "casts Shockwave at the level its npc_skills entry defines" are genuinely checked,
 			// and a wrong npc id or a broken ai_name binding fails the test instead of passing silently.
 			SetHolder(staticData, nameof(StaticData.NpcDataDh), RealNpcs.Value);
+			// Retail's guard call/answer table, data since it left GuardAnswers for ai/guard_answers.xml.
+			SetHolder(staticData, nameof(StaticData.GuardAnswerDataDh), RealGuardAnswers.Value);
 			SetHolder(staticData, nameof(StaticData.NpcSkillDataDh), RealNpcSkills.Value);
 			// NpcSkillList silently drops any npc_skill with no skill_templates entry, so this one is load-bearing.
 			SetHolder(staticData, nameof(StaticData.SkillDataDh), RealSkills.Value);
@@ -1083,6 +1085,9 @@ public sealed class BossAiHarness : IDisposable
 		// skill table). These are read-only from the harness's point of view.
 		private static readonly Lazy<NpcData> RealNpcs = new(() =>
 			LoadStaticDataFile<NpcData>("npcs", "npc_templates.xml"));
+
+		private static readonly Lazy<GuardAnswerData> RealGuardAnswers = new(() =>
+			LoadStaticDataFile<GuardAnswerData>("guard_answers", "guard_answers.xml"));
 
 		/// <summary>
 		/// Every npc skill file, merged the way <c>StaticData</c> merges them.

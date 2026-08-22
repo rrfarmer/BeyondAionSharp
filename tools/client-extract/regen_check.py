@@ -103,6 +103,8 @@ GAME_DATA_EXTRACTORS = [("extract_gated_spawns.py",
 # (emitter, committed .cs, argv builder). The tiamat emitter takes the output path FIRST and its tables
 # as repeated --table switches, so it cannot share the others' shape.
 GEN = pathlib.Path("src/Aion.GameServer/Handlers/AI")
+#: Tables that are data rather than code and live with the rest of the static data.
+STATIC = pathlib.Path("game-server/data/static_data")
 EMITTERS = [
     # Writes game data rather than C#, but it is an emitter in every other respect and drifts the
     # same way, so it is checked here rather than trusted.
@@ -119,7 +121,7 @@ EMITTERS = [
      lambda out: [str(HERE / "out" / "guard_calls.tsv"), out]),
     ("emit_pull_calls_table.py", GEN / "PullCalls.cs",
      lambda out: [str(HERE / "out" / "pull_calls.tsv"), out]),
-    ("emit_guard_answers_table.py", GEN / "GuardAnswers.g.cs",
+    ("emit_guard_answers_table.py", STATIC / "guard_answers" / "guard_answers.xml",
      lambda out: [str(HERE / "out" / "guard_answers.tsv"), out]),
     ("emit_tiamat_beacons_table.py", GEN / "TiamatBeacons.cs",
      lambda out: [str(HERE / "out" / "tiamat_beacons.tsv"), out]),
