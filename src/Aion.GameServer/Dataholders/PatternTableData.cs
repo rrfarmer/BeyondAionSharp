@@ -28,6 +28,19 @@ public class PatternTableData
 {
     [XmlElement("npc")] public List<PatternTableNpc>? npcs;
 
+    /// <summary>
+    /// Branch lists shared by many npcs, for the tables where that redundancy is worth removing.
+    /// </summary>
+    /// <remarks>
+    /// The battle table is 6.7x redundant: retail keys a pattern by name and many npcs run the same
+    /// one. Written per npc it would repeat the same branches 30,166 times. The extractor dedupes on
+    /// the emitted text of the branch list, so two npcs share a variant only when their branches are
+    /// byte-identical -- which cannot lose a difference nobody thought to look for.
+    /// </remarks>
+    [XmlElement("variant")] public List<PatternTableVariant>? variants;
+
+    [XmlElement("owner")] public List<PatternTableOwner>? owners;
+
     [XmlIgnore] private readonly Dictionary<string, Dictionary<int, PatternBranch[]>> byHandler = new();
 
     /// <summary>How many npcs this table speaks for, across every handler.</summary>
@@ -68,13 +81,7 @@ public class PatternTableData
     {
         byHandler.Clear();
         HashSet<int> distinct = new();
-        if (npcs == null)
-        {
-            Size = 0;
-            return;
-        }
-
-        foreach (PatternTableNpc npc in npcs)
+        foreach (PatternTableNpc npc in npcs ?? [])
         {
             if (npc.branches == null || npc.branches.Count == 0)
             {
@@ -84,7 +91,7 @@ public class PatternTableData
             PatternBranch[] built = new PatternBranch[npc.branches.Count];
             for (int i = 0; i < npc.branches.Count; i++)
             {
-                built[i] = Build(npc, npc.branches[i]);
+                built[i] = Build(npc.branches[i]);
             }
 
             if (!byHandler.TryGetValue(npc.handler ?? string.Empty,
@@ -98,11 +105,52 @@ public class PatternTableData
             distinct.Add(npc.npcId);
         }
 
+        // The variant form: build each shared list once, then point its owners at it.
+        Dictionary<(string Handler, int Id), PatternBranch[]> shared = new();
+        if (variants != null)
+        {
+            foreach (PatternTableVariant variant in variants)
+            {
+                PatternBranch[] built = new PatternBranch[variant.branches?.Count ?? 0];
+                for (int i = 0; i < built.Length; i++)
+                {
+                    built[i] = Build(variant.branches![i]);
+                }
+
+                shared[(variant.handler ?? string.Empty, variant.id)] = built;
+            }
+        }
+
+        if (owners != null)
+        {
+            foreach (PatternTableOwner owner in owners)
+            {
+                string handler = owner.handler ?? string.Empty;
+                if (!shared.TryGetValue((handler, owner.variant), out PatternBranch[]? built))
+                {
+                    throw new PatternTableFormatException(
+                        $"npc {owner.npcId} points at variant {owner.variant} of '{handler}', "
+                        + "which this table does not define");
+                }
+
+                if (!byHandler.TryGetValue(handler, out Dictionary<int, PatternBranch[]>? table))
+                {
+                    table = new Dictionary<int, PatternBranch[]>();
+                    byHandler[handler] = table;
+                }
+
+                table[owner.npcId] = built;
+                distinct.Add(owner.npcId);
+            }
+        }
+
         Size = distinct.Count;
         npcs = null;
+        variants = null;
+        owners = null;
     }
 
-    private static PatternBranch Build(PatternTableNpc npc, PatternTableBranch branch)
+    private static PatternBranch Build(PatternTableBranch branch)
     {
         // No guards means the branch always matches: Evaluate fails a branch only when a condition
         // says no, so an empty list is retail's unguarded rung.
@@ -125,6 +173,26 @@ public class PatternTableData
 
         return AiPattern.Branch(branch.priority, branch.comment ?? string.Empty, guards, actions);
     }
+}
+
+/// <summary>A branch list shared by many npcs.</summary>
+public class PatternTableVariant
+{
+    [XmlAttribute("id")] public int id;
+
+    [XmlAttribute("handler")] public string? handler;
+
+    [XmlElement("branch")] public List<PatternTableBranch>? branches;
+}
+
+/// <summary>Which variant one npc runs for one handler.</summary>
+public class PatternTableOwner
+{
+    [XmlAttribute("npc")] public int npcId;
+
+    [XmlAttribute("handler")] public string? handler;
+
+    [XmlAttribute("variant")] public int variant;
 }
 
 /// <summary>One npc's branches for one handler.</summary>

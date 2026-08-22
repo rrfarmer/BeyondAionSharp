@@ -129,7 +129,7 @@ EMITTERS = [
      lambda out: [str(HERE / "out" / "idle_spawns.tsv"), out]),
     ("emit_idle_cycles_table.py", GEN / "IdleCycles.cs",
      lambda out: [str(HERE / "out" / "idle_cycles.tsv"), out]),
-    ("emit_battle_cycles_table.py", GEN / "BattleCycles.g.cs",
+    ("emit_battle_cycles_table.py", STATIC / "pattern_tables" / "battle_cycles.xml",
      lambda out: [str(HERE / "out" / "battle_cycles.tsv"), out]),
     ("emit_death_spawns_table.py", STATIC / "pattern_tables" / "death_spawns.xml",
      lambda out: [str(HERE / "out" / "death_spawns.tsv"), out]),

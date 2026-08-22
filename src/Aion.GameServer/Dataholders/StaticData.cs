@@ -236,6 +236,8 @@ public sealed partial class StaticData
 	public PatternTableData DeathSpawnTableDh { get; private set; } = new();
 
 	public PatternTableData WakeIdleTableDh { get; private set; } = new();
+
+	public PatternTableData BattleCycleTableDh { get; private set; } = new();
 	public ChestData ChestDataDh { get; private set; } = new();
 	public BindPointData BindPointDataDh { get; private set; } = new();
 	public ItemData ItemDataDh { get; private set; } = new();
@@ -373,6 +375,7 @@ public sealed partial class StaticData
 		// back into a guard or an action and throws on one it cannot translate.
 		DeathSpawnTableDh = TryLoadHolder(DeathSpawnTableDh, Path.Combine(staticDataDirectory, "pattern_tables", "death_spawns.xml"), logger);
 		WakeIdleTableDh = TryLoadHolder(WakeIdleTableDh, Path.Combine(staticDataDirectory, "pattern_tables", "wake_idle_patterns.xml"), logger);
+		BattleCycleTableDh = TryLoadHolder(BattleCycleTableDh, Path.Combine(staticDataDirectory, "pattern_tables", "battle_cycles.xml"), logger);
 		// Standalone <quests> root (~82k lines, self-contained, no imports / no IDREF resolution): the faithful
 		// QuestsData holder feeds DataManager.QUEST_DATA (the 1025 ported quest handlers).
 		Quests = TryLoadHolder(Quests, Path.Combine(staticDataDirectory, "quest_data", "quest_data.xml"), logger);

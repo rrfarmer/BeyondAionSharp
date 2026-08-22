@@ -70,6 +70,9 @@ public sealed class DataManager
 
 	/// <summary>What a retail npc does on appearing and on its idle timer.</summary>
 	public static PatternTableData WAKE_IDLE_TABLE => SD.WakeIdleTableDh;
+
+	/// <summary>Retail's battle rotations and the handlers that arm them.</summary>
+	public static PatternTableData BATTLE_CYCLE_TABLE => SD.BattleCycleTableDh;
 	public static CosmeticItemsData COSMETIC_ITEMS_DATA => SD.CosmeticItemsDataDh;
 	public static ChallengeData CHALLENGE_DATA => SD.ChallengeDataDh;
 	public static WindstreamData WINDSTREAM_DATA => SD.WindstreamDataDh;

@@ -39,7 +39,8 @@ public sealed class HarnessHolderInventoryTests
 	/// <summary>Holders the fixture sets, and which every AI test therefore depends on.</summary>
 	private static readonly string[] Provided =
 	[
-		"AbsoluteStatsDataDh", "AiDataDh", "CustomNpcDropDh", "DeathSpawnTableDh", "WakeIdleTableDh",
+		"AbsoluteStatsDataDh", "AiDataDh", "BattleCycleTableDh", "CustomNpcDropDh",
+		"DeathSpawnTableDh", "WakeIdleTableDh",
 		"GuardAnswerDataDh", "Materials",
 		"NpcDataDh", "NpcSkillDataDh",
 		"PlayerExperienceTable", "SkillDataDh", "TribeRelations", "WalkerDataDh", "WorldMaps2", "ZoneInfo",

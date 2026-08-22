@@ -1014,6 +1014,7 @@ public sealed class BossAiHarness : IDisposable
 			SetHolder(staticData, nameof(StaticData.GuardAnswerDataDh), RealGuardAnswers.Value);
 			SetHolder(staticData, nameof(StaticData.DeathSpawnTableDh), RealDeathSpawns.Value);
 			SetHolder(staticData, nameof(StaticData.WakeIdleTableDh), RealWakeIdle.Value);
+			SetHolder(staticData, nameof(StaticData.BattleCycleTableDh), RealBattleCycles.Value);
 			SetHolder(staticData, nameof(StaticData.NpcSkillDataDh), RealNpcSkills.Value);
 			// NpcSkillList silently drops any npc_skill with no skill_templates entry, so this one is load-bearing.
 			SetHolder(staticData, nameof(StaticData.SkillDataDh), RealSkills.Value);
@@ -1096,6 +1097,9 @@ public sealed class BossAiHarness : IDisposable
 
 		private static readonly Lazy<PatternTableData> RealWakeIdle = new(() =>
 			LoadStaticDataFile<PatternTableData>("pattern_tables", "wake_idle_patterns.xml"));
+
+		private static readonly Lazy<PatternTableData> RealBattleCycles = new(() =>
+			LoadStaticDataFile<PatternTableData>("pattern_tables", "battle_cycles.xml"));
 
 		/// <summary>
 		/// Every npc skill file, merged the way <c>StaticData</c> merges them.

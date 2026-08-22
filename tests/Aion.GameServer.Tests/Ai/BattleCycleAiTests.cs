@@ -32,6 +32,8 @@ namespace Aion.GameServer.Tests.Ai;
 [Collection("GoldenDataManager")]
 public sealed class BattleCycleAiTests
 {
+	static BattleCycleAiTests() => StaticTableFixture.EnsureLoaded();
+
 	private const int AnyMap = 300520000;
 
 	/// <summary>An Abyssal core worm: arms at 10s, spawns three adds, re-arms at 15s.</summary>
@@ -858,10 +860,12 @@ public sealed class BattleCycleAiTests
 
 		Assert.NotEmpty(wanted);
 
+		// The table is data now, so this reads the stored guard token rather than the C# it used to
+		// be pasted into. `waypoint:N` is what becomes When.AtWaypoint(N).
 		string generated = File.ReadAllText(Path.Combine(BossAiHarness.RepoRoot(),
-			"src", "Aion.GameServer", "Handlers", "AI", "BattleCycles.g.cs"));
+			"game-server", "data", "static_data", "pattern_tables", "battle_cycles.xml"));
 		HashSet<int> emitted = new HashSet<int>();
-		foreach (Match call in Regex.Matches(generated, @"When\.AtWaypoint\((\d+)\)"))
+		foreach (Match call in Regex.Matches(generated, @"token=""waypoint:(\d+)"""))
 		{
 			emitted.Add(int.Parse(call.Groups[1].Value));
 		}
@@ -873,7 +877,7 @@ public sealed class BattleCycleAiTests
 		// route" into "despawn at the first point", and every assertion above still passed.
 		bool anyLast = lines.Skip(1).Any(line => line.Split('	')[guardsAt].Contains("last_waypoint:"));
 		Assert.True(anyLast, "the table no longer carries is_last_waypoint, so this pin proves nothing");
-		Assert.Contains("When.AtLastWaypoint", generated);
+		Assert.Contains("token=\"last_waypoint", generated);
 	}
 
 	/// <summary><b>A "keep going" rung is carried, and it blocks the branches below it.</b></summary>
@@ -934,10 +938,10 @@ public sealed class BattleCycleAiTests
 			$"only {alongsideRealWork} branches pair keep-going with a real action, so reading the "
 			+ "element is no longer rescuing the mechanics that justified it");
 
-		// And it reaches the generated code as the named no-op rather than being quietly folded away.
+		// And it reaches the stored table as its own kind rather than being quietly folded away.
 		string generated = File.ReadAllText(Path.Combine(BossAiHarness.RepoRoot(),
-			"src", "Aion.GameServer", "Handlers", "AI", "BattleCycles.g.cs"));
-		Assert.Contains("Do.ContinueRoute()", generated);
+			"game-server", "data", "static_data", "pattern_tables", "battle_cycles.xml"));
+		Assert.Contains("kind=\"next_waypoint\"", generated);
 	}
 
 	/// <summary><b>A patrolling npc is not idle, however much it is also not fighting.</b></summary>
