@@ -1,0 +1,111 @@
+# Retail AI — what is left
+
+Standing list of open work on the retail (5.8) NPC AI port. Re-measured 2026-08-23.
+
+`docs/retail-ai-fidelity.md` is the running log — why each decision was made, in order. It is 40,000
+lines and is not a to-do list. **This file is the to-do list.** Keep it short; move detail to the log.
+
+## First, a correction to the numbers
+
+Earlier backlogs in the log carried figures like *"`control_door` (691); `enable_area` (575);
+`random_move` (187)"*. **Those are usage counts across the whole retail dump, not work items.** Most of
+those uses are in patterns no npc in this port runs, or in patterns already taken for other reasons.
+
+Measured against what is actually blocked today, the same items are:
+
+| carried in the log as | actually refused now |
+|---|---|
+| `control_door` 691 | **9** |
+| `random_move` 187 | **29** |
+| `switch_target_by_class_indicator` 53 | **9** |
+| abnormal-state groups 108 | **9** (`is_in_abnormal_state`) |
+| `enable_area` 575 | **1** |
+
+Priorities set from the old numbers were wrong by an order of magnitude. What follows is from the
+extractors' own tallies.
+
+## Where coverage stands
+
+| table | patterns | npcs |
+|---|---|---|
+| battle cycles | 3,938 | 30,166 |
+| wake / idle | 1,555 | 3,928 |
+| death spawns | 678 | 1,927 |
+| guard answers | 4,242 answers | 3,696 |
+
+## A. Best value: one vocabulary item, dozens of handlers
+
+These are **partial** losses. The npc's rotation runs; one arming handler was dropped, so the fight is
+subtly quieter than retail's. 711 handlers are dropped this way in the battle table alone.
+
+| item | dropped | what it means in play |
+|---|---|---|
+| `is_npc_state NPC_STATE_WAKE_UP` | **69** (23 each on `on_attacked`, `on_see_npc`, `on_see_user`) | "only while still waking" — the port answers six npc states and not this one |
+| `activate_skillarea` | **33** (25 battle + 8 wake) | turns a skill area on; ground effects and hazard zones |
+| `is_tribe` on `on_talked_by_user` | **28** | who may talk to it, by tribe |
+| `goto_alias` | **14** | move to a named point rather than a route step |
+| `is_race` (wake table) | **11** | faction-gated wake behaviour |
+
+## B. Whole patterns refused — the small tail
+
+Each of these blocks the entire pattern, so the npc runs nothing from it.
+
+`random_move` 29 · `switch_target_by_class_indicator` 9 · `control_door` 9 · `is_in_abnormal_state` 9 ·
+`spawn_on_target` told to attack with no hate points 8 · `switch_target` at `OBJI_CUR_TARGET` 7 ·
+`set_intvar_if_less_than` 7 · `despawn_by_nameid` 4 · a tail of ones and twos.
+
+`control_door` still needs one in-game observation to settle which `method` value opens versus closes;
+everything else is ordinary work.
+
+## C. Engine-level, and the theme worth a deliberate pass
+
+**Marker NPCs collide with combat machinery built for bosses.** Three encounters have now hit this and
+it is one underlying problem, not three:
+
+1. **Marker clocks** — an npc that never fights had its `on_wake_up` timers cancelled on settling, and
+   any survivor refused outside `FIGHT`. *Fixed.* Every marker that arms a clock now runs it for the
+   first time, which is a broad behaviour change nobody has walked through encounter by encounter.
+2. **`NagaSubordinateAI`** — a subordinate that never engaged is now dismissed by its fuse. Found by
+   accident, via a comment asserting the opposite. *Correct, and unreviewed.*
+3. **Kingspin's web sweep** — a web aggros whoever steps on it, and stepping back out sends it home,
+   which resets the pattern and cancels the flag and both clocks, fuse included. So the two-metre sweep
+   can never fire. *Open.*
+
+Candidate fix for (3), unmeasured: `ResetPattern` exists to stop a rotation, and a web has none — its
+pattern carries no `Cycle` rungs. "Reset only what has a rotation to stop" is decidable from the
+pattern and would spare markers while leaving bosses alone. Two gates have already been narrowed here
+and one of the two narrowings was wrong, so measure before trusting it.
+
+## D. Encounters and hygiene
+
+- **Kaidan's low-health rung** — needs the skill index list resolved for thirteen shaman npcs first;
+  they may not agree the way the wave attackers' index 0 did (22 of 22).
+- **The other 65 `on_see_user_move` patterns** — 105 npcs gained the handler; one encounter is pinned.
+- **The guards' two broadcasts** (22696 on waking, 22658 on the second clock) — no listener found in
+  this tree, so a pin would assert into silence. Check the listener side before assuming they are idle.
+- **18 `--implemented` audit candidates** — `python tools/client-extract/audit_stale_claims.py
+  --implemented`. Most are accurate past-tense history; the yield is in repeated claims.
+
+## E. Boundaries, not backlog
+
+Not work items — recorded so nobody re-derives them:
+
+- **10,948 patterns refused for having no npc here free to run them** (6,899 battle + 4,049 wake).
+  Either this port lacks the npc, or it is bound to a hand-written class.
+- **876 patterns with no rotation and nothing sayable outside waking.**
+- **220 npcs dropped from a pattern their skill list cannot answer** (197 + 23).
+- **16 walker routes** named by retail spawns and absent from every world file and the client pak.
+- **The runner encounter** (`BIDF5_R2_Runner`, 9 npcs) — no spawn rows and no routes in this port, so
+  it cannot be driven here at all.
+
+## How to work on this
+
+```bash
+python tools/client-extract/regen_check.py          # run the whole pipeline, verify it round-trips
+dotnet test AionServer.slnx                         # ~55s
+python scripts/parity/check_fidelity.py             # structural gate
+pwsh scripts/ci/check-warning-baseline.ps1          # warning gate
+```
+
+Extractor refusal tallies are printed by each `extract_*.py` run and are the authority on what is
+blocked. Re-measure before setting a priority — this file did, and the old one was wrong.
