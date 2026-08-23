@@ -25,6 +25,8 @@ services:
       - ../login-server/sql:/sql/login:ro
       - ../game-server/sql:/sql/game:ro
       - ../chat-server/sql:/sql/chat:ro
+    ports:
+      - "3306:3306"                   # expose to the host for GUI tools (HeidiSQL etc.)
     healthcheck:
       # "healthy" must mean first-boot init is DONE: query over TCP (-h127.0.0.1, which the
       # socket-only init phase rejects) for a row in the seeded gameservers table (loaded last).
