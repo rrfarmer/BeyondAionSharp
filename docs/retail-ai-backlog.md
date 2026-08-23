@@ -29,7 +29,7 @@ extractors' own tallies.
 | table | patterns | npcs |
 |---|---|---|
 | battle cycles | 3,938 | 30,166 |
-| wake / idle | 1,555 | 3,928 |
+| wake / idle | 1,571 | 3,948 |
 | death spawns | 678 | 1,927 |
 | guard answers | 4,242 answers | 3,696 |
 
