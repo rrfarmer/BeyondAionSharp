@@ -1349,6 +1349,14 @@ public static class Do
     /// <remarks>A queued cast on such an NPC never fires — see <see cref="PatternAi.CastSkillNow"/>.</remarks>
     public static PatternAction SkillOnSelfNow(int skillId) => ai => ai.CastSkillNow(skillId);
 
+    /// <summary><c>use_skill target=OBJI_SEEN</c>, cast at once because the branch despawns.</summary>
+    public static PatternAction SkillOnSeenNow(int skillId)
+        => ai => ai.CastSkillAtNow(ai.SeenCreature, skillId);
+
+    /// <summary><c>use_skill target=OBJI_CUR_TARGET</c>, cast at once because the branch despawns.</summary>
+    public static PatternAction SkillOnTargetNow(int skillId)
+        => ai => ai.CastSkillAtNow(ai.CurrentTarget, skillId);
+
     /// <summary><c>add_hate_point</c> at the object a message carried, then attack it.</summary>
     /// <summary><c>add_hate_point target=OBJI_MESSAGE_SENDER</c> — hate whoever spoke.</summary>
     public static PatternAction HateMessageSender(int hate)

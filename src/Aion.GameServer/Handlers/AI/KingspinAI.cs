@@ -196,26 +196,79 @@ public class KingspinWebAI : PatternAi
 	/// <summary>Retail's <c>BTIMERI_INDEX_5</c>: a web that catches nobody still goes.</summary>
 	private const int Lifetime = 5;
 
-	/// <summary>Retail's <c>FLAGVARI_ALPHA_1</c> on the catch.</summary>
-	private const int Caught = 1;
+	/// <summary>Retail's <c>BTIMERI_INDEX_0</c>: the two and a half seconds a web takes to arm.</summary>
+	private const int Settle = 0;
 
-	/// <summary>A slot of our own for the fuse, which retail arms without a flag.</summary>
-	private const int Settled = 2;
+	/// <summary>Retail's <c>BTIMERI_INDEX_1</c>: the sweep for anybody standing on it.</summary>
+	private const int Sweep = 1;
 
+	/// <summary>Retail's <c>BTIMERI_INDEX_2</c>. Armed by the catch and read by nothing — see below.</summary>
+	private const int Spent = 2;
+
+	/// <summary>
+	/// Retail's <c>FLAGVARI_ALPHA_1</c>, and <b>one flag doing two jobs</b>: set on waking, which is
+	/// what keeps the sight rung quiet while the web settles; unset by the settle timer, which is what
+	/// arms the web; set again by the catch, so it catches only once.
+	/// </summary>
+	private const int Armed = 1;
+
+	/// <summary><c>SKILLI_INDEX_0</c> for 281391: <c>BNWI_Root_Spider</c>, which is what a web is for.</summary>
+	private const int Root = 18607;
+
+	/// <summary>Retail's <c>is_distance_shorter_than</c> on the sweep: two metres, not the one it spawns in.</summary>
+	private const int Underfoot = 2;
+
+	/// <remarks>
+	/// <b>Three quarters of this was missing, and the shape of what was missing is why nobody noticed.</b>
+	/// The web still appeared, still vanished after eight seconds, and still cried when it happened to
+	/// see somebody, so it read as a working trap that was merely quiet.
+	/// <para>
+	/// What it never did: <b>root anybody</b>. Retail casts <c>SKILLI_INDEX_0</c> on both catch paths
+	/// and this port cast nothing at all, so Kingspin's webs have been decorative.
+	/// </para>
+	/// <para>
+	/// And it could barely catch. A web is spawned within <b>one</b> metre of a player
+	/// (<c>spawn_range=1</c>) and its own sight is <b>one</b> metre (<c>srange="1"</c>), so whether it
+	/// ever sees them is a coin flip — which is why an opening throw of three webs produced one cry,
+	/// and why a pin counting cries flaked for months. Retail does not rely on sight at all: it arms a
+	/// sweep a second and a half after the web settles and asks whether anybody is within <b>two</b>
+	/// metres. The sight rung is the fast path; the sweep is the mechanic.
+	/// </para>
+	/// <para>
+	/// <b>Neither clock could run before this.</b> A marker npc never enters combat, and
+	/// <c>PatternAi</c> both cancelled its timers on settling and refused to fire the survivors outside
+	/// <c>AIState.FIGHT</c>. Both are fixed; this is the encounter that found them.
+	/// </para>
+	/// <para>
+	/// <c>Spent</c> is armed by the catch and read by nothing, in retail as here. It is kept because
+	/// the branch is retail's, and dropping an action from a branch is how a mechanic quietly changes.
+	/// </para>
+	/// </remarks>
 	private static readonly AiPattern Pattern_ = new AiPattern
 	{
-		OnWakeUp = Of(Branch(15, "settle, and start the fuse", [When.FirstTime(Settled)],
+		OnWakeUp = Of(Branch(15, "settle, and start both clocks", [When.FirstTime(Armed)],
+			Do.ArmTimer(Settle, 2_500),
 			Do.ArmTimer(Lifetime, 8_000))),
 
-		// Retail guards this with set_flag_var, so a web catches once. The despawn makes that moot in
-		// practice -- but only in practice, and a branch that fires twice before the despawn lands would
-		// cry twice. The flag is retail's and costs nothing.
-		OnSeeUser = Of(Branch(10, "caught one", [When.FirstTime(Caught)],
+		// Quiet until the settle timer clears the flag, then one catch only. Both halves are that one
+		// flag, which is why this guard reads as a first-time test rather than a plain one.
+		OnSeeUser = Of(Branch(10, "somebody walked into it", [When.FirstTime(Armed)],
+			Do.SkillOnSeenNow(Root),
 			Do.Broadcast(KingspinAI.WebCaught, CryReach),
 			Do.DespawnSelf())),
 
-		OnBattleTimer = Of(Branch(8, "nobody came", [When.Timer(Lifetime)],
-			Do.DespawnSelf())),
+		OnBattleTimer = Of(
+			Branch(8, "nobody came", [When.Timer(Lifetime)],
+				Do.DespawnSelf()),
+
+			Branch(7, "armed now", [When.Timer(Settle), When.Consuming(Armed)],
+				Do.ArmTimer(Sweep, 1_500)),
+
+			Branch(6, "somebody is standing on it", [When.Timer(Sweep), When.TargetWithin(Underfoot)],
+				Do.ArmTimer(Spent, 1_000),
+				Do.SkillOnTargetNow(Root),
+				Do.Broadcast(KingspinAI.WebCaught, CryReach),
+				Do.DespawnSelf())),
 	};
 
 	public KingspinWebAI(Npc owner)

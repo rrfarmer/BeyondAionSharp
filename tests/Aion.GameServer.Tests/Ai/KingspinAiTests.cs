@@ -1,3 +1,4 @@
+using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
@@ -24,6 +25,9 @@ public sealed class KingspinAiTests
 {
 	private const int LowerUdasTemple = 300160000;
 	private const int Kingspin = 215792;
+
+	/// <summary><c>BNWI_Root_Spider</c> — <c>SKILLI_INDEX_0</c> for the web, and the point of a web.</summary>
+	private const int WebRoot = 18607;
 	private const int Web = 281391;
 
 	private static BossAiHarness NewHarness() =>
@@ -82,6 +86,95 @@ public sealed class KingspinAiTests
 			if (ai.CounterEquals(0, n))
 				return n;
 		return -1;
+	}
+
+	/// <summary>
+	/// <b>A web roots whoever it catches.</b> Retail casts <c>SKILLI_INDEX_0</c> — <c>BNWI_Root_Spider</c>,
+	/// 18607 — on both of its catch paths, and this port cast nothing on either, so the webs were
+	/// decorative for as long as they have existed here.
+	/// </summary>
+	/// <remarks>
+	/// Driven through the sweep rather than through sight, because sight is the coin flip: a web is
+	/// spawned within one metre of somebody and sees one metre. The sweep asks about two.
+	/// <para>
+	/// This is also the pin that proves a marker's clocks run at all. A web never enters combat, and
+	/// until now <c>PatternAi</c> cancelled its timers when it settled and refused to fire the
+	/// survivors outside <c>AIState.FIGHT</c>.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AWebRootsWhoeverItCatches()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc web = harness.Spawn(Web, 300f, 300f, 200f);
+		// Half a metre. A web sees one metre and is dropped within one metre, so a player at exactly
+		// the boundary is a coin flip -- which is the whole reason retail also sweeps.
+		Player caught = harness.SpawnPlayer(300.5f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(web, caught);
+
+		// Two and a half seconds for the settle timer to clear the flag, which is what arms the web.
+		harness.Clock.Advance(TimeSpan.FromSeconds(3));
+		web.GetAi().OnCreatureEvent(AiEventType.CreatureSee, caught);
+
+		Assert.DoesNotContain(web, harness.LiveNpcs());
+		Assert.True(caught.GetEffectController().HasAbnormalEffect(WebRoot),
+			"the web caught them and did not root them");
+	}
+
+	/// <summary>
+	/// <b>And it cannot catch anybody while it is still settling.</b> Retail sets
+	/// <c>FLAGVARI_ALPHA_1</c> on waking, which blocks its own sight rung until the settle timer clears
+	/// it two and a half seconds later. Without that a web would go off in the instant it landed.
+	/// </summary>
+	[Fact]
+	public void AWebCannotCatchAnybodyWhileItIsStillSettling()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc web = harness.Spawn(Web, 300f, 300f, 200f);
+		Player caught = harness.SpawnPlayer(301f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(web, caught);
+		web.SetTarget(caught);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+
+		Assert.False(caught.GetEffectController().HasAbnormalEffect(WebRoot),
+			"it caught them while it was still settling");
+		Assert.Contains(web, harness.LiveNpcs());
+	}
+
+	/// <summary>
+	/// <b>Standing clear of it is standing clear.</b> The sweep asks for two metres; at ten the web
+	/// runs its clock out and goes without rooting anybody.
+	/// </summary>
+	[Fact]
+	public void AWebCatchesNobodyStandingClearOfIt()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc web = harness.Spawn(Web, 300f, 300f, 200f);
+		Player clear = harness.SpawnPlayer(310f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(web, clear);
+		web.SetTarget(clear);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(5));
+
+		Assert.False(clear.GetEffectController().HasAbnormalEffect(WebRoot),
+			"it reached somebody standing clear of it");
+	}
+
+	/// <summary>
+	/// <b>A web nobody goes near still leaves after eight seconds.</b> Retail's second clock, and the
+	/// only one of the three this port already had — though it could not fire it either.
+	/// </summary>
+	[Fact]
+	public void AWebNobodyTouchesStillGoes()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc web = harness.Spawn(Web, 300f, 300f, 200f);
+		harness.SpawnPlayer(360f, 300f, 200f);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(9));
+
+		Assert.DoesNotContain(web, harness.LiveNpcs());
 	}
 
 	/// <summary>Untouched he throws nothing — everything hangs off entering the fight.</summary>

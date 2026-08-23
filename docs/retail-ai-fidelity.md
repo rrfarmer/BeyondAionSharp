@@ -40240,3 +40240,87 @@ already clear. **That is the next thing to measure, and it is where this stopped
 5. `random_move` (187); abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
    `switch_target_by_class_indicator` (53).
 6. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** — boundaries, not backlog.
+
+## The marker clocks run, and Kingspin's webs root
+
+Three entries ago this was recorded and reverted unbuilt. It is built now, and the last open question
+had an answer nobody had looked for.
+
+### Two gates, not one
+
+A marker npc arms a clock in `on_wake_up` and nothing ever fired it. **Both halves had to go.**
+
+`HandleBackHome` called `ResetPattern`, which cancels every battle timer — and an npc reaches "back
+home" the moment it settles after spawning, having never fought anybody. Guarded on `inCombat` now:
+there is no fight to end.
+
+`FireTimer` then refused to run branches outside `AIState.FIGHT`. **The first attempt narrowed that to
+"fighting, or never fought" and was still wrong**, which measurement caught and reasoning would not
+have: a web is an aggressive class with one metre of sight, so a player standing on it — the exact
+case the sweep exists for — aggros it, `inCombat` goes true while the state stays `IDLE`, and every
+clock stopped again. With the player at sixty metres the whole chain ran; at one metre none of it did.
+
+So there is no state gate. What stops a boss's rotation once its fight is over is the reset it runs on
+reaching home, which was always the real mechanism.
+
+### What that cost in pins, and why it is a correction rather than a convenience
+
+Two pins guarded the old behaviour and both had to change. That is the shape of a mistake, so it is
+worth being explicit about why it is not one here.
+
+`PatternAiTests` asserted a timer outside combat does nothing, *"because retail battle timers only run
+in battle"*. **The retail data says otherwise and one encounter settles it**: `IDTP_Web` arms
+`BTIMERI_INDEX_0` and `INDEX_5` from `on_wake_up` and hangs its whole mechanic off the
+`on_battle_timer` rungs they fire, and a web never fights anybody. The pin's premise was false; it
+asserts the corrected behaviour now and cites the encounter.
+
+`BattleCycleAiTests.ALeftFightStopsTheRotationMidFlight` ended its fight by flipping the AI's state to
+`IDLE` by hand. That stopped the rotation only because firing was gated on `FIGHT`; it skips the reset
+entirely. **It drives the back-home path now** — what a boss actually does when it loses its raid —
+and the guarantee holds through it. The pin got stronger, not weaker.
+
+### The webs
+
+| retail | before |
+|---|---|
+| `on_wake_up` sets `ALPHA_1`, arms `INDEX_0` at 2500ms **and** `INDEX_5` at 8000ms | only the 8000ms fuse |
+| `on_see_user` behind `ALPHA_1`: cast index 0 at the seen player, cry, despawn | cry, despawn — **no cast** |
+| `INDEX_0` + `unset_flag_var ALPHA_1` → arm `INDEX_1` at 1500ms | absent |
+| `INDEX_1` + `is_distance_shorter_than(CUR_TARGET, 2)` → cast index 0 at the target, cry, despawn | absent |
+
+One flag doing two jobs is the design: set on waking, which keeps the sight rung quiet while the web
+settles; unset by the settle timer, which arms it; set again by the catch, so it catches once.
+
+**Index 0 is 18607 `BNWI_Root_Spider`.** Kingspin's webs have never rooted anybody in this port.
+
+### The boundary that wasted an hour, and is retail's own
+
+The root would not land in a pin, through either path, and the cast looked wrong. It was not. A web is
+dropped within **one** metre of a player and its sight is **one** metre, and at exactly 1.0 the sight
+test rejects. At half a metre the whole thing works: the branch fires, the player is rooted, the web
+goes.
+
+That is not a test artefact — **it is the reason retail sweeps at two metres as well as seeing at
+one**, and it is why an opening throw of three webs produced one cry and why a pin counting cries
+flaked for months. The measurement finally explains the number this log has been carrying since the
+`settled = 1` observation.
+
+**Verification.** Full suite **2,938 passing**, 1 skipped. Fidelity gate and warning baseline both
+pass.
+
+### Still missing, in order
+
+1. **The sweep's target.** `OBJI_CUR_TARGET` is the subject of retail's two-metre sweep, and a web in
+   this port never acquires a current target — `SetTarget` does not stick on it. The sight path is
+   pinned and works; the sweep path is built, reachable and **unverified**, because nothing gives the
+   web a target to measure against. In retail the web presumably aggros whoever stands on it. Worth
+   settling before trusting the sweep.
+2. **Every other marker that arms a clock on waking** now runs it for the first time. That is a large
+   behaviour change nobody has looked at encounter by encounter; the suite is green, which is evidence
+   and not proof.
+3. **The other 65 move-rung patterns**; **the runner encounter** (no spawn rows, no routes);
+   **Kaidan's low-health rung**; **the 18 `--implemented` candidates**; **the guards' two broadcasts**.
+4. `control_door` (691); `enable_area` (575); `change_world_scene_status` (101).
+5. `random_move` (187); abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
+   `switch_target_by_class_indicator` (53).
+6. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** — boundaries, not backlog.

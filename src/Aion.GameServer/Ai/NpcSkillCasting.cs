@@ -45,6 +45,19 @@ public static class NpcSkillCasting
             .UseSkill();
     }
 
+    /// <summary>Casts one of an NPC's skills at somebody else now, bypassing the queue.</summary>
+    /// <remarks>
+    /// The self-cast above already hands <c>GetSkill</c> a target; this only lets the caller choose
+    /// it. Needed by any branch that casts and then removes the caster in the same breath, because
+    /// the queue is drained by the attack loop and a trap that despawns never reaches it.
+    /// </remarks>
+    public static void UseOnNow(Npc owner, Creature target, int skillId, int fallbackLevel = 1)
+    {
+        SkillEngine.SkillEngine.GetInstance()
+            .GetSkill(owner, skillId, LevelOf(owner, skillId, fallbackLevel), target)
+            .UseSkill();
+    }
+
     /// <summary>Returns the level an NPC's npc_skills entry gives a skill.</summary>
     public static int LevelOf(Npc owner, int skillId, int fallbackLevel = 1)
     {

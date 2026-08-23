@@ -147,9 +147,16 @@ public sealed class BattleCycleAiTests
 		BossAiHarness.MakeMutuallyKnown(worm, player);
 		harness.Engage(worm, player);
 
-		// Armed for ten seconds; drop out of combat with it still pending.
+		// Armed for ten seconds; end the fight with it still pending.
+		//
+		// **The fight is ended the way the server ends one, and that is the point of the change here.**
+		// This used to flip the AI's state to IDLE directly, which stopped the rotation because firing
+		// was gated on being in FIGHT. That gate is gone -- retail arms battle timers on npcs that
+		// never fight at all, and it was stopping every marker's clock -- so what protects a boss now
+		// is the reset it runs on reaching home, which is the path a real boss takes when it loses its
+		// raid. Flipping the state by hand skips that reset and pins nothing a boss would ever do.
 		harness.Clock.Advance(TimeSpan.FromSeconds(5));
-		worm.GetAi().SetStateIfNot(Aion.GameServer.Ai.AIState.IDLE);
+		worm.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.BACK_HOME);
 		harness.Clock.Advance(TimeSpan.FromSeconds(20));
 
 		Assert.Equal(0, Count(harness, Swarm));

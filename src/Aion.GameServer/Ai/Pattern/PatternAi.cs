@@ -395,7 +395,16 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         // the returning state is left by arriving, which is exactly what `OnBackHome` means in the
         // Java this is ported from -- it sets `AIState.IDLE`.
         Evaluate(Pattern.OnLeaveReturning);
-        ResetPattern();
+
+        // **Only if there was a fight to end.** `ResetPattern` wipes a fight's state -- every battle
+        // timer, the pending spawns, the flee -- and an npc reaches "back home" the moment it settles
+        // after spawning, having never fought anybody. Running it there cancelled the battle timers
+        // retail arms in `on_wake_up` before any of them could fire.
+        if (inCombat)
+        {
+            ResetPattern();
+        }
+
         base.HandleBackHome();
     }
 
@@ -1271,13 +1280,38 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         }
     }
 
+    /// <summary>Runs the branches a battle timer's firing selects.</summary>
+    /// <remarks>
+    /// <b>There is deliberately no state gate here, and there used to be one:
+    /// <c>IsInState(AIState.FIGHT)</c>.</b> It was the second half of why a marker npc's clock never
+    /// ran — <see cref="HandleBackHome"/> cancelled the timers outright, and any survivor fired into
+    /// this and returned.
+    /// <para>
+    /// Retail draws no such line: a battle timer fires when it fires, and retail arms them from
+    /// <c>on_wake_up</c> on npcs that never fight anybody. Kingspin's webs are the clearest case — a
+    /// web arms a settle timer, that arms a sweep, and the sweep is what catches whoever is standing
+    /// on it. None of it could run.
+    /// </para>
+    /// <para>
+    /// <b>Narrowing the gate to "fighting, or never fought" was tried and was still wrong.</b> A web
+    /// is an aggressive class with one metre of sight, so a player standing on it — the exact case the
+    /// sweep exists for — aggros it: <c>inCombat</c> goes true while the state stays <c>IDLE</c>, and
+    /// every clock stopped again. Measured rather than reasoned: with the player at sixty metres the
+    /// whole chain ran, at one metre none of it did.
+    /// </para>
+    /// <para>
+    /// What stops a rotation ticking on an npc that has finished fighting is
+    /// <see cref="ResetPattern"/>, which cancels every timer when it dies or reaches home. That was
+    /// always the real mechanism; the state check was a second one that also caught markers.
+    /// </para>
+    /// </remarks>
     private void FireTimer(int index)
     {
         lock (gate)
         {
             timerFires[index]++;
             timers[index] = null;
-            if (IsDead() || !IsInState(AIState.FIGHT))
+            if (IsDead())
                 return;
 
             FiredTimer = index;
@@ -1533,6 +1567,24 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         lock (gate)
             immediateCasts++;
         NpcSkillCasting.UseOnSelfNow(GetOwner(), skillId);
+    }
+
+    /// <summary>Casts one of this NPC's own skills at somebody else now, bypassing the queue.</summary>
+    /// <remarks>
+    /// The aimed twin of <see cref="CastSkillNow"/>, and it exists for the same reason: a branch that
+    /// casts and then despawns the caster leaves a queued cast nobody will ever drain. Kingspin's webs
+    /// are exactly that shape — root whoever stepped on it, cry, vanish.
+    /// </remarks>
+    public void CastSkillAtNow(Creature? aim, int skillId)
+    {
+        if (IsDead() || aim == null || aim.IsDead())
+        {
+            return;
+        }
+
+        lock (gate)
+            immediateCasts++;
+        NpcSkillCasting.UseOnNow(GetOwner(), aim, skillId);
     }
 
     /// <summary>

@@ -279,22 +279,41 @@ public sealed class PatternAiTests
 		}
 	}
 
+	/// <summary>
+	/// <b>A battle timer runs on an npc that has never fought anybody.</b>
+	/// </summary>
+	/// <remarks>
+	/// <b>This pin used to assert the opposite</b>, on the stated grounds that "retail battle timers
+	/// only run in battle". The retail data says otherwise, and one encounter is enough to show it:
+	/// <c>IDTP_Web</c> — Kingspin's webs — arms <c>BTIMERI_INDEX_0</c> and <c>INDEX_5</c> from
+	/// <c>on_wake_up</c> and hangs its whole mechanic off the <c>on_battle_timer</c> rungs they fire.
+	/// A web never fights anybody. It settles, sweeps for whoever is standing on it, roots them, and
+	/// leaves.
+	/// <para>
+	/// While the gate was here none of that could happen, and the same was true of every marker in the
+	/// game that arms a clock on waking: the npc appeared, did nothing, and despawned on schedule,
+	/// which reads as a working prop rather than a broken one.
+	/// </para>
+	/// <para>
+	/// What still stops a boss's rotation once its fight is over is the reset it runs on reaching home
+	/// — see <c>BattleCycleAiTests.ALeftFightStopsTheRotationMidFlight</c>, which pins exactly that
+	/// through the path a real boss takes.
+	/// </para>
+	/// </remarks>
 	[Fact]
-	public void IgnoresATimerThatComesDueOutsideCombat()
+	public void RunsATimerOnAnNpcThatHasNeverFought()
 	{
 		using BossAiHarness harness = NewHarness();
 		Npc boss = harness.SpawnWithAi(SomeNpc, PatternProbeAI.Name);
 		var ai = (PatternProbeAI)boss.GetAi();
 
-		// Never engaged, so nothing can put it back into combat -- an engaged boss cannot be held out of
-		// one, because its attack task re-enters FIGHT on every swing. Health is set below a threshold a
-		// branch records at, so a timer that does fire is visible rather than silently matching nothing.
+		// Health is set below a threshold a branch records at, so a timer that fires is visible rather
+		// than silently matching nothing.
 		BossAiHarness.SetHpPercent(boss, 40);
 		ai.ArmTimer(1, 1000);
 		harness.Clock.Advance(TimeSpan.FromMinutes(1));
 
-		// Retail battle timers only run in battle, so this one comes due and does nothing.
-		Assert.Empty(ai.Ran);
+		Assert.NotEmpty(ai.Ran);
 	}
 }
 
