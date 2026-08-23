@@ -40385,3 +40385,65 @@ quietly altered an encounter three files away, and the only trace was a comment 
 5. `random_move` (187); abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
    `switch_target_by_class_indicator` (53).
 6. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** — boundaries, not backlog.
+
+## The sweep's target: found, and then found to be disarmed
+
+Last entry left the web's two-metre sweep built but unverified, on the grounds that "a web never
+acquires a current target". **That was half right and the wrong half.**
+
+### It does acquire one
+
+Retail spawns these with `attack_target_after_spawn=FALSE` and `hatepoints_to_add=0`, so the spawn
+hands the web nothing. The target it sweeps against is the one it **aggros**, and it does:
+
+| player at | result |
+|---|---|
+| 0.5m | target and most-hated set, state `FIGHT` |
+| 1.5m | nothing, ever |
+
+`srange="1"` is both what a web sees and what it aggros. That is now pinned.
+
+### And then loses it, along with everything else
+
+The sweep exists to reach **two** metres — somebody who walked onto the web and stepped back out of
+its one-metre sight. Driving exactly that case shows why it cannot happen here:
+
+```
+before walk:  cur=2   state=FIGHT  flag1=True
+t=2s          cur=none state=IDLE  flag1=False  f0=0  arms1=0
+```
+
+Stepping out of aggro range sends the web home. Going home resets the pattern — and because the web
+aggroed, `inCombat` is true, so last entry's guard does not spare it. **The flag clears and both clocks
+are cancelled, the eight-second fuse included.** The trap disarms itself, and in a harness with no
+spawn lifetime it then never despawns at all.
+
+So the case the sweep is *for* is exactly the case our fight-and-return machinery destroys.
+
+### Not guessed at a third time
+
+Two gates have already been narrowed on this mechanic, and the first attempt at the second was wrong
+in a way only measurement caught. A third narrowing is not something to reach for on a hunch, so the
+pin that shipped is the one that is proven — the aggro reach — and the sweep stays unverified with its
+blocker written down rather than papered over.
+
+**The candidate fix, for whoever takes it:** `ResetPattern` exists to stop a rotation. A web has no
+rotation — its pattern carries no `Cycle` rungs at all, only `on_wake_up`, `on_see_user` and
+`on_battle_timer`. "Reset only what has a rotation to stop" is decidable from the pattern and would
+spare every marker while leaving bosses untouched. It is a guess until it is measured, and the honest
+place to measure it is against the encounters, not the suite alone.
+
+**Verification.** Full suite **2,939 passing**, 1 skipped. Fidelity gate passes.
+
+### Still missing, in order
+
+1. **The sweep, still.** Blocker characterised above; candidate fix named and unmeasured.
+2. **Every other marker that arms a clock on waking.** The naga subordinate was found by accident last
+   entry; a web that aggros and loses its target is a second shape of the same problem. Nobody has gone
+   through them.
+3. **The other 65 move-rung patterns**; **the runner encounter** (no spawn rows, no routes);
+   **Kaidan's low-health rung**; **the 18 `--implemented` candidates**; **the guards' two broadcasts**.
+4. `control_door` (691); `enable_area` (575); `change_world_scene_status` (101).
+5. `random_move` (187); abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
+   `switch_target_by_class_indicator` (53).
+6. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** — boundaries, not backlog.

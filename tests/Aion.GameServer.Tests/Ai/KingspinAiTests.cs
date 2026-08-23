@@ -177,6 +177,40 @@ public sealed class KingspinAiTests
 		Assert.DoesNotContain(web, harness.LiveNpcs());
 	}
 
+	/// <summary>
+	/// <b>A web takes its target by aggroing whoever stands on it, and only within one metre.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail spawns these with <c>attack_target_after_spawn=FALSE</c> and <c>hatepoints_to_add=0</c>,
+	/// so the spawn hands the web nothing; the target it sweeps against is the one it aggros. That
+	/// matters because <c>srange="1"</c> is both what it sees and what it aggros, while retail's sweep
+	/// asks about <b>two</b> metres — the sweep is meant to reach somebody the web can no longer see.
+	/// <para>
+	/// <b>That reach cannot be pinned yet, and the reason is worth stating precisely.</b> Stepping out
+	/// of aggro range sends the web home, and going home resets the pattern: the flag clears and both
+	/// clocks are cancelled, fuse included. Measured — target and <c>FIGHT</c> at 0.5m, then
+	/// <c>IDLE</c>, no flag and no timers a second after walking to 1.5m. So the case the sweep exists
+	/// for is exactly the case our fight-and-return machinery disarms. See the log.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AWebTakesItsTargetByAggroingWhoeverStandsOnIt()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc near = harness.Spawn(Web, 300f, 300f, 200f);
+		Player onIt = harness.SpawnPlayer(300.5f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(near, onIt);
+
+		Npc far = harness.Spawn(Web, 400f, 300f, 200f);
+		Player clear = harness.SpawnPlayer(401.5f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(far, clear);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+
+		Assert.Same(onIt, ((Aion.GameServer.Ai.Pattern.PatternAi)near.GetAi()).CurrentTarget);
+		Assert.Null(((Aion.GameServer.Ai.Pattern.PatternAi)far.GetAi()).CurrentTarget);
+	}
+
 	/// <summary>Untouched he throws nothing — everything hangs off entering the fight.</summary>
 	[Fact]
 	public void AnUnpulledKingspinThrowsNothing()
