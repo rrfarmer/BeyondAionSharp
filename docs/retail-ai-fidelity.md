@@ -40447,3 +40447,50 @@ place to measure it is against the encounters, not the suite alone.
 5. `random_move` (187); abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
    `switch_target_by_class_indicator` (53).
 6. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** — boundaries, not backlog.
+
+## Counting who the marker-clock fix actually changed
+
+The fix was filed as "a broad behaviour change nobody has walked through encounter by encounter",
+which is the kind of note that sits in a backlog for a year. Counted instead, end to end.
+
+Two separate sets, because the fix had two halves.
+
+**The wake-arm half — timers armed in `on_wake_up`.** Four npcs in the battle table, and **none of
+them is spawned in this port**: an arena prop that becomes another npc after ten seconds, two
+`inviNPC` cavalry spawners, and one of NCSoft's own `Test_Basic_Monster_AI` dummies. Among hand-written
+classes, exactly **one** arms a battle timer inside `OnWakeUp`, and it is Kingspin's web — the
+encounter that found the bug, already pinned.
+
+**The gate half — any timer coming due outside `FIGHT`.** Wider in principle. 2,040 npcs on a passive
+class arm a timer and have rungs to run, but 2,031 of those arm from `on_enter_attack_state`, which an
+npc that never fights never reaches. What is left is **11**:
+
+| npc | armed from | what its clock does |
+|---|---|---|
+| `BLDF4_Dramata_TimerTrigger` ×2, `LF4/DF4_DramataTimer` | `on_message` | chain an arm and a system message, over and over — an event countdown |
+| `DF4_DramataGC` | `on_message` | spawns four |
+| `LF4_DramataGC`, `Cromede_Hierarch_Stone`, `IDVritra_Base_Boss2_Support2` | `on_message` | broadcast |
+| `ND2_KnC` | `on_spelled` | casts |
+| `IDArena_pvp02_S3_Meat` | `on_wake_up` | spawns and removes itself |
+| `TestAI47` | `on_message` | NCSoft's own test |
+
+**Two are spawned here**: 204805 in Beluslan and Kromede's Hierarch Stone. The rest are the invisible
+controllers that run timed events, and this port places the results directly instead — the same shape
+already recorded for Taloc's ambush and the Kamar runner.
+
+So the honest scope of a change that read as sweeping: **two live npcs, plus the web that found it.**
+The machinery it unblocks matters more than the count — every `Dramata` countdown in the game is one
+of these — but nothing needs walking through, and the item is closed.
+
+### Still missing, in order
+
+1. **Kingspin's web sweep.** Unchanged: a web aggros whoever steps on it, stepping out sends it home,
+   and going home resets the pattern and cancels the flag and both clocks. Candidate fix — "reset only
+   what has a rotation to stop" — named and still unmeasured.
+2. **`NagaSubordinateAI`** — a subordinate that never engaged is now dismissed by its fuse, which is
+   what retail does. Correct and still unreviewed against the encounter.
+3. **The other 65 `on_see_user_move` patterns**; **Kaidan's low-health rung**; **the 18
+   `--implemented` candidates**; **the guards' two broadcasts**.
+4. The small refusal tail: `random_move` 29, `switch_target_by_class_indicator` 9, `control_door` 9,
+   `is_in_abnormal_state` 9, and ones and twos below that.
+5. **Boundaries, not backlog** — see `docs/retail-ai-backlog.md`.

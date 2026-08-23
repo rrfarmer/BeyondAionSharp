@@ -73,8 +73,13 @@ everything else is ordinary work.
 it is one underlying problem, not three:
 
 1. **Marker clocks** — an npc that never fights had its `on_wake_up` timers cancelled on settling, and
-   any survivor refused outside `FIGHT`. *Fixed.* Every marker that arms a clock now runs it for the
-   first time, which is a broad behaviour change nobody has walked through encounter by encounter.
+   any survivor refused outside `FIGHT`. **Fixed, and now reviewed.** The change was recorded as broad
+   and is not: counted end to end, **11 npcs** have a clock that newly runs, and **2 of them are
+   spawned in this port** — 204805 in Beluslan and Kromede's Hierarch Stone (282091). The rest are
+   event controllers this port never places: `BLDF4_Dramata_TimerTrigger`, `LF4/DF4_DramataTimer` and
+   `DramataGC`, which chain a countdown of system messages and then spawn. Among hand-written classes
+   exactly one arms a timer on waking, and it is Kingspin's web, which is pinned. Nothing else to walk
+   through.
 2. **`NagaSubordinateAI`** — a subordinate that never engaged is now dismissed by its fuse. Found by
    accident, via a comment asserting the opposite. *Correct, and unreviewed.*
 3. **Kingspin's web sweep** — a web aggros whoever steps on it, and stepping back out sends it home,
