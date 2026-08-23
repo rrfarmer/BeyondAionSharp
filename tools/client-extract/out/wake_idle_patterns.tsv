@@ -428,6 +428,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 218719	IDArena_pvp02_S3_Tog_03	on_wake_up	0	7		0	spawn	218757	1	0	for_the_fight_self	0.0	0.0	0.0
 218719	IDArena_pvp02_S3_Tog_03	on_wake_up	0	7		1	skill	20065	0	0	ME	0.0	0.0	0.0
 218722	TDown_DrakanSc_Tiamat_60_Ae	on_wake_up	0	6	chance:25	0	skill	20251	0	0	ME	0.0	0.0	0.0
+218758	IDArena_pvp02_S3_Meat	on_wake_up	0	7		0	broadcast	2001	100	0		0.0	0.0	0.0
+218758	IDArena_pvp02_S3_Meat	on_wake_up	0	7		1	arm	0	10000	0		0.0	0.0	0.0
 218764	TDown_DrakanSc_Tiamat_60_Ae	on_wake_up	0	6	chance:25	0	skill	20240	0	0	ME	0.0	0.0	0.0
 218765	TDown_DrakanSc_Tiamat_60_Ae	on_wake_up	0	6	chance:25	0	skill	20240	0	0	ME	0.0	0.0	0.0
 218771	TDown_DrakanSc_Tiamat_60_Ae	on_wake_up	0	6	chance:25	0	skill	20240	0	0	ME	0.0	0.0	0.0
@@ -3879,6 +3881,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 282751	LDF4b_FOBJ_LavaRock1_invisible	on_wake_up	0	1		0	skill_now	20356	0	0	ME	0.0	0.0	0.0
 282751	LDF4b_FOBJ_LavaRock1_invisible	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 282785	Station_Shu_AS	on_wake_up	0	7		0	skill	19493	0	0	ME	0.0	0.0	0.0
+282797	LDF4b_Cavalry_Pagati_inviNPC_57	on_wake_up	0	2		0	arm	0	2500	0		0.0	0.0	0.0
+282798	LDF4b_Cavalry_Pagati_inviNPC_58	on_wake_up	0	2		0	arm	0	2500	0		0.0	0.0	0.0
 282907	LDF4b_Tiamat_Temp16	on_wake_up	0	1		0	skill	20429	0	0	ME	0.0	0.0	0.0
 282909	LDF4b_Tiamat_Temp18	on_wake_up	0	1		0	skill	20418	0	0	ME	0.0	0.0	0.0
 282924	LDF4a_Public_Mob_005	on_wake_up	0	7		0	skill	20471	0	0	ME	0.0	0.0	0.0
@@ -4730,6 +4734,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 287156	Test_Basic_Monster_AI_GW_6	on_wake_up	0	7		0	waypoint	0	0	0		0.0	0.0	0.0
 287158	Test_Basic_Monster_AI_GW_8	on_wake_up	0	7	set_flag_var:0	0	sysmsg	1401431	0	0		0.0	0.0	0.0
 287158	Test_Basic_Monster_AI_GW_8	on_wake_up	0	7	set_flag_var:0	1	despawn_self	0	0	0		0.0	0.0	0.0
+287164	Test_Basic_Monster_AI_MJ_8	on_wake_up	0	7	set_flag_var:1	0	arm	0	5000	0		0.0	0.0	0.0
 287193	Test_Basic_Monster_AI_CYS_3	on_wake_up	0	7	set_flag_var:0	0	timer	5000	0	0		0.0	0.0	0.0
 287193	Test_Basic_Monster_AI_CYS_3	on_wake_up	0	7	set_flag_var:0	1	skill	19708	0	0	ME	0.0	0.0	0.0
 287199	Test_Basic_Monster_AI_CYS_4	on_idle_timer	0	7	set_flag_var:2	0	spawn	287199	1	0	for_the_fight_self	0.0	0.0	0.0
@@ -4756,6 +4761,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 287245	LDF5_U2_E_02_Time_03	on_idle_timer	0	5	set_flag_var:0	2	timer	0	0	0		0.0	0.0	0.0
 287245	LDF5_U2_E_02_Time_03	on_idle_timer	1	4	set_flag_var:1	0	spawn	287244	1	0	for_the_fight_self	0.0	0.0	0.0
 287245	LDF5_U2_E_02_Time_03	on_idle_timer	1	4	set_flag_var:1	1	timer	0	0	0		0.0	0.0	0.0
+287248	Test_Basic_Monster_AI_KJH02	on_wake_up	0	7		0	arm	0	20000	0		0.0	0.0	0.0
+287252	Test_Basic_Monster_AI_KJH02	on_wake_up	0	7		0	arm	0	20000	0		0.0	0.0	0.0
 287256	LDF4_Advance_Killer_02_Li	on_wake_up	0	7		0	spawn	855256	1	0	for_the_fight_self	0.0	0.0	0.0
 287260	LDF4_Advance_Killer_06_Da	on_wake_up	0	7		0	spawn	855256	1	0	for_the_fight_self	0.0	0.0	0.0
 287269	IDF4Re_Drana_Named_E	on_wake_up	0	7		0	say	1500200	0	0		0.0	0.0	0.0
@@ -7572,6 +7579,10 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 855734	LF5_ItemNamed_6_Fi_KJS	on_wake_up	0	7		0	skill	21146	0	0	ME	0.0	0.0	0.0
 855735	LF5_ItemNamed_6_Wi_KJS	on_wake_up	0	7		0	skill	21146	0	0	ME	0.0	0.0	0.0
 855736	LF5_ItemNamed_6_As1_KJS	on_wake_up	0	7		0	skill	21146	0	0	ME	0.0	0.0	0.0
+855738	LF5_ItemNamed_12_Pet_KJS	on_idle_timer	0	7		0	arm	0	5000	0		0.0	0.0	0.0
+855738	LF5_ItemNamed_12_Pet_KJS	on_idle_timer	0	7		1	skill_now	21180	0	0	ME	0.0	0.0	0.0
+855738	LF5_ItemNamed_12_Pet_KJS	on_idle_timer	0	7		2	despawn_self	0	0	0		0.0	0.0	0.0
+855738	LF5_ItemNamed_12_Pet_KJS	on_wake_up	0	7		0	timer	30000	0	0		0.0	0.0	0.0
 855745	IDSeal_Skill_RapidBreath_Target_01	on_wake_up	0	1		0	broadcast	22601	50	0		0.0	0.0	0.0
 855746	IDSeal_Skill_RapidBreath_Target_02	on_wake_up	0	1		0	broadcast	22602	50	0		0.0	0.0	0.0
 855747	IDSeal_Skill_RapidBreath_Target_03	on_wake_up	0	1		0	broadcast	22603	50	0		0.0	0.0	0.0

@@ -4,7 +4,7 @@
     out/wake_idle_patterns.tsv. Do not edit by hand; edit the extractor and re-run.
 
     What a retail npc does the moment it appears, and each time its own idle timer fires:
-    1565 patterns across 3941 npcs, 10037 actions.
+    1571 patterns across 3948 npcs, 10048 actions.
 
     Two handlers share this file and an npc may appear under both, so each element names its own.
     Branch order is the order written here; retail's lists are first-match-wins.
@@ -1353,6 +1353,12 @@
 		<branch priority="6" comment="rung 0">
 			<guard token="chance:25" />
 			<action kind="skill" a1="20251" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
+	<npc id="218758" handler="on_wake_up">  <!-- IDArena_pvp02_S3_Meat -->
+		<branch priority="7" comment="rung 0">
+			<action kind="broadcast" a1="2001" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="arm" a1="0" a2="10000" a3="0" place="" x="0.0" y="0.0" z="0.0" />
 		</branch>
 	</npc>
 	<npc id="218764" handler="on_wake_up">  <!-- TDown_DrakanSc_Tiamat_60_Ae -->
@@ -12650,6 +12656,16 @@
 			<action kind="skill" a1="19493" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" />
 		</branch>
 	</npc>
+	<npc id="282797" handler="on_wake_up">  <!-- LDF4b_Cavalry_Pagati_inviNPC_57 -->
+		<branch priority="2" comment="rung 0">
+			<action kind="arm" a1="0" a2="2500" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
+	<npc id="282798" handler="on_wake_up">  <!-- LDF4b_Cavalry_Pagati_inviNPC_58 -->
+		<branch priority="2" comment="rung 0">
+			<action kind="arm" a1="0" a2="2500" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
 	<npc id="282907" handler="on_wake_up">  <!-- LDF4b_Tiamat_Temp16 -->
 		<branch priority="1" comment="rung 0">
 			<action kind="skill" a1="20429" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" />
@@ -15067,6 +15083,12 @@
 			<action kind="despawn_self" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
 		</branch>
 	</npc>
+	<npc id="287164" handler="on_wake_up">  <!-- Test_Basic_Monster_AI_MJ_8 -->
+		<branch priority="7" comment="rung 0">
+			<guard token="set_flag_var:1" />
+			<action kind="arm" a1="0" a2="5000" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
 	<npc id="287193" handler="on_wake_up">  <!-- Test_Basic_Monster_AI_CYS_3 -->
 		<branch priority="7" comment="rung 0">
 			<guard token="set_flag_var:0" />
@@ -15092,6 +15114,16 @@
 	<npc id="287223" handler="on_wake_up">  <!-- Test_Monster_SSH_01 -->
 		<branch priority="7" comment="rung 0">
 			<action kind="timer" a1="6000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
+	<npc id="287248" handler="on_wake_up">  <!-- Test_Basic_Monster_AI_KJH02 -->
+		<branch priority="7" comment="rung 0">
+			<action kind="arm" a1="0" a2="20000" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
+	<npc id="287252" handler="on_wake_up">  <!-- Test_Basic_Monster_AI_KJH02 -->
+		<branch priority="7" comment="rung 0">
+			<action kind="arm" a1="0" a2="20000" a3="0" place="" x="0.0" y="0.0" z="0.0" />
 		</branch>
 	</npc>
 	<npc id="287256" handler="on_wake_up">  <!-- LDF4_Advance_Killer_02_Li -->
@@ -19855,6 +19887,11 @@
 	<npc id="855736" handler="on_wake_up">  <!-- LF5_ItemNamed_6_As1_KJS -->
 		<branch priority="7" comment="rung 0">
 			<action kind="skill" a1="21146" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
+	<npc id="855738" handler="on_wake_up">  <!-- LF5_ItemNamed_12_Pet_KJS -->
+		<branch priority="7" comment="rung 0">
+			<action kind="timer" a1="30000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
 		</branch>
 	</npc>
 	<npc id="855745" handler="on_wake_up">  <!-- IDSeal_Skill_RapidBreath_Target_01 -->
@@ -27587,6 +27624,13 @@
 	<npc id="855732" handler="on_idle_timer">  <!-- LF5_ItemNamed_6_Ra1_Pet_KJS -->
 		<branch priority="7" comment="rung 0">
 			<action kind="skill_now" a1="19836" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" />
+			<action kind="despawn_self" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
+	<npc id="855738" handler="on_idle_timer">  <!-- LF5_ItemNamed_12_Pet_KJS -->
+		<branch priority="7" comment="rung 0">
+			<action kind="arm" a1="0" a2="5000" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="skill_now" a1="21180" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" />
 			<action kind="despawn_self" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
 		</branch>
 	</npc>

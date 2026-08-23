@@ -149,6 +149,22 @@ def string_ids(repo: pathlib.Path) -> dict[str, int]:
     return out
 
 
+#: Battle-vocabulary actions this table must not borrow.
+#:
+#: `use_skill_by_attacker_indicator` and `switch_target_by_attacker_indicator` carry a skill index that
+#: only means anything once resolved against the owning npc's ordered list, and this pipeline has no
+#: resolution pass. The spawn kinds and `despawn` carry a spawn group, and the wake and idle tables
+#: have no group column -- their spawns are retail's `SPAWN_ID_NONE`.
+INDEX_OR_GROUP_ACTIONS = {
+    "use_skill_by_attacker_indicator",
+    "switch_target_by_attacker_indicator",
+    "spawn_on_target_by_attacker_indicator",
+    "spawn_on_target",
+    "spawn_on_multi_target",
+    "despawn",
+}
+
+
 def read_actions(block: str, dev: dict[str, int], known: set[int],
                  strings: dict[str, int], skill_targets: dict[str, str] | None = None
                  ) -> list[tuple] | None:
@@ -269,8 +285,39 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
                 return None
             out.append(("broadcast", int(message.group(1)),
                         int(reach.group(1)) if reach else 0, 0, "", 0.0, 0.0, 0.0))
-        else:
+        elif kind in INDEX_OR_GROUP_ACTIONS:
+            # Refused for the same reason `is_skill_count_left` is refused above. These carry either a
+            # skill index, which retail resolves against the npc's own ordered list and this pipeline
+            # has no pass for, or a spawn group, which this table has no column for at all -- its
+            # spawns are retail's SPAWN_ID_NONE. Delegating them would drop the group silently or hand
+            # an index to something expecting an id.
             return None
+        else:
+            # The rest of the battle vocabulary. See the note on guards above: this reader knew ten
+            # action kinds and the battle reader knows twenty-two, purely because of which module the
+            # wake and idle tables import from.
+            #
+            # `add_battle_timer` is the one that matters. Retail's markers arm their clocks from
+            # `on_wake_up` -- Kingspin's webs are the worked example -- and until now this reader could
+            # not read the arming, so the engine fix that lets a marker's clock run had nothing to run.
+            import extract_battle_cycles as B
+
+            # It raises where this returns None, same as the guard reader above.
+            try:
+                rows = B.read_actions(f"<{kind}>{body}</{kind}>", dev, known, strings)
+            except B.Unsayable:
+                return None
+            if rows is None:
+                return None
+            for row in rows:
+                # The battle tuple carries a spawn group this table has no column for. Every kind that
+                # reaches here is a timer, a hate change or a target switch, so the group is always
+                # zero -- checked rather than assumed, because dropping a real one would be silent.
+                if len(row) == 9:
+                    if row[8] not in (0, "0"):
+                        return None
+                    row = row[:8]
+                out.append(row)
     return out
 
 

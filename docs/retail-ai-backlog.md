@@ -44,7 +44,17 @@ subtly quieter than retail's. 711 handlers are dropped this way in the battle ta
 | `activate_skillarea` | **33** (25 battle + 8 wake) | turns a skill area on; ground effects and hazard zones |
 | `is_tribe` on `on_talked_by_user` | **28** | who may talk to it, by tribe |
 | `goto_alias` | **14** | move to a named point rather than a route step |
-| `is_race` (wake table) | **11** | faction-gated wake behaviour |
+| `is_race` (wake table) | **10** | faction-gated wake behaviour |
+
+**The two readers are aligned now.** The wake and idle tables used to import a guard reader that knew
+2 condition kinds and an action reader that knew 10, against the battle reader's 20 and 22, purely
+because of which module they import from. Both delegate now, minus the kinds that cannot travel —
+anything carrying a skill index (retail resolves it against the owning npc's own ordered list, and this
+pipeline has no such pass) or a spawn group (these tables have no group column).
+
+**Yield was small and is worth stating honestly: +20 npcs, of which two handlers were new to the
+runtime.** The value is that there is one vocabulary rather than two, so the next condition added
+reaches every table.
 
 ## B. Whole patterns refused — the small tail
 
