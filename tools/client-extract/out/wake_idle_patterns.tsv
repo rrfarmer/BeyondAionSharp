@@ -182,6 +182,26 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 216886	Dread02_Drakan_Boss	on_wake_up	0	7		0	sysmsg	1400632	0	0		0.0	0.0	0.0
 216941	Dread02_BonusDrakan	on_wake_up	0	7		0	sysmsg	1400633	0	0		0.0	0.0	0.0
 217119	Cromede_Named_ScaredQ	on_wake_up	0	7		0	nothing	0	0	0		0.0	0.0	0.0
+217235	IDForest_Rollingstone_Boss	on_idle_timer	0	5	set_flag_var:0	0	say	1500441	0	0		0.0	0.0	0.0
+217235	IDForest_Rollingstone_Boss	on_idle_timer	0	5	set_flag_var:0	1	timer	6000	0	0		0.0	0.0	0.0
+217235	IDForest_Rollingstone_Boss	on_idle_timer	1	4	set_flag_var:1	0	say	1500442	0	0		0.0	0.0	0.0
+217235	IDForest_Rollingstone_Boss	on_idle_timer	1	4	set_flag_var:1	1	timer	6000	0	0		0.0	0.0	0.0
+217235	IDForest_Rollingstone_Boss	on_idle_timer	2	3	set_flag_var:2	0	say	1500443	0	0		0.0	0.0	0.0
+217235	IDForest_Rollingstone_Boss	on_idle_timer	2	3	set_flag_var:2	1	timer	6000	0	0		0.0	0.0	0.0
+217235	IDForest_Rollingstone_Boss	on_idle_timer	3	2	unset_flag_var:0|unset_flag_var:1|unset_flag_var:2	0	timer	60000	0	0		0.0	0.0	0.0
+217235	IDForest_Rollingstone_Boss	on_idle_timer	4	1	state:route	0	nothing	0	0	0		0.0	0.0	0.0
+217235	IDForest_Rollingstone_Boss	on_wake_up	0	6		0	timer	6000	0	0		0.0	0.0	0.0
+217235	IDForest_Rollingstone_Boss	on_wake_up	0	6		1	nothing	0	0	0		0.0	0.0	0.0
+217236	IDForest_Rollingstone_Boss	on_idle_timer	0	5	set_flag_var:0	0	say	1500441	0	0		0.0	0.0	0.0
+217236	IDForest_Rollingstone_Boss	on_idle_timer	0	5	set_flag_var:0	1	timer	6000	0	0		0.0	0.0	0.0
+217236	IDForest_Rollingstone_Boss	on_idle_timer	1	4	set_flag_var:1	0	say	1500442	0	0		0.0	0.0	0.0
+217236	IDForest_Rollingstone_Boss	on_idle_timer	1	4	set_flag_var:1	1	timer	6000	0	0		0.0	0.0	0.0
+217236	IDForest_Rollingstone_Boss	on_idle_timer	2	3	set_flag_var:2	0	say	1500443	0	0		0.0	0.0	0.0
+217236	IDForest_Rollingstone_Boss	on_idle_timer	2	3	set_flag_var:2	1	timer	6000	0	0		0.0	0.0	0.0
+217236	IDForest_Rollingstone_Boss	on_idle_timer	3	2	unset_flag_var:0|unset_flag_var:1|unset_flag_var:2	0	timer	60000	0	0		0.0	0.0	0.0
+217236	IDForest_Rollingstone_Boss	on_idle_timer	4	1	state:route	0	nothing	0	0	0		0.0	0.0	0.0
+217236	IDForest_Rollingstone_Boss	on_wake_up	0	6		0	timer	6000	0	0		0.0	0.0	0.0
+217236	IDForest_Rollingstone_Boss	on_wake_up	0	6		1	nothing	0	0	0		0.0	0.0	0.0
 217240	IDHouse_Zadra_Boss_Phase1	on_wake_up	0	7	set_flag_var:0	0	spawn	282208	1	0	for_the_fight_absolute	1020.13	1269.6	95.95
 217240	IDHouse_Zadra_Boss_Phase1	on_wake_up	0	7	set_flag_var:0	1	spawn	282208	1	0	for_the_fight_absolute	1006.09	1282.35	95.95
 217240	IDHouse_Zadra_Boss_Phase1	on_wake_up	0	7	set_flag_var:0	2	spawn	282208	1	0	for_the_fight_absolute	992.511	1269.61	95.95
@@ -192,6 +212,26 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 217242	IDHouse_Zadra_Boss_Phase4	on_wake_up	0	99		0	say	1500481	0	0		0.0	0.0	0.0
 217242	IDHouse_Zadra_Boss_Phase4	on_wake_up	0	99		1	nothing	0	0	0		0.0	0.0	0.0
 217244	IDForest_Bridge_Boss	on_wake_up	0	14		0	spawn	282362	1	10	for_the_fight_absolute	302.515	756.957	203.0
+217246	IDForest_Rollingstone_Boss	on_idle_timer	0	5	set_flag_var:0	0	say	1500441	0	0		0.0	0.0	0.0
+217246	IDForest_Rollingstone_Boss	on_idle_timer	0	5	set_flag_var:0	1	timer	6000	0	0		0.0	0.0	0.0
+217246	IDForest_Rollingstone_Boss	on_idle_timer	1	4	set_flag_var:1	0	say	1500442	0	0		0.0	0.0	0.0
+217246	IDForest_Rollingstone_Boss	on_idle_timer	1	4	set_flag_var:1	1	timer	6000	0	0		0.0	0.0	0.0
+217246	IDForest_Rollingstone_Boss	on_idle_timer	2	3	set_flag_var:2	0	say	1500443	0	0		0.0	0.0	0.0
+217246	IDForest_Rollingstone_Boss	on_idle_timer	2	3	set_flag_var:2	1	timer	6000	0	0		0.0	0.0	0.0
+217246	IDForest_Rollingstone_Boss	on_idle_timer	3	2	unset_flag_var:0|unset_flag_var:1|unset_flag_var:2	0	timer	60000	0	0		0.0	0.0	0.0
+217246	IDForest_Rollingstone_Boss	on_idle_timer	4	1	state:route	0	nothing	0	0	0		0.0	0.0	0.0
+217246	IDForest_Rollingstone_Boss	on_wake_up	0	6		0	timer	6000	0	0		0.0	0.0	0.0
+217246	IDForest_Rollingstone_Boss	on_wake_up	0	6		1	nothing	0	0	0		0.0	0.0	0.0
+217247	IDForest_Rollingstone_Boss	on_idle_timer	0	5	set_flag_var:0	0	say	1500441	0	0		0.0	0.0	0.0
+217247	IDForest_Rollingstone_Boss	on_idle_timer	0	5	set_flag_var:0	1	timer	6000	0	0		0.0	0.0	0.0
+217247	IDForest_Rollingstone_Boss	on_idle_timer	1	4	set_flag_var:1	0	say	1500442	0	0		0.0	0.0	0.0
+217247	IDForest_Rollingstone_Boss	on_idle_timer	1	4	set_flag_var:1	1	timer	6000	0	0		0.0	0.0	0.0
+217247	IDForest_Rollingstone_Boss	on_idle_timer	2	3	set_flag_var:2	0	say	1500443	0	0		0.0	0.0	0.0
+217247	IDForest_Rollingstone_Boss	on_idle_timer	2	3	set_flag_var:2	1	timer	6000	0	0		0.0	0.0	0.0
+217247	IDForest_Rollingstone_Boss	on_idle_timer	3	2	unset_flag_var:0|unset_flag_var:1|unset_flag_var:2	0	timer	60000	0	0		0.0	0.0	0.0
+217247	IDForest_Rollingstone_Boss	on_idle_timer	4	1	state:route	0	nothing	0	0	0		0.0	0.0	0.0
+217247	IDForest_Rollingstone_Boss	on_wake_up	0	6		0	timer	6000	0	0		0.0	0.0	0.0
+217247	IDForest_Rollingstone_Boss	on_wake_up	0	6		1	nothing	0	0	0		0.0	0.0	0.0
 217249	IDForest_Wave_Trico_Boss	on_wake_up	0	15		0	spawn	282465	1	10	for_the_fight_self	0.0	0.0	0.0
 217249	IDForest_Wave_Trico_Boss	on_wake_up	0	15		1	sysmsg	1500242	0	0		0.0	0.0	0.0
 217249	IDForest_Wave_Trico_Boss	on_wake_up	0	15		2	nothing	0	0	0		0.0	0.0	0.0
@@ -3555,6 +3595,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 282130	Elim_Effect_Debuff	on_wake_up	0	7	set_flag_var:0	0	broadcast	6515	5	0		0.0	0.0	0.0
 282132	LF4_DespawnTBox	on_wake_up	0	7		0	broadcast	11103	10	0		0.0	0.0	0.0
 282139	Elim_Effect_Heal1	on_wake_up	0	7	set_flag_var:0	0	broadcast	6515	5	0		0.0	0.0	0.0
+282146	IDHouse_Prime_Sum1	on_wake_up	0	1	state:route	0	nothing	0	0	0		0.0	0.0	0.0
 282155	IDDF3_BroadNPC_System	on_wake_up	0	7		0	broadcast	1125	50	0		0.0	0.0	0.0
 282155	IDDF3_BroadNPC_System	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
 282179	IDHouse_Zadra_Boss_Phase1	on_wake_up	0	7	set_flag_var:0	0	spawn	282208	1	0	for_the_fight_absolute	1020.13	1269.6	95.95
@@ -5231,6 +5272,25 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		15	var	1	0	0	C_WaveReTake_4	0.0	0.0	0.0
 701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		16	timer	5000	0	0		0.0	0.0	0.0
 701648	IDF5_Under_01_PcTank_Ctrl	on_wake_up	0	90		0	broadcast	21201	50	0		0.0	0.0	0.0
+701650	IDF5_U1_CtrlPlay	on_idle_timer	0	10	is_world_flag_var:9|is_world_flag_var:5|count:0:31:32:1	0	var	1	0	0	C_TimeOver	0.0	0.0	0.0
+701650	IDF5_U1_CtrlPlay	on_idle_timer	0	10	is_world_flag_var:9|is_world_flag_var:5|count:0:31:32:1	1	timer	0	0	0		0.0	0.0	0.0
+701650	IDF5_U1_CtrlPlay	on_idle_timer	1	9	is_world_flag_var:5|is_world_flag_var:9|count:0:31:32:1	0	sysmsg	1401878	0	0		0.0	0.0	0.0
+701650	IDF5_U1_CtrlPlay	on_idle_timer	1	9	is_world_flag_var:5|is_world_flag_var:9|count:0:31:32:1	1	var	0	1	0	C_Boss	0.0	0.0	0.0
+701650	IDF5_U1_CtrlPlay	on_idle_timer	1	9	is_world_flag_var:5|is_world_flag_var:9|count:0:31:32:1	2	var	2	0	0	C_TimeOver	0.0	0.0	0.0
+701650	IDF5_U1_CtrlPlay	on_idle_timer	1	9	is_world_flag_var:5|is_world_flag_var:9|count:0:31:32:1	3	var	2	0	0	cBox	0.0	0.0	0.0
+701650	IDF5_U1_CtrlPlay	on_idle_timer	1	9	is_world_flag_var:5|is_world_flag_var:9|count:0:31:32:1	4	var	3	0	0	cWeapon	0.0	0.0	0.0
+701650	IDF5_U1_CtrlPlay	on_idle_timer	1	9	is_world_flag_var:5|is_world_flag_var:9|count:0:31:32:1	5	spawn	701645	1	0	for_the_fight_self	0.0	0.0	0.0
+701650	IDF5_U1_CtrlPlay	on_idle_timer	1	9	is_world_flag_var:5|is_world_flag_var:9|count:0:31:32:1	6	timer	0	0	0		0.0	0.0	0.0
+701650	IDF5_U1_CtrlPlay	on_idle_timer	2	7	is_world_flag_var:5|count:0:27:31:1	0	sysmsg	1401877	0	0		0.0	0.0	0.0
+701650	IDF5_U1_CtrlPlay	on_idle_timer	2	7	is_world_flag_var:5|count:0:27:31:1	1	var	0	1	0	C_Boss	0.0	0.0	0.0
+701650	IDF5_U1_CtrlPlay	on_idle_timer	3	6	is_world_flag_var:5|count:0:22:27:1	0	sysmsg	1401876	0	0		0.0	0.0	0.0
+701650	IDF5_U1_CtrlPlay	on_idle_timer	3	6	is_world_flag_var:5|count:0:22:27:1	1	var	0	1	0	C_Boss	0.0	0.0	0.0
+701650	IDF5_U1_CtrlPlay	on_idle_timer	4	5	is_world_flag_var:5|count:0:13:22:1	0	sysmsg	1401875	0	0		0.0	0.0	0.0
+701650	IDF5_U1_CtrlPlay	on_idle_timer	4	5	is_world_flag_var:5|count:0:13:22:1	1	var	0	1	0	C_Boss	0.0	0.0	0.0
+701650	IDF5_U1_CtrlPlay	on_idle_timer	5	2	is_world_flag_var:5|count:0:2:13:1	0	var	0	1	0	C_Boss	0.0	0.0	0.0
+701650	IDF5_U1_CtrlPlay	on_idle_timer	5	2	is_world_flag_var:5|count:0:2:13:1	1	var	1	0	0	C_Weapon	0.0	0.0	0.0
+701650	IDF5_U1_CtrlPlay	on_wake_up	0	1	countby:0:2:0:2:1	0	sysmsg	1401892	0	0		0.0	0.0	0.0
+701650	IDF5_U1_CtrlPlay	on_wake_up	0	1	countby:0:2:0:2:1	1	timer	60000	0	0		0.0	0.0	0.0
 701665	Underpass_IDUnderpassRe_msg	on_wake_up	0	7	set_flag_var:0	0	sysmsg	1401605	0	0		0.0	0.0	0.0
 701670	IDF5_Under_01_PcTank	on_idle_timer	0	2	unset_flag_var:0	0	timer	0	0	0		0.0	0.0	0.0
 701671	IDF5_Under_01_PcTank	on_idle_timer	0	2	unset_flag_var:0	0	timer	0	0	0		0.0	0.0	0.0
@@ -8575,8 +8635,56 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 855988	BIDF5_U01_Middle_Boss_Dark	on_wake_up	0	1000		0	skill	20700	0	0	ME	0.0	0.0	0.0
 855989	BIDF5_U01_Middle_Boss_Dark	on_wake_up	0	1000		0	skill	20700	0	0	ME	0.0	0.0	0.0
 855990	BIDF5_U01_Middle_Boss_Dark	on_wake_up	0	1000		0	skill	20700	0	0	ME	0.0	0.0	0.0
+855991	BIDF5_U01_Runaway_Wi_P1	on_idle_timer	0	1000	chance:33|countby:0:1:0:500:0	0	timer	10000	0	0		0.0	0.0	0.0
+855991	BIDF5_U01_Runaway_Wi_P1	on_idle_timer	0	1000	chance:33|countby:0:1:0:500:0	1	say	1501286	0	0		0.0	0.0	0.0
+855991	BIDF5_U01_Runaway_Wi_P1	on_idle_timer	1	990	chance:33|countby:0:1:0:500:0	0	timer	10000	0	0		0.0	0.0	0.0
+855991	BIDF5_U01_Runaway_Wi_P1	on_idle_timer	1	990	chance:33|countby:0:1:0:500:0	1	say	1501287	0	0		0.0	0.0	0.0
+855991	BIDF5_U01_Runaway_Wi_P1	on_idle_timer	2	980	countby:0:1:0:500:0	0	timer	10000	0	0		0.0	0.0	0.0
+855991	BIDF5_U01_Runaway_Wi_P1	on_idle_timer	2	980	countby:0:1:0:500:0	1	say	1501288	0	0		0.0	0.0	0.0
+855991	BIDF5_U01_Runaway_Wi_P1	on_wake_up	0	1000		0	skill	21779	0	0	ME	0.0	0.0	0.0
+855991	BIDF5_U01_Runaway_Wi_P1	on_wake_up	0	1000		1	timer	10000	0	0		0.0	0.0	0.0
+855993	BIDF5_U01_Runaway_Wi_P3	on_idle_timer	0	1000	chance:33|countby:0:1:0:500:0	0	timer	10000	0	0		0.0	0.0	0.0
+855993	BIDF5_U01_Runaway_Wi_P3	on_idle_timer	0	1000	chance:33|countby:0:1:0:500:0	1	say	1501286	0	0		0.0	0.0	0.0
+855993	BIDF5_U01_Runaway_Wi_P3	on_idle_timer	1	990	chance:33|countby:0:1:0:500:0	0	timer	10000	0	0		0.0	0.0	0.0
+855993	BIDF5_U01_Runaway_Wi_P3	on_idle_timer	1	990	chance:33|countby:0:1:0:500:0	1	say	1501287	0	0		0.0	0.0	0.0
+855993	BIDF5_U01_Runaway_Wi_P3	on_idle_timer	2	980	countby:0:1:0:500:0	0	timer	10000	0	0		0.0	0.0	0.0
+855993	BIDF5_U01_Runaway_Wi_P3	on_idle_timer	2	980	countby:0:1:0:500:0	1	say	1501288	0	0		0.0	0.0	0.0
+855993	BIDF5_U01_Runaway_Wi_P3	on_wake_up	0	1000		0	skill	21779	0	0	ME	0.0	0.0	0.0
+855993	BIDF5_U01_Runaway_Wi_P3	on_wake_up	0	1000		1	timer	10000	0	0		0.0	0.0	0.0
 855994	BIDF5_U01_Runaway_Wi	on_wake_up	0	1000		0	skill	21877	0	0	ME	0.0	0.0	0.0
+855995	BIDF5_U01_Runaway_Pr_P1	on_idle_timer	0	1000	chance:33|countby:0:1:0:500:0	0	timer	10000	0	0		0.0	0.0	0.0
+855995	BIDF5_U01_Runaway_Pr_P1	on_idle_timer	0	1000	chance:33|countby:0:1:0:500:0	1	say	1501286	0	0		0.0	0.0	0.0
+855995	BIDF5_U01_Runaway_Pr_P1	on_idle_timer	1	990	chance:33|countby:0:1:0:500:0	0	timer	10000	0	0		0.0	0.0	0.0
+855995	BIDF5_U01_Runaway_Pr_P1	on_idle_timer	1	990	chance:33|countby:0:1:0:500:0	1	say	1501287	0	0		0.0	0.0	0.0
+855995	BIDF5_U01_Runaway_Pr_P1	on_idle_timer	2	980	countby:0:1:0:500:0	0	timer	10000	0	0		0.0	0.0	0.0
+855995	BIDF5_U01_Runaway_Pr_P1	on_idle_timer	2	980	countby:0:1:0:500:0	1	say	1501288	0	0		0.0	0.0	0.0
+855995	BIDF5_U01_Runaway_Pr_P1	on_wake_up	0	1000		0	skill	21779	0	0	ME	0.0	0.0	0.0
+855995	BIDF5_U01_Runaway_Pr_P1	on_wake_up	0	1000		1	timer	10000	0	0		0.0	0.0	0.0
+855997	BIDF5_U01_Runaway_Pr_P3	on_idle_timer	0	1000	chance:33|countby:0:1:0:500:0	0	timer	10000	0	0		0.0	0.0	0.0
+855997	BIDF5_U01_Runaway_Pr_P3	on_idle_timer	0	1000	chance:33|countby:0:1:0:500:0	1	say	1501286	0	0		0.0	0.0	0.0
+855997	BIDF5_U01_Runaway_Pr_P3	on_idle_timer	1	990	chance:33|countby:0:1:0:500:0	0	timer	10000	0	0		0.0	0.0	0.0
+855997	BIDF5_U01_Runaway_Pr_P3	on_idle_timer	1	990	chance:33|countby:0:1:0:500:0	1	say	1501287	0	0		0.0	0.0	0.0
+855997	BIDF5_U01_Runaway_Pr_P3	on_idle_timer	2	980	countby:0:1:0:500:0	0	timer	10000	0	0		0.0	0.0	0.0
+855997	BIDF5_U01_Runaway_Pr_P3	on_idle_timer	2	980	countby:0:1:0:500:0	1	say	1501288	0	0		0.0	0.0	0.0
+855997	BIDF5_U01_Runaway_Pr_P3	on_wake_up	0	1000		0	skill	21779	0	0	ME	0.0	0.0	0.0
+855997	BIDF5_U01_Runaway_Pr_P3	on_wake_up	0	1000		1	timer	10000	0	0		0.0	0.0	0.0
 855998	BIDF5_U01_Runaway_Pr	on_wake_up	0	1000		0	skill	21878	0	0	ME	0.0	0.0	0.0
+855999	BIDF5_U01_Runaway_As_P1	on_idle_timer	0	1000	chance:33|countby:0:1:0:500:0	0	timer	10000	0	0		0.0	0.0	0.0
+855999	BIDF5_U01_Runaway_As_P1	on_idle_timer	0	1000	chance:33|countby:0:1:0:500:0	1	say	1501286	0	0		0.0	0.0	0.0
+855999	BIDF5_U01_Runaway_As_P1	on_idle_timer	1	990	chance:33|countby:0:1:0:500:0	0	timer	10000	0	0		0.0	0.0	0.0
+855999	BIDF5_U01_Runaway_As_P1	on_idle_timer	1	990	chance:33|countby:0:1:0:500:0	1	say	1501287	0	0		0.0	0.0	0.0
+855999	BIDF5_U01_Runaway_As_P1	on_idle_timer	2	980	countby:0:1:0:500:0	0	timer	10000	0	0		0.0	0.0	0.0
+855999	BIDF5_U01_Runaway_As_P1	on_idle_timer	2	980	countby:0:1:0:500:0	1	say	1501288	0	0		0.0	0.0	0.0
+855999	BIDF5_U01_Runaway_As_P1	on_wake_up	0	1000		0	skill	21779	0	0	ME	0.0	0.0	0.0
+855999	BIDF5_U01_Runaway_As_P1	on_wake_up	0	1000		1	timer	10000	0	0		0.0	0.0	0.0
+856001	BIDF5_U01_Runaway_As_P3	on_idle_timer	0	1000	chance:33|countby:0:1:0:500:0	0	timer	10000	0	0		0.0	0.0	0.0
+856001	BIDF5_U01_Runaway_As_P3	on_idle_timer	0	1000	chance:33|countby:0:1:0:500:0	1	say	1501286	0	0		0.0	0.0	0.0
+856001	BIDF5_U01_Runaway_As_P3	on_idle_timer	1	990	chance:33|countby:0:1:0:500:0	0	timer	10000	0	0		0.0	0.0	0.0
+856001	BIDF5_U01_Runaway_As_P3	on_idle_timer	1	990	chance:33|countby:0:1:0:500:0	1	say	1501287	0	0		0.0	0.0	0.0
+856001	BIDF5_U01_Runaway_As_P3	on_idle_timer	2	980	countby:0:1:0:500:0	0	timer	10000	0	0		0.0	0.0	0.0
+856001	BIDF5_U01_Runaway_As_P3	on_idle_timer	2	980	countby:0:1:0:500:0	1	say	1501288	0	0		0.0	0.0	0.0
+856001	BIDF5_U01_Runaway_As_P3	on_wake_up	0	1000		0	skill	21779	0	0	ME	0.0	0.0	0.0
+856001	BIDF5_U01_Runaway_As_P3	on_wake_up	0	1000		1	timer	10000	0	0		0.0	0.0	0.0
 856002	BIDF5_U01_Runaway_As	on_wake_up	0	1000		0	skill	21879	0	0	ME	0.0	0.0	0.0
 856003	BIDF5_U01_Boss_Wi_Nor	on_wake_up	0	1000		0	skill	20700	0	0	ME	0.0	0.0	0.0
 856007	IDF5_U1_Vri_Def_Fi_65_Ae	on_wake_up	0	90		0	waypoint	0	0	0		0.0	0.0	0.0
@@ -9216,6 +9324,22 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 856458	F4_Rotation_Treasure_Guardian_D_03	on_wake_up	0	7		2	spawn	236668	1	600	absolute	1348.0	1306.0	290.0
 856458	F4_Rotation_Treasure_Guardian_D_03	on_wake_up	0	7		3	spawn	236669	1	600	absolute	711.0	2031.0	341.0
 856458	F4_Rotation_Treasure_Guardian_D_03	on_wake_up	0	7		4	spawn	236670	1	600	absolute	2063.0	1630.0	355.0
+856460	IDLegion_Race_Check	on_idle_timer	0	1100	set_flag_var:0	0	timer	56000	0	0		0.0	0.0	0.0
+856460	IDLegion_Race_Check	on_idle_timer	0	1100	set_flag_var:0	1	sysmsg	1402863	0	0		0.0	0.0	0.0
+856460	IDLegion_Race_Check	on_idle_timer	1	1000	set_flag_var:1	0	timer	60000	0	0		0.0	0.0	0.0
+856460	IDLegion_Race_Check	on_idle_timer	1	1000	set_flag_var:1	1	sysmsg	1402864	0	0		0.0	0.0	0.0
+856460	IDLegion_Race_Check	on_idle_timer	2	900	set_flag_var:2	0	timer	30000	0	0		0.0	0.0	0.0
+856460	IDLegion_Race_Check	on_idle_timer	2	900	set_flag_var:2	1	sysmsg	1402865	0	0		0.0	0.0	0.0
+856460	IDLegion_Race_Check	on_idle_timer	3	800	set_flag_var:3	0	timer	30000	0	0		0.0	0.0	0.0
+856460	IDLegion_Race_Check	on_idle_timer	3	800	set_flag_var:3	1	sysmsg	1402866	0	0		0.0	0.0	0.0
+856460	IDLegion_Race_Check	on_idle_timer	4	700	set_flag_var:4|race:TargetRace:ASMODIANS	0	var	-1	0	0	legion_on	0.0	0.0	0.0
+856460	IDLegion_Race_Check	on_idle_timer	4	700	set_flag_var:4|race:TargetRace:ASMODIANS	1	var	1	0	0	race_dark	0.0	0.0	0.0
+856460	IDLegion_Race_Check	on_idle_timer	4	700	set_flag_var:4|race:TargetRace:ASMODIANS	2	spawn	856461	1	0	for_the_fight_self	0.0	0.0	0.0
+856460	IDLegion_Race_Check	on_idle_timer	5	690	set_flag_var:5|race:TargetRace:ELYOS	0	var	-1	0	0	legion_on	0.0	0.0	0.0
+856460	IDLegion_Race_Check	on_idle_timer	5	690	set_flag_var:5|race:TargetRace:ELYOS	1	var	1	0	0	race_light	0.0	0.0	0.0
+856460	IDLegion_Race_Check	on_idle_timer	5	690	set_flag_var:5|race:TargetRace:ELYOS	2	spawn	855955	1	0	for_the_fight_self	0.0	0.0	0.0
+856460	IDLegion_Race_Check	on_wake_up	0	1000		0	timer	6000	0	0		0.0	0.0	0.0
+856460	IDLegion_Race_Check	on_wake_up	0	1000		1	var	1	0	0	legion_on	0.0	0.0	0.0
 856461	Legion_Dark_Start_Check	on_idle_timer	0	600	set_flag_var:5	0	timer	360000	0	0		0.0	0.0	0.0
 856461	Legion_Dark_Start_Check	on_idle_timer	0	600	set_flag_var:5	1	spawn	856463	1	0	for_the_fight_self	0.0	0.0	0.0
 856461	Legion_Dark_Start_Check	on_idle_timer	1	500	set_flag_var:6	0	timer	420000	0	0		0.0	0.0	0.0

@@ -104,7 +104,31 @@ def read_guards(block: str) -> list[str] | None:
                 COUNTERS.index(indicator.group(1).strip()), low.group(1), high.group(1),
                 "1" if at_bound and at_bound.group(1).upper() == "TRUE" else "0"))
         else:
-            return None
+            # **Everything the battle parser has learned, rather than a second smaller vocabulary.**
+            # This reader knew two guard kinds; the battle reader knows twenty, and its two are the
+            # same two. Every condition added over the life of this project -- is_race, is_message,
+            # is_hp_lower_than, is_event_skill_id and the rest -- was unavailable to the wake and idle
+            # tables purely because they import their guards from this file.
+            #
+            # Imported inside the function because extract_battle_cycles imports from this module at
+            # load time, and it raises where this returns None.
+            import extract_battle_cycles as B
+
+            # **Except the ones that carry a skill index.** The battle extractor emits
+            # `skillready:<index>` and then resolves it to a skill id per npc, because retail names a
+            # skill by its place in that npc's own list. This pipeline has no such step, so the index
+            # would reach `When.SkillReady` as if it were a skill id -- and an id nothing owns reads as
+            # "available", which turns the guard into a rung that always fires.
+            #
+            # Found the hard way: two death-spawn markers gained `on_wake_up [skillready:0] -> cast,
+            # despawn_self` and started detonating the instant they appeared.
+            if kind == "is_skill_count_left":
+                return None
+
+            try:
+                out.extend(B.read_guards(f"<{kind}>{body}</{kind}>"))
+            except B.Unsayable:
+                return None
     return out
 
 

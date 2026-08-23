@@ -4,7 +4,7 @@
     out/wake_idle_patterns.tsv. Do not edit by hand; edit the extractor and re-run.
 
     What a retail npc does the moment it appears, and each time its own idle timer fires:
-    1555 patterns across 3928 npcs, 9913 actions.
+    1565 patterns across 3941 npcs, 10037 actions.
 
     Two handlers share this file and an npc may appear under both, so each element names its own.
     Branch order is the order written here; retail's lists are first-match-wins.
@@ -545,6 +545,18 @@
 			<action kind="nothing" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
 		</branch>
 	</npc>
+	<npc id="217235" handler="on_wake_up">  <!-- IDForest_Rollingstone_Boss -->
+		<branch priority="6" comment="rung 0">
+			<action kind="timer" a1="6000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="nothing" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
+	<npc id="217236" handler="on_wake_up">  <!-- IDForest_Rollingstone_Boss -->
+		<branch priority="6" comment="rung 0">
+			<action kind="timer" a1="6000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="nothing" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
 	<npc id="217240" handler="on_wake_up">  <!-- IDHouse_Zadra_Boss_Phase1 -->
 		<branch priority="7" comment="rung 0">
 			<guard token="set_flag_var:0" />
@@ -571,6 +583,18 @@
 	<npc id="217244" handler="on_wake_up">  <!-- IDForest_Bridge_Boss -->
 		<branch priority="14" comment="rung 0">
 			<action kind="spawn" a1="282362" a2="1" a3="10" place="for_the_fight_absolute" x="302.515" y="756.957" z="203.0" />
+		</branch>
+	</npc>
+	<npc id="217246" handler="on_wake_up">  <!-- IDForest_Rollingstone_Boss -->
+		<branch priority="6" comment="rung 0">
+			<action kind="timer" a1="6000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="nothing" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
+	<npc id="217247" handler="on_wake_up">  <!-- IDForest_Rollingstone_Boss -->
+		<branch priority="6" comment="rung 0">
+			<action kind="timer" a1="6000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="nothing" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
 		</branch>
 	</npc>
 	<npc id="217249" handler="on_wake_up">  <!-- IDForest_Wave_Trico_Boss -->
@@ -11866,6 +11890,12 @@
 			<action kind="broadcast" a1="6515" a2="5" a3="0" place="" x="0.0" y="0.0" z="0.0" />
 		</branch>
 	</npc>
+	<npc id="282146" handler="on_wake_up">  <!-- IDHouse_Prime_Sum1 -->
+		<branch priority="1" comment="rung 0">
+			<guard token="state:route" />
+			<action kind="nothing" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
 	<npc id="282155" handler="on_wake_up">  <!-- IDDF3_BroadNPC_System -->
 		<branch priority="7" comment="rung 0">
 			<action kind="broadcast" a1="1125" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" />
@@ -16561,6 +16591,13 @@
 			<action kind="broadcast" a1="21201" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" />
 		</branch>
 	</npc>
+	<npc id="701650" handler="on_wake_up">  <!-- IDF5_U1_CtrlPlay -->
+		<branch priority="1" comment="rung 0">
+			<guard token="countby:0:2:0:2:1" />
+			<action kind="sysmsg" a1="1401892" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="60000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
 	<npc id="701665" handler="on_wake_up">  <!-- Underpass_IDUnderpassRe_msg -->
 		<branch priority="7" comment="rung 0">
 			<guard token="set_flag_var:0" />
@@ -20381,14 +20418,50 @@
 			<action kind="skill" a1="20700" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" />
 		</branch>
 	</npc>
+	<npc id="855991" handler="on_wake_up">  <!-- BIDF5_U01_Runaway_Wi_P1 -->
+		<branch priority="1000" comment="rung 0">
+			<action kind="skill" a1="21779" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="10000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
+	<npc id="855993" handler="on_wake_up">  <!-- BIDF5_U01_Runaway_Wi_P3 -->
+		<branch priority="1000" comment="rung 0">
+			<action kind="skill" a1="21779" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="10000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
 	<npc id="855994" handler="on_wake_up">  <!-- BIDF5_U01_Runaway_Wi -->
 		<branch priority="1000" comment="rung 0">
 			<action kind="skill" a1="21877" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" />
 		</branch>
 	</npc>
+	<npc id="855995" handler="on_wake_up">  <!-- BIDF5_U01_Runaway_Pr_P1 -->
+		<branch priority="1000" comment="rung 0">
+			<action kind="skill" a1="21779" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="10000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
+	<npc id="855997" handler="on_wake_up">  <!-- BIDF5_U01_Runaway_Pr_P3 -->
+		<branch priority="1000" comment="rung 0">
+			<action kind="skill" a1="21779" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="10000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
 	<npc id="855998" handler="on_wake_up">  <!-- BIDF5_U01_Runaway_Pr -->
 		<branch priority="1000" comment="rung 0">
 			<action kind="skill" a1="21878" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
+	<npc id="855999" handler="on_wake_up">  <!-- BIDF5_U01_Runaway_As_P1 -->
+		<branch priority="1000" comment="rung 0">
+			<action kind="skill" a1="21779" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="10000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
+	<npc id="856001" handler="on_wake_up">  <!-- BIDF5_U01_Runaway_As_P3 -->
+		<branch priority="1000" comment="rung 0">
+			<action kind="skill" a1="21779" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="10000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
 		</branch>
 	</npc>
 	<npc id="856002" handler="on_wake_up">  <!-- BIDF5_U01_Runaway_As -->
@@ -21214,6 +21287,12 @@
 			<action kind="spawn" a1="236668" a2="1" a3="600" place="absolute" x="1348.0" y="1306.0" z="290.0" />
 			<action kind="spawn" a1="236669" a2="1" a3="600" place="absolute" x="711.0" y="2031.0" z="341.0" />
 			<action kind="spawn" a1="236670" a2="1" a3="600" place="absolute" x="2063.0" y="1630.0" z="355.0" />
+		</branch>
+	</npc>
+	<npc id="856460" handler="on_wake_up">  <!-- IDLegion_Race_Check -->
+		<branch priority="1000" comment="rung 0">
+			<action kind="timer" a1="6000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="var" a1="1" a2="0" a3="0" place="legion_on" x="0.0" y="0.0" z="0.0" />
 		</branch>
 	</npc>
 	<npc id="856461" handler="on_wake_up">  <!-- Legion_Dark_Start_Check -->
@@ -23011,6 +23090,114 @@
 			<action kind="timer" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
 		</branch>
 	</npc>
+	<npc id="217235" handler="on_idle_timer">  <!-- IDForest_Rollingstone_Boss -->
+		<branch priority="5" comment="rung 0">
+			<guard token="set_flag_var:0" />
+			<action kind="say" a1="1500441" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="6000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="4" comment="rung 1">
+			<guard token="set_flag_var:1" />
+			<action kind="say" a1="1500442" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="6000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="3" comment="rung 2">
+			<guard token="set_flag_var:2" />
+			<action kind="say" a1="1500443" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="6000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="2" comment="rung 3">
+			<guard token="unset_flag_var:0" />
+			<guard token="unset_flag_var:1" />
+			<guard token="unset_flag_var:2" />
+			<action kind="timer" a1="60000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="1" comment="rung 4">
+			<guard token="state:route" />
+			<action kind="nothing" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
+	<npc id="217236" handler="on_idle_timer">  <!-- IDForest_Rollingstone_Boss -->
+		<branch priority="5" comment="rung 0">
+			<guard token="set_flag_var:0" />
+			<action kind="say" a1="1500441" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="6000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="4" comment="rung 1">
+			<guard token="set_flag_var:1" />
+			<action kind="say" a1="1500442" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="6000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="3" comment="rung 2">
+			<guard token="set_flag_var:2" />
+			<action kind="say" a1="1500443" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="6000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="2" comment="rung 3">
+			<guard token="unset_flag_var:0" />
+			<guard token="unset_flag_var:1" />
+			<guard token="unset_flag_var:2" />
+			<action kind="timer" a1="60000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="1" comment="rung 4">
+			<guard token="state:route" />
+			<action kind="nothing" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
+	<npc id="217246" handler="on_idle_timer">  <!-- IDForest_Rollingstone_Boss -->
+		<branch priority="5" comment="rung 0">
+			<guard token="set_flag_var:0" />
+			<action kind="say" a1="1500441" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="6000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="4" comment="rung 1">
+			<guard token="set_flag_var:1" />
+			<action kind="say" a1="1500442" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="6000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="3" comment="rung 2">
+			<guard token="set_flag_var:2" />
+			<action kind="say" a1="1500443" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="6000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="2" comment="rung 3">
+			<guard token="unset_flag_var:0" />
+			<guard token="unset_flag_var:1" />
+			<guard token="unset_flag_var:2" />
+			<action kind="timer" a1="60000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="1" comment="rung 4">
+			<guard token="state:route" />
+			<action kind="nothing" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
+	<npc id="217247" handler="on_idle_timer">  <!-- IDForest_Rollingstone_Boss -->
+		<branch priority="5" comment="rung 0">
+			<guard token="set_flag_var:0" />
+			<action kind="say" a1="1500441" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="6000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="4" comment="rung 1">
+			<guard token="set_flag_var:1" />
+			<action kind="say" a1="1500442" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="6000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="3" comment="rung 2">
+			<guard token="set_flag_var:2" />
+			<action kind="say" a1="1500443" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="6000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="2" comment="rung 3">
+			<guard token="unset_flag_var:0" />
+			<guard token="unset_flag_var:1" />
+			<guard token="unset_flag_var:2" />
+			<action kind="timer" a1="60000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="1" comment="rung 4">
+			<guard token="state:route" />
+			<action kind="nothing" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
 	<npc id="217383" handler="on_idle_timer">  <!-- D3_NeM -->
 		<branch priority="3" comment="rung 0">
 			<guard token="set_flag_var:0" />
@@ -24538,6 +24725,51 @@
 			<action kind="var" a1="4" a2="0" a3="0" place="C_WaveReTake_3" x="0.0" y="0.0" z="0.0" />
 			<action kind="var" a1="4" a2="0" a3="0" place="C_WaveReTake_4" x="0.0" y="0.0" z="0.0" />
 			<action kind="timer" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
+	<npc id="701650" handler="on_idle_timer">  <!-- IDF5_U1_CtrlPlay -->
+		<branch priority="10" comment="rung 0">
+			<guard token="is_world_flag_var:9" />
+			<guard token="is_world_flag_var:5" />
+			<guard token="count:0:31:32:1" />
+			<action kind="var" a1="1" a2="0" a3="0" place="C_TimeOver" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="9" comment="rung 1">
+			<guard token="is_world_flag_var:5" />
+			<guard token="is_world_flag_var:9" />
+			<guard token="count:0:31:32:1" />
+			<action kind="sysmsg" a1="1401878" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="var" a1="0" a2="1" a3="0" place="C_Boss" x="0.0" y="0.0" z="0.0" />
+			<action kind="var" a1="2" a2="0" a3="0" place="C_TimeOver" x="0.0" y="0.0" z="0.0" />
+			<action kind="var" a1="2" a2="0" a3="0" place="cBox" x="0.0" y="0.0" z="0.0" />
+			<action kind="var" a1="3" a2="0" a3="0" place="cWeapon" x="0.0" y="0.0" z="0.0" />
+			<action kind="spawn" a1="701645" a2="1" a3="0" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="7" comment="rung 2">
+			<guard token="is_world_flag_var:5" />
+			<guard token="count:0:27:31:1" />
+			<action kind="sysmsg" a1="1401877" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="var" a1="0" a2="1" a3="0" place="C_Boss" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="6" comment="rung 3">
+			<guard token="is_world_flag_var:5" />
+			<guard token="count:0:22:27:1" />
+			<action kind="sysmsg" a1="1401876" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="var" a1="0" a2="1" a3="0" place="C_Boss" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="5" comment="rung 4">
+			<guard token="is_world_flag_var:5" />
+			<guard token="count:0:13:22:1" />
+			<action kind="sysmsg" a1="1401875" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="var" a1="0" a2="1" a3="0" place="C_Boss" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="2" comment="rung 5">
+			<guard token="is_world_flag_var:5" />
+			<guard token="count:0:2:13:1" />
+			<action kind="var" a1="0" a2="1" a3="0" place="C_Boss" x="0.0" y="0.0" z="0.0" />
+			<action kind="var" a1="1" a2="0" a3="0" place="C_Weapon" x="0.0" y="0.0" z="0.0" />
 		</branch>
 	</npc>
 	<npc id="701670" handler="on_idle_timer">  <!-- IDF5_Under_01_PcTank -->
@@ -28604,6 +28836,120 @@
 			<action kind="spawn" a1="855824" a2="1" a3="0" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" />
 		</branch>
 	</npc>
+	<npc id="855991" handler="on_idle_timer">  <!-- BIDF5_U01_Runaway_Wi_P1 -->
+		<branch priority="1000" comment="rung 0">
+			<guard token="chance:33" />
+			<guard token="countby:0:1:0:500:0" />
+			<action kind="timer" a1="10000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="say" a1="1501286" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="990" comment="rung 1">
+			<guard token="chance:33" />
+			<guard token="countby:0:1:0:500:0" />
+			<action kind="timer" a1="10000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="say" a1="1501287" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="980" comment="rung 2">
+			<guard token="countby:0:1:0:500:0" />
+			<action kind="timer" a1="10000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="say" a1="1501288" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
+	<npc id="855993" handler="on_idle_timer">  <!-- BIDF5_U01_Runaway_Wi_P3 -->
+		<branch priority="1000" comment="rung 0">
+			<guard token="chance:33" />
+			<guard token="countby:0:1:0:500:0" />
+			<action kind="timer" a1="10000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="say" a1="1501286" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="990" comment="rung 1">
+			<guard token="chance:33" />
+			<guard token="countby:0:1:0:500:0" />
+			<action kind="timer" a1="10000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="say" a1="1501287" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="980" comment="rung 2">
+			<guard token="countby:0:1:0:500:0" />
+			<action kind="timer" a1="10000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="say" a1="1501288" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
+	<npc id="855995" handler="on_idle_timer">  <!-- BIDF5_U01_Runaway_Pr_P1 -->
+		<branch priority="1000" comment="rung 0">
+			<guard token="chance:33" />
+			<guard token="countby:0:1:0:500:0" />
+			<action kind="timer" a1="10000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="say" a1="1501286" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="990" comment="rung 1">
+			<guard token="chance:33" />
+			<guard token="countby:0:1:0:500:0" />
+			<action kind="timer" a1="10000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="say" a1="1501287" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="980" comment="rung 2">
+			<guard token="countby:0:1:0:500:0" />
+			<action kind="timer" a1="10000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="say" a1="1501288" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
+	<npc id="855997" handler="on_idle_timer">  <!-- BIDF5_U01_Runaway_Pr_P3 -->
+		<branch priority="1000" comment="rung 0">
+			<guard token="chance:33" />
+			<guard token="countby:0:1:0:500:0" />
+			<action kind="timer" a1="10000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="say" a1="1501286" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="990" comment="rung 1">
+			<guard token="chance:33" />
+			<guard token="countby:0:1:0:500:0" />
+			<action kind="timer" a1="10000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="say" a1="1501287" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="980" comment="rung 2">
+			<guard token="countby:0:1:0:500:0" />
+			<action kind="timer" a1="10000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="say" a1="1501288" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
+	<npc id="855999" handler="on_idle_timer">  <!-- BIDF5_U01_Runaway_As_P1 -->
+		<branch priority="1000" comment="rung 0">
+			<guard token="chance:33" />
+			<guard token="countby:0:1:0:500:0" />
+			<action kind="timer" a1="10000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="say" a1="1501286" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="990" comment="rung 1">
+			<guard token="chance:33" />
+			<guard token="countby:0:1:0:500:0" />
+			<action kind="timer" a1="10000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="say" a1="1501287" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="980" comment="rung 2">
+			<guard token="countby:0:1:0:500:0" />
+			<action kind="timer" a1="10000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="say" a1="1501288" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
+	<npc id="856001" handler="on_idle_timer">  <!-- BIDF5_U01_Runaway_As_P3 -->
+		<branch priority="1000" comment="rung 0">
+			<guard token="chance:33" />
+			<guard token="countby:0:1:0:500:0" />
+			<action kind="timer" a1="10000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="say" a1="1501286" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="990" comment="rung 1">
+			<guard token="chance:33" />
+			<guard token="countby:0:1:0:500:0" />
+			<action kind="timer" a1="10000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="say" a1="1501287" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="980" comment="rung 2">
+			<guard token="countby:0:1:0:500:0" />
+			<action kind="timer" a1="10000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="say" a1="1501288" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
 	<npc id="856028" handler="on_idle_timer">  <!-- IDTiamat_Hard_Tiamat_Dragon -->
 		<branch priority="8" comment="rung 0">
 			<guard token="set_world_flag_var:5" />
@@ -29443,6 +29789,42 @@
 	<npc id="856450" handler="on_idle_timer">  <!-- F4_Rotation_Treasure_Ctrl_04 -->
 		<branch priority="5" comment="rung 0">
 			<action kind="despawn_self" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
+	<npc id="856460" handler="on_idle_timer">  <!-- IDLegion_Race_Check -->
+		<branch priority="1100" comment="rung 0">
+			<guard token="set_flag_var:0" />
+			<action kind="timer" a1="56000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="sysmsg" a1="1402863" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="1000" comment="rung 1">
+			<guard token="set_flag_var:1" />
+			<action kind="timer" a1="60000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="sysmsg" a1="1402864" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="900" comment="rung 2">
+			<guard token="set_flag_var:2" />
+			<action kind="timer" a1="30000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="sysmsg" a1="1402865" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="800" comment="rung 3">
+			<guard token="set_flag_var:3" />
+			<action kind="timer" a1="30000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="sysmsg" a1="1402866" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="700" comment="rung 4">
+			<guard token="set_flag_var:4" />
+			<guard token="race:TargetRace:ASMODIANS" />
+			<action kind="var" a1="-1" a2="0" a3="0" place="legion_on" x="0.0" y="0.0" z="0.0" />
+			<action kind="var" a1="1" a2="0" a3="0" place="race_dark" x="0.0" y="0.0" z="0.0" />
+			<action kind="spawn" a1="856461" a2="1" a3="0" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="690" comment="rung 5">
+			<guard token="set_flag_var:5" />
+			<guard token="race:TargetRace:ELYOS" />
+			<action kind="var" a1="-1" a2="0" a3="0" place="legion_on" x="0.0" y="0.0" z="0.0" />
+			<action kind="var" a1="1" a2="0" a3="0" place="race_light" x="0.0" y="0.0" z="0.0" />
+			<action kind="spawn" a1="855955" a2="1" a3="0" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" />
 		</branch>
 	</npc>
 	<npc id="856461" handler="on_idle_timer">  <!-- Legion_Dark_Start_Check -->
