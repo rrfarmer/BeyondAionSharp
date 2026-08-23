@@ -69,7 +69,9 @@ public class SpawnEngine
         return NewSpawn(worldId, npcId, x, y, z, heading, 0, 0, null, null);
     }
 
-    public static SpawnTemplate NewSingleTimeSpawn(int worldId, int npcId, float x, float y, float z, byte heading, VisibleObject creator, string aiName)
+    // `creator` is nullable and always was: the two lines below null-check it, and the harness has
+    // passed null since spawn-with-ai was added. The signature simply did not say so.
+    public static SpawnTemplate NewSingleTimeSpawn(int worldId, int npcId, float x, float y, float z, byte heading, VisibleObject? creator, string aiName)
     {
         int creatorId = creator == null ? 0 : creator.GetObjectId();
         EventTemplate eventTemplate = creator == null || creator.GetSpawn() == null ? null : creator.GetSpawn().GetEventTemplate();
