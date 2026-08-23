@@ -1,4 +1,8 @@
-"""Transcribe death_spawns.tsv into DeathSpawns.g.cs. See extract_death_spawns.py for the claim."""
+"""Transcribe death_spawns.tsv into pattern_tables/death_spawns.xml.
+
+See extract_death_spawns.py for the claim, and PatternTableLoader for how a stored token becomes
+the guard or action a PatternAi runs.
+"""
 from __future__ import annotations
 
 import argparse

@@ -40324,3 +40324,64 @@ pass.
 5. `random_move` (187); abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
    `switch_target_by_class_indicator` (53).
 6. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** — boundaries, not backlog.
+
+## A pass over the docs, and one claim the last change broke
+
+Housekeeping after the tables left C#, plus the stale-claim audit run over the result. Two of the four
+things it found were real.
+
+### What was simply out of date
+
+The four emitters still said in their first line that they write `BattleCycles.g.cs`,
+`DeathSpawns.g.cs`, `GuardAnswers.g.cs` and — older still — `PassivePatterns.cs`, a name that stopped
+being true long before this. `regen_check.py` described the pipeline as ending in "generated C# in
+`src/`". All now name the XML they actually write.
+
+`CLAUDE.md` gained the three retail-AI locations: the log to read first, the generated data, and the
+extractors. Somebody arriving at this project had no pointer to any of it from the file they are told
+to read.
+
+### The fidelity gate's two exemptions are written down now
+
+`docs/parity-verification.md` states the banned-vocabulary rule and said nothing about the two ways a
+name can be exempt, both of which are enforced in code rather than by judgement:
+
+* **A banned word inside a place name Java itself uses.** `OphidanBridgeCallAI` is Ophidan Bridge, and
+  Java has `OphidanBridgeInstance`; `PlanExecutor` still fails because nothing in Java starts with
+  `Plan`.
+* **`*.g.cs`.** Nothing uses it today — the tables that needed it are data now and no `.g.cs` remains —
+  but it is the gate's own escape hatch and worth knowing about before reaching for a baseline entry.
+
+The note also now says what that gate is *for*: it was written for the Java → C# port, and
+retail-sourced AI deliberately has no Java counterpart.
+
+### The claim the marker-clock change broke
+
+`NagaSubordinateAI` carried this:
+
+> **A subordinate that never joined the fight is never dismissed**, because retail hangs the fuse on a
+> battle timer and battle timers do not tick outside combat. Kept as written: our runtime has the same
+> rule for the same reason.
+
+**Both halves were false, and the second became false last entry.** `IDTP_Web` arms two battle timers
+from `on_wake_up` on an npc that never fights, so retail does tick them outside combat; and this
+runtime's refusal to fire them was the port-side gate that stopped every marker's clock, now removed.
+
+So the behaviour changed: a subordinate that never engaged now runs its fuse and is dismissed, which is
+what retail's timer does. **That is the shape of thing worth catching.** Removing a gate in the engine
+quietly altered an encounter three files away, and the only trace was a comment asserting the opposite.
+
+### Still missing, in order
+
+1. **The sweep's target.** Retail's two-metre sweep measures against `OBJI_CUR_TARGET`, and a web here
+   never acquires a current target — `SetTarget` does not stick on it. The sight path is pinned; the
+   sweep path is built, reachable and **unverified**.
+2. **Every other marker that arms a clock on waking** now runs it for the first time. The naga
+   subordinate above is one such encounter found by accident; nobody has gone looking for the rest.
+   The suite is green, which is evidence and not proof.
+3. **The other 65 move-rung patterns**; **the runner encounter** (no spawn rows, no routes);
+   **Kaidan's low-health rung**; **the 18 `--implemented` candidates**; **the guards' two broadcasts**.
+4. `control_door` (691); `enable_area` (575); `change_world_scene_status` (101).
+5. `random_move` (187); abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
+   `switch_target_by_class_indicator` (53).
+6. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** — boundaries, not backlog.

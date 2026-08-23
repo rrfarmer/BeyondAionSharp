@@ -46,6 +46,9 @@ when it lives elsewhere.
 | **C# port** | repository root (solution `AionServer.slnx`, target `net10.0`) |
 | Authoritative parity backlog | `docs/Full-Parity-Backlog.md` — read before doing parity work |
 | Upstream update queue | `docs/upstream-port-log.md` and `docs/upstream-porting.md` |
+| Retail AI log (read before NPC AI work) | `docs/retail-ai-fidelity.md` |
+| Retail AI data (generated, do not hand-edit) | `game-server/data/static_data/pattern_tables/*.xml`, `.../guard_answers/` |
+| Retail AI extractors and emitters | `tools/client-extract/` — `regen_check.py` runs the whole pipeline |
 | Run / DB / setup guide | `RUNNING.md` |
 
 ## Build & test (C#)

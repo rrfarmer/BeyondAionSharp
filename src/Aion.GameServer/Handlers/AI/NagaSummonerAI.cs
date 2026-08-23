@@ -210,9 +210,12 @@ public class NagaSummonerAI : PatternAi
 /// own summons on the way past forty. The cast is the animation; the despawn is the mechanic.
 /// </para>
 /// <para>
-/// <b>A subordinate that never joined the fight is never dismissed</b>, because retail hangs the fuse on
-/// a battle timer and battle timers do not tick outside combat. Kept as written: our runtime has the
-/// same rule for the same reason, and the case barely arises when the summons land on a player.
+/// <b>A subordinate that never joined the fight is dismissed anyway</b>, and this paragraph used to say
+/// the opposite. It claimed retail hangs the fuse on a battle timer and that battle timers do not tick
+/// outside combat, in retail or here. Neither half was true: <c>IDTP_Web</c> arms two battle timers
+/// from <c>on_wake_up</c> on an npc that never fights anybody, and this runtime's own refusal to fire
+/// them outside <c>FIGHT</c> was a port-side gate that stopped every marker's clock. The gate is gone,
+/// so the fuse now runs on a subordinate that never engaged — which is what retail's timer does.
 /// </para>
 /// </remarks>
 [AIName("naga_subordinate")]

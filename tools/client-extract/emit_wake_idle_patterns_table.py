@@ -1,4 +1,8 @@
-"""Transcribe wake_idle_patterns.tsv into PassivePatterns.cs. See extract_wake_idle_patterns.py."""
+"""Transcribe wake_idle_patterns.tsv into pattern_tables/wake_idle_patterns.xml.
+
+See extract_wake_idle_patterns.py for the claim. Two handlers share this file and an npc may
+appear under both, so each element names its own.
+"""
 from __future__ import annotations
 
 import argparse

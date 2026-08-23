@@ -26,6 +26,13 @@ The C# must mirror the Java structure. Answer before committing:
 
 1. **1:1 shape?** One Java file → one C# file; class→class, method→method, same names (idiomatic casing), same guard/early-return order.
 2. **No invented abstraction?** No type/layer that has no Java counterpart. A Java private method stays a private method — it does not become its own service+test. Banned vocabulary unless Java has it: `Plan`, `Bridge`, `Adapter`, `Composition`, `Outcome`, `Integration`, `Owner`, `Policy`, `Executor`, `Projection`, `Snapshot`, `Preview`, `Fact`.
+
+   **Two exemptions, both enforced by `scripts/parity/check_fidelity.py` rather than by judgement:**
+
+   - *A banned word that is part of a place name Java itself uses.* `OphidanBridgeCallAI` is named after Ophidan Bridge, and Java has `OphidanBridgeInstance`. The check accepts a banned token when the name up to and including it prefixes a real Java class name, so `OphidanBridge…` passes and `PlanExecutor` still fails — nothing in Java starts with `Plan`.
+   - *Generated files.* `*.g.cs` is skipped entirely. Nothing in the port uses this today: the retail pattern tables that once needed it are data now (see below), and no `.g.cs` files remain.
+
+   Note the scope of this gate. It was written for the **Java → C# port**, where every C# file should mirror a Java one. Retail-sourced NPC AI deliberately goes beyond what aionemu has and therefore has no Java counterpart by design — see `CLAUDE.md`'s sanctioned exception and `docs/retail-ai-fidelity.md`.
 3. **Packets in their own classes?** One C# class per Java `CM_*`/`SM_*`; no packet logic added to `GameServerConnection.cs`.
 4. **Net structure reduced or matched?** Remediation deletes the slop it replaces. The unit must not increase divergence from Java.
 5. **Breadcrumb present?** `// Java parity: path::method` on ported methods.

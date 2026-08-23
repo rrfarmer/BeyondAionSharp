@@ -1,4 +1,8 @@
-"""Transcribe battle_cycles.tsv into BattleCycles.g.cs. See extract_battle_cycles.py for the claim."""
+"""Transcribe battle_cycles.tsv into pattern_tables/battle_cycles.xml.
+
+See extract_battle_cycles.py for the claim, and PatternTableLoader for how a stored token becomes
+the guard or action a PatternAi runs.
+"""
 from __future__ import annotations
 
 import argparse

@@ -1,4 +1,8 @@
-"""Transcribe guard_answers.tsv into GuardAnswers.g.cs. See extract_guard_answers.py for the claim."""
+"""Transcribe guard_answers.tsv into guard_answers/guard_answers.xml.
+
+See extract_guard_answers.py for the claim, and GuardAnswerData for how it is read. This table is
+plain data: GuardAnswers builds the rungs from it at runtime rather than storing branches.
+"""
 from __future__ import annotations
 
 import argparse

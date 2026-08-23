@@ -3,7 +3,7 @@
 
 WHY THIS EXISTS
 ---------------
-Five scripts here write tables into `out/`, which are then emitted as generated C# and shipped. All
+Five scripts here write tables into `out/`, which are then emitted as data and shipped. All
 five are invoked by hand, and nothing re-runs them. So a script can stop working and stay broken:
 
 > `extract_gate_squads.py` raised `ValueError: too many values to unpack` on **every** run for as long
@@ -29,7 +29,8 @@ It cannot tell you which. It tells you the three files that need looking at inst
 
 BOTH HALVES OF THE PIPELINE
 ---------------------------
-The patterns become a `.tsv` in `out/`, and the `.tsv` becomes generated C# in `src/`. Checking only the
+The patterns become a `.tsv` in `out/`, and the `.tsv` becomes XML under
+`game-server/data/static_data/`. Checking only the
 first half leaves the case where a table is correct and the C# beside it is stale -- which is the more
 dangerous of the two, because the `.tsv` is a working file and the `.cs` is what actually ships.
 
