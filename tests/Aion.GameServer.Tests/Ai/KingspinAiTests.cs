@@ -28,6 +28,11 @@ public sealed class KingspinAiTests
 
 	/// <summary><c>BNWI_Root_Spider</c> — <c>SKILLI_INDEX_0</c> for the web, and the point of a web.</summary>
 	private const int WebRoot = 18607;
+
+	/// <summary>The web's own slots, as <see cref="KingspinWebAI"/> numbers them.</summary>
+	private const int WebSettle = 0;
+	private const int WebSweep = 1;
+	private const int WebArmed = 1;
 	private const int Web = 281391;
 
 	private static BossAiHarness NewHarness() =>
@@ -209,6 +214,70 @@ public sealed class KingspinAiTests
 
 		Assert.Same(onIt, ((Aion.GameServer.Ai.Pattern.PatternAi)near.GetAi()).CurrentTarget);
 		Assert.Null(((Aion.GameServer.Ai.Pattern.PatternAi)far.GetAi()).CurrentTarget);
+	}
+
+	/// <summary>
+	/// <b>A web clipped by somebody's area skill still goes.</b> The eight-second fuse that removes a
+	/// web is a battle timer, and being hit is enough to put an NPC in combat — so a stray hit followed
+	/// by the raid moving on used to cancel the fuse and leave the web standing in the room forever.
+	/// </summary>
+	/// <remarks>
+	/// Kingspin throws webs into a raid at a player's feet, which is exactly where area skills land, so
+	/// this is the ordinary case rather than a corner of one. What made it invisible is that a web is a
+	/// two-metre prop: a room slowly filling with them reads as scenery.
+	/// </remarks>
+	[Fact]
+	public void AWebClippedByAnAreaSkillStillGoes()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc web = harness.Spawn(Web, 300f, 300f, 200f);
+		Player raider = harness.SpawnPlayer(360f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(web, raider);
+
+		// Clipped from across the room, then nobody comes for it.
+		BossAiHarness.Wound(web, raider);
+		web.GetAi().OnGeneralEvent(AiEventType.BACK_HOME);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(9));
+
+		Assert.DoesNotContain(web, harness.LiveNpcs());
+	}
+
+	/// <summary>
+	/// <b>And a stray hit no longer disarms it.</b> A web arms its sweep by <em>consuming</em> the flag
+	/// it set on waking, so anything that clears that flag disarms the trap permanently — and going home
+	/// used to clear every flag an NPC held, whether the fight had set it or not.
+	/// </summary>
+	/// <remarks>
+	/// This stops at "the sweep is armed" rather than "somebody is rooted", and the line is deliberate.
+	/// Whether the sweep finds anybody depends on the web holding a target, and an NPC that has just gone
+	/// home has dropped its aggro list — in the room it re-aggros whoever is standing on it, which is
+	/// what makes it a trap, but re-aggro is the aggro tick's job and not this engine's. What belongs
+	/// here is that the clock and the flag both survived the hit, which is the part that was broken.
+	/// <para>
+	/// <see cref="AWebRootsWhoeverItCatches"/> pins the rest of the chain on a web nobody hit.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AStrayHitNoLongerDisarmsAWeb()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc web = harness.Spawn(Web, 300f, 300f, 200f);
+		Player ranged = harness.SpawnPlayer(360f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(web, ranged);
+		var ai = (Aion.GameServer.Ai.Pattern.PatternAi)web.GetAi();
+
+		// Clipped from across the room, and it goes home without ever reaching anybody.
+		BossAiHarness.Wound(web, ranged);
+		web.GetAi().OnGeneralEvent(AiEventType.BACK_HOME);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+		Assert.True(ai.IsFlagSet(WebArmed), "the hit cleared the flag the web arms its sweep with");
+
+		// The settle timer at 2.5s consumes that flag and arms the sweep.
+		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+		Assert.True(ai.TimerFireCount(WebSettle) > 0, "the settle timer was cancelled by the hit");
+		Assert.True(ai.TimerArmCount(WebSweep) > 0, "the web never armed its sweep");
 	}
 
 	/// <summary>Untouched he throws nothing — everything hangs off entering the fight.</summary>

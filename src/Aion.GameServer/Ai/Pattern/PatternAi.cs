@@ -51,7 +51,40 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
 
     private readonly ScheduledTask?[] timers = new ScheduledTask?[TimerSlots];
     private readonly bool[] flags = new bool[FlagSlots];
+
+    /// <summary>Whether the NPC was in combat at the moment each flag var was set.</summary>
+    /// <remarks>
+    /// The same rule as <see cref="timerFromCombat"/>, for the same reason: leaving a fight clears the
+    /// state the fight created and leaves the state the NPC arrived with. A boss's ladder steps are set
+    /// during the fight, so a re-pull still replays them from the top; a marker's "I have settled" flag
+    /// is set on waking, so a stray hit no longer erases it.
+    /// <para>
+    /// <b>Counters are still cleared outright</b>, and that asymmetry is deliberate rather than
+    /// overlooked: no encounter has been found that needs otherwise, and a counter has six write paths
+    /// to the flag's one. Recorded in <c>docs/retail-ai-backlog.md</c>.
+    /// </para>
+    /// </remarks>
+    private readonly bool[] flagFromCombat = new bool[FlagSlots];
     private readonly long[] timerDue = new long[TimerSlots];
+
+    /// <summary>Whether the NPC was in combat at the moment each slot was armed.</summary>
+    /// <remarks>
+    /// This is what tells a fight's clock from the NPC's own. <see cref="ResetPattern"/> ends a fight,
+    /// and ending a fight should stop what the fight started -- not a clock the NPC set running before
+    /// anybody touched it.
+    /// <para>
+    /// Recorded rather than inferred from the handler. Classifying handlers was tried on paper and does
+    /// not survive contact: <c>on_stop_to_flee</c> arms 123 of the 266 out-of-combat-looking clocks in
+    /// this port's tables and always runs mid-fight, so a static split would spare exactly the clocks it
+    /// should cancel. Reading <c>inCombat</c> at the moment of arming cannot be wrong about it.
+    /// </para>
+    /// <para>
+    /// Bosses are untouched by this and provably so: every boss clock is armed from
+    /// <c>on_enter_attack_state</c> or from an <c>on_battle_timer</c> chain inside the fight, so every
+    /// one of them is recorded as the fight's and cancelled exactly as before.
+    /// </para>
+    /// </remarks>
+    private readonly bool[] timerFromCombat = new bool[TimerSlots];
 
     /// <summary>How many times each slot has been armed and has fired. **Diagnostics only.**</summary>
     /// <remarks>
@@ -396,13 +429,19 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         // Java this is ported from -- it sets `AIState.IDLE`.
         Evaluate(Pattern.OnLeaveReturning);
 
-        // **Only if there was a fight to end.** `ResetPattern` wipes a fight's state -- every battle
-        // timer, the pending spawns, the flee -- and an npc reaches "back home" the moment it settles
-        // after spawning, having never fought anybody. Running it there cancelled the battle timers
-        // retail arms in `on_wake_up` before any of them could fire.
+        // **Only if there was a fight to end.** `ResetPattern` wipes a fight's state -- the pending
+        // spawns, the flee, the clocks the fight armed -- and an npc reaches "back home" the moment it
+        // settles after spawning, having never fought anybody.
+        //
+        // **And it leaves the clocks the fight did not arm.** Being hit is enough to put an npc in
+        // combat, so a marker clipped by somebody's area skill and then left alone came through here
+        // and lost the clocks it started on waking. Kingspin's webs are the case: a web caught by a
+        // stray hit stopped rooting anybody *and never despawned*, because the eight-second fuse that
+        // removes it is one of those clocks. Retail cancels no timer anywhere -- there is no such
+        // action in its vocabulary -- so cancelling only what the fight armed is the narrower reading.
         if (inCombat)
         {
-            ResetPattern();
+            ResetPattern(resettingEverything: false);
         }
 
         base.HandleBackHome();
@@ -595,19 +634,36 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// something else has removed the NPC.
     /// </para>
     /// </remarks>
-    private void ResetPattern()
+    private void ResetPattern(bool resettingEverything = true)
     {
         List<Npc> leaving;
         lock (gate)
         {
             inCombat = false;
             for (int i = 0; i < timers.Length; i++)
-                CancelSlot(i);
+            {
+                // Leaving a fight stops the fight's clocks. Ending the NPC stops all of them: a
+                // pending task on an NPC that is gone is a leak, and `FireTimer` would only find it
+                // dead anyway. See `timerFromCombat` for why this is recorded and not inferred.
+                if (resettingEverything || timerFromCombat[i])
+                {
+                    CancelSlot(i);
+                    timerFromCombat[i] = false;
+                }
+            }
             if (idleTimer != null && !idleTimer.IsDone())
                 idleTimer.Cancel(true);
             idleTimer = null;
             CancelFlee();
-            Array.Clear(flags);
+            for (int i = 0; i < flags.Length; i++)
+            {
+                if (resettingEverything || flagFromCombat[i])
+                {
+                    flags[i] = false;
+                    flagFromCombat[i] = false;
+                }
+            }
+
             Array.Clear(counters);
             leaving = new List<Npc>(transientSpawns);
             transientSpawns.Clear();
@@ -1271,6 +1327,7 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
                 return;
             timerDue[index] = dueAt;
             timerArms[index]++;
+            timerFromCombat[index] = inCombat;
             CancelSlot(index);
             timers[index] = ThreadPoolManager.GetInstance().Schedule(_ =>
             {
@@ -1344,6 +1401,7 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
             if (flags[flag])
                 return false;
             flags[flag] = true;
+            flagFromCombat[flag] = inCombat;
             return true;
         }
     }

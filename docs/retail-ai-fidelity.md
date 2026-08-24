@@ -40494,3 +40494,69 @@ of these — but nothing needs walking through, and the item is closed.
 4. The small refusal tail: `random_move` 29, `switch_target_by_class_indicator` 9, `control_door` 9,
    `is_in_abnormal_state` 9, and ones and twos below that.
 5. **Boundaries, not backlog** — see `docs/retail-ai-backlog.md`.
+
+## A fight's clocks end with the fight; the NPC's own do not
+
+**The candidate fix written in the backlog was wrong, and wrong in a way worth recording.** It said
+`ResetPattern` exists to stop a rotation and "a web has none -- its pattern carries no `Cycle` rungs".
+There is no `Cycle` slot in the pattern engine at all; the name came from the battle *table*. And the
+web's three branches live in `OnBattleTimer`, the same slot a boss's rotation uses. The discriminator
+it named does not exist and the property it assumed is false. That is three narrowings attempted in
+this area and two of them wrong, which is the argument for measuring rather than reasoning.
+
+### What the bug actually is
+
+Not what the backlog said either. The backlog had a web aggroing whoever steps on it and being sent
+home when they step off. `inCombat` is set in exactly one place -- `HandleAttack`, via
+`CreatureController.OnAttack` -- so what puts a web in combat is **being hit**. A web is
+`type="MONSTER"` with an hpgauge, thrown at a player's feet, in a raid. Area skills land there.
+
+So: a stray hit puts the web in combat, the raid moves on, the web goes home, and `ResetPattern`
+cancels every clock it holds. One of those is the eight-second fuse that despawns it. **The web never
+leaves the room.** That is the part nobody noticed, because a two-metre prop accumulating in a boss
+room reads as scenery. Reproduced before anything was changed; both halves failed.
+
+### The rule
+
+Retail settles this: there is **no timer-cancelling action anywhere in its vocabulary**. 55,894 timer
+references across the dump, 31,442 of them `add_battle_timer`, and nothing that stops one. Retail arms
+battle timers in `on_wake_up` (13 patterns) and in `on_die` (one real pattern, plus two in NCSoft's own
+`TEST_TAIKEN`), both outside any fight. `on_leave_attack_state` arms none.
+
+Cancelling nothing is not an option here -- a boss that has gone home must stop casting -- so the rule
+is the narrowest one that keeps bosses intact:
+
+> Leaving a fight resets what the fight created. It leaves what the NPC arrived with.
+
+Recorded, not inferred. `timerFromCombat[i]` and `flagFromCombat[i]` are written at the moment the slot
+is armed or the flag is set, from `inCombat`. **Classifying handlers was tried on paper first and does
+not survive contact:** of the 266 npcs in this port's tables that arm a clock from an
+out-of-combat-looking handler, **123 are `on_stop_to_flee`**, which only ever runs mid-fight. A static
+split would have spared exactly the clocks it should cancel. Reading the flag at arming time cannot be
+wrong about it.
+
+Death and despawn still wipe everything: a pending task on an NPC that is gone is a leak, and
+`FireTimer` would only find it dead.
+
+### What it costs
+
+Nothing measurable, and that is checkable rather than hopeful. **Every boss clock is armed from
+`on_enter_attack_state` or from an `on_battle_timer` chain inside the fight**, so every one is recorded
+as the fight's and cancelled exactly as before. The full suite passed with **no pin changed** ---
+including `AdjutantAnuhartAiTests`, which pins that going home resets the ladder so a re-pull replays
+the phases from the top. Ladder steps are set during the fight, so they are still cleared. That pin was
+the reason for doing flags by attribution instead of by removal.
+
+**Counters are still cleared outright.** No encounter has been found that needs otherwise, and a
+counter has six write paths to the flag's one. Recorded in the backlog rather than done speculatively.
+
+### Where the pins stop
+
+`AWebClippedByAnAreaSkillStillGoes` is the whole bug: hit, abandoned, and gone at eight seconds.
+
+`AStrayHitNoLongerDisarmsAWeb` stops at *the sweep is armed* rather than *somebody is rooted*, and the
+line is deliberate. Whether the sweep finds anybody depends on the web holding a target, and an NPC
+that has just gone home has dropped its aggro list. In the room it re-aggros whoever stands on it --
+that is what makes it a trap -- but re-aggro is the aggro tick's job, not this engine's. Asserting
+through it would have pinned the harness. The diagnostics confirmed the chain end to end before the
+assertion was narrowed to what belongs here: flag survived, settle fired, sweep armed.

@@ -69,8 +69,12 @@ everything else is ordinary work.
 
 ## C. Engine-level, and the theme worth a deliberate pass
 
-**Marker NPCs collide with combat machinery built for bosses.** Three encounters have now hit this and
-it is one underlying problem, not three:
+**Marker NPCs collide with combat machinery built for bosses.** Three encounters hit this and it was
+one underlying problem, not three. **Two of the three are now closed**; what is left is (2) below.
+
+The shape worth carrying forward: this machinery assumes an NPC that fights, and a marker is an NPC
+that merely *can be hit*. Being hit is enough to enter combat, and everything downstream then treats
+the marker as a boss that has finished a fight.
 
 1. **Marker clocks** — an npc that never fights had its `on_wake_up` timers cancelled on settling, and
    any survivor refused outside `FIGHT`. **Fixed, and now reviewed.** The change was recorded as broad
@@ -82,14 +86,18 @@ it is one underlying problem, not three:
    through.
 2. **`NagaSubordinateAI`** — a subordinate that never engaged is now dismissed by its fuse. Found by
    accident, via a comment asserting the opposite. *Correct, and unreviewed.*
-3. **Kingspin's web sweep** — a web aggros whoever steps on it, and stepping back out sends it home,
-   which resets the pattern and cancels the flag and both clocks, fuse included. So the two-metre sweep
-   can never fire. *Open.*
+3. **Kingspin's web sweep** — **fixed.** The diagnosis in this file was wrong twice: what puts a web
+   in combat is *being hit*, not aggro (`inCombat` is set only in `HandleAttack`), and the fix named
+   here — "a web has no `Cycle` rungs" — pointed at a slot the engine does not have. The real bug was
+   larger: a web clipped by a stray area skill lost the eight-second fuse that despawns it, so **it
+   never left the room**. `ResetPattern` now resets what the fight created and leaves what the npc
+   arrived with, recorded per slot at arming time. Retail cancels no timer anywhere. Cost: no pin
+   changed, suite green. See the log entry *A fight's clocks end with the fight*.
 
-Candidate fix for (3), unmeasured: `ResetPattern` exists to stop a rotation, and a web has none — its
-pattern carries no `Cycle` rungs. "Reset only what has a rotation to stop" is decidable from the
-pattern and would spare markers while leaving bosses alone. Two gates have already been narrowed here
-and one of the two narrowings was wrong, so measure before trusting it.
+**Still open from (3):** counters are cleared outright on going home, while timers and flags are now
+cleared by attribution. No encounter has been found that needs the counter half, and a counter has six
+write paths to the flag's one — so it was left rather than done speculatively. If an encounter turns up
+where an npc's out-of-combat counter is wiped by a stray hit, the change is the same three lines.
 
 ## D. Encounters and hygiene
 
