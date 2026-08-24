@@ -38,6 +38,8 @@ internal static class StaticTableFixture
             StaticData staticData = (StaticData)RuntimeHelpers.GetUninitializedObject(typeof(StaticData));
             Set(staticData, nameof(StaticData.GuardAnswerDataDh),
                 Load<GuardAnswerData>("guard_answers", "guard_answers.xml"));
+            Set(staticData, nameof(StaticData.SkillCategoryDataDh),
+                Load<SkillCategoryData>("skills", "retail_skill_categories.xml"));
             Set(staticData, nameof(StaticData.DeathSpawnTableDh),
                 Load<PatternTableData>("pattern_tables", "death_spawns.xml"));
             Set(staticData, nameof(StaticData.WakeIdleTableDh),

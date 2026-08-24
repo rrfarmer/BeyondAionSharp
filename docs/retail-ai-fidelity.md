@@ -40758,3 +40758,69 @@ refused whole for their cast, so their guards had never been read either.
 **Next by this ranking:** `is_event_skill_category` on `on_friend_spelled`, 11 patterns and 147 npcs.
 Retail asks four categories --- `PHYSICAL_DEBUFF`, `MENTAL_DEBUFF`, `HEAL`, `CHAIN_SKILL` --- and
 `When.EventSkill` currently matches a skill id rather than a category, so it needs a category source.
+
+## A skill's category, which this port had no source for
+
+Top of the npc-ranked list after the last pass: `is_event_skill_category` on `on_friend_spelled`, 11
+patterns and **147 npcs**. A support npc watching for its friend to be debuffed or healed, answering
+the *kind* of skill rather than its id.
+
+### The port cannot derive it, and not by a small margin
+
+The obvious shortcut is to map this port's `skilltype`/`skillsubtype` onto retail's four category
+names. Measured against retail's own field, it does not survive contact:
+
+| retail category | what this port says |
+|---|---|
+| `PHYSICAL_DEBUFF` (324 known here) | **159 are `skilltype="MAGICAL"`**, only 119 `PHYSICAL` |
+| `MENTAL_DEBUFF` (81) | 63 are `MAGICAL`/`DEBUFF` — but that signature is **1,382 skills here, of which 1,248 have no retail category at all** |
+| `HEAL` (349) | 307 `MAGICAL`/`HEAL`, and that signature is 604 skills, half of them uncategorised |
+| `CHAIN_SKILL` (1,203) | splits across four signatures, none of them distinctive |
+
+Every port signature is dominated by `SKILLCTG_NONE`. The words do not even agree: retail's *physical*
+debuff is mostly this port's *magical*. So the field is ported from retail's `skill_base.xml`, which
+names it outright, rather than inferred.
+
+### Two things already existed and one of them is a trap
+
+`SkillEngine.Model.SkillCategory` was **already there**, Java parity, with retail's exact names. A
+duplicate enum was written and deleted; the existing one is used.
+
+`SkillTemplate` also already has a `skill_category` attribute — and **not one of the 13,570 rows in
+`skill_templates.xml` sets it**, here or in the Java this came from, so `GetSkillCategory()` answers
+`NONE` for every skill in the game. That is now said in a remark on the field, because a field that
+looks answerable and never is will be read by somebody.
+
+The retail categories are held apart in `skills/retail_skill_categories.xml` rather than merged into
+`skill_templates.xml`, for the reason `retail_autonomous.xml` gives for the same choice: that file is
+aionemu's, and a generated pass over it is lost or fought at the next upstream port.
+
+2,052 skills carry a category; the other 12,341 are `SKILLCTG_NONE` and are dropped, so "not listed"
+and "no category" are the same statement and answer the same way. 167 lines, grouped by category
+rather than 2,052 rows of one id each.
+
+### One pattern lost, and the mechanism is worth knowing
+
+`Krall_WnH` went from taken to refused, and it is not a regression in the change: it is
+**`no npc here whose skill list answers the indices` going 35 -> 36**. Its `on_spelled` handler used
+to be dropped whole for the unreadable condition, so the skill indices inside it were never required.
+Reading the handler *raises the bar*, and the one npc bound to the pattern (285097) cannot answer the
+fuller index set, so it is dropped and the pattern has nobody left.
+
+**285097 is not spawned in this port**, so nothing in play changes. But the mechanism generalises:
+teaching the extractor a new condition can cost a pattern, because a handler that was skipped no
+longer is. The narrower rule — drop the *handler* rather than the *npc* when the unanswerable index
+is only used in a best-effort handler — is a real improvement and is left in the backlog rather than
+done here, because it changes a rule 203 npcs already sit behind.
+
+### What it was worth
+
+Dropped arming handlers **637 -> 589**. Patterns 3,963 -> 3,962 and npcs 30,198 -> 30,197, both from
+the one lost pattern above; actions 327,118 -> 327,959.
+
+Four pins added, including the negative ones that matter: a skill in no category answers `NONE` rather
+than the nearest thing, and `PHYSICAL_DEBUFF` is pinned as *mostly not* this port's `PHYSICAL`, so the
+derive-it shortcut is refuted in the suite rather than only in a comment.
+
+The harness gained the holder, which its inventory pin caught and named — that pin exists so a new
+holder is a deliberate line rather than a silent dependency.

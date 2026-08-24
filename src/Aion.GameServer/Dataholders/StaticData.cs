@@ -233,6 +233,8 @@ public sealed partial class StaticData
 
 	public GuardAnswerData GuardAnswerDataDh { get; private set; } = new();
 
+	public SkillCategoryData SkillCategoryDataDh { get; private set; } = new();
+
 	public PatternTableData DeathSpawnTableDh { get; private set; } = new();
 
 	public PatternTableData WakeIdleTableDh { get; private set; } = new();
@@ -370,6 +372,9 @@ public sealed partial class StaticData
 		// expects every file under it to be an <ai_templates> root -- dropping a different root in
 		// there fails the merge and takes the whole DataManager down with it.
 		GuardAnswerDataDh = TryLoadHolder(GuardAnswerDataDh, Path.Combine(staticDataDirectory, "guard_answers", "guard_answers.xml"), logger);
+		// <skill_categories> root (single file): retail's own skill_category field, which this port
+		// has no other source for. No Java counterpart. Feeds DataManager.SKILL_CATEGORY_DATA.
+		SkillCategoryDataDh = TryLoadHolder(SkillCategoryDataDh, Path.Combine(staticDataDirectory, "skills", "retail_skill_categories.xml"), logger);
 		// <pattern_table> roots (one file per table): retail's pattern branches, which used to be
 		// generated C#. Feeds DataManager.DEATH_SPAWN_TABLE. PatternTableLoader turns each stored token
 		// back into a guard or an action and throws on one it cannot translate.

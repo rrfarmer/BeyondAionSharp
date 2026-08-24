@@ -756,6 +756,18 @@ def read_guards(block: str) -> list[str]:
                 raise Unsayable("decrease_intvar that passes only at the bound")
             out.append("decrement:%d:%s:%s" % (
                 COUNTERS.index(indicator.group(1).strip()), low.group(1), high.group(1)))
+        elif kind == "is_event_skill_category":
+            # Retail's own `skill_category`, ported from `skill_base.xml` -- this port's `skilltype`
+            # and `skillsubtype` cannot answer it, and not by a small margin. See
+            # `extract_skill_categories.py` for the measurement.
+            category = re.search(r"<skill_category>SKILLCTG_(\w+)</skill_category>", body)
+            if not category:
+                raise Unsayable("is_event_skill_category with no category")
+            if category.group(1) == "NONE":
+                # "the skill has no category" is a question about absence, and the table stores only
+                # skills that have one. Refused rather than answered wrongly.
+                raise Unsayable("is_event_skill_category of NONE")
+            out.append(f"skillcategory:{category.group(1)}")
         elif kind == "increase_intvar":
             # A condition that increments as it tests, like the flag idiom. All 1,409 uses in the dump
             # are conditions and none is an action; see `When.Counting`.

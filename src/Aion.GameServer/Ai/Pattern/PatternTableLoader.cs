@@ -206,6 +206,13 @@ public static class PatternTableLoader
                 };
             }
 
+            case "skillcategory":
+            {
+                SkillCategory category = Enum.TryParse(argument, out SkillCategory parsed)
+                    ? parsed : throw Unknown(token);
+                return When.EventSkillCategory(category);
+            }
+
             case "abnormal":
             {
                 (string name, string state) = Split(argument);

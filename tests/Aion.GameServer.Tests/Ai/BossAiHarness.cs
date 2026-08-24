@@ -1012,6 +1012,9 @@ public sealed class BossAiHarness : IDisposable
 			SetHolder(staticData, nameof(StaticData.NpcDataDh), RealNpcs.Value);
 			// Retail's guard call/answer table, data since it left GuardAnswers for ai/guard_answers.xml.
 			SetHolder(staticData, nameof(StaticData.GuardAnswerDataDh), RealGuardAnswers.Value);
+			// Retail's skill categories. Load-bearing for `When.EventSkillCategory`, which asks what
+			// kind of skill just hit a friend and has nowhere else to get the answer.
+			SetHolder(staticData, nameof(StaticData.SkillCategoryDataDh), RealSkillCategories.Value);
 			SetHolder(staticData, nameof(StaticData.DeathSpawnTableDh), RealDeathSpawns.Value);
 			SetHolder(staticData, nameof(StaticData.WakeIdleTableDh), RealWakeIdle.Value);
 			SetHolder(staticData, nameof(StaticData.BattleCycleTableDh), RealBattleCycles.Value);
@@ -1091,6 +1094,9 @@ public sealed class BossAiHarness : IDisposable
 
 		private static readonly Lazy<GuardAnswerData> RealGuardAnswers = new(() =>
 			LoadStaticDataFile<GuardAnswerData>("guard_answers", "guard_answers.xml"));
+
+		private static readonly Lazy<SkillCategoryData> RealSkillCategories = new(() =>
+			LoadStaticDataFile<SkillCategoryData>("skills", "retail_skill_categories.xml"));
 
 		private static readonly Lazy<PatternTableData> RealDeathSpawns = new(() =>
 			LoadStaticDataFile<PatternTableData>("pattern_tables", "death_spawns.xml"));

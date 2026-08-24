@@ -28,7 +28,7 @@ extractors' own tallies.
 
 | table | patterns | npcs |
 |---|---|---|
-| battle cycles | 3,963 | 30,198 |
+| battle cycles | 3,962 | 30,197 |
 | wake / idle | 1,572 | 3,949 |
 | death spawns | 678 | 1,927 |
 | guard answers | 4,242 answers | 3,696 |
@@ -48,9 +48,9 @@ Ranked by npcs affected, which is what the extractor now prints:
 | item | npcs | what it means in play |
 |---|---:|---|
 | `is_obj_in_abnormal_state PHYSICAL_GROUP` on `on_friend_spelled` | 163 | **not work** — retail's group taxonomy has no exact name here, and picking a "nearest" is inventing it |
-| `is_event_skill_category` on `on_friend_spelled` | **147** | "a friend was hit with a debuff, or healed" — needs a skill *category* source; `When.EventSkill` matches an id, not a category. Retail asks four: `PHYSICAL_DEBUFF`, `MENTAL_DEBUFF`, `HEAL`, `CHAIN_SKILL` |
 | `activate_skillarea` on `on_talked_by_user` | **121** | turns a skill area on; `SkillAreaNpcAI` is an empty stub with no area registry |
 | `use_skill` at `OBJI_FLEE_FROM` on `on_stop_to_flee` | **113** | the parting shot at whoever it ran from |
+| `on_attacked: is_hp_in_boundary` about somebody else | 65 | a rung that reads the attacker's health band, not its own |
 | `is_npc_state NPC_STATE_WAKE_UP` | 69 patterns | "only while still waking"; every use is a `do_nothing` suppression rung, so taking it needs a wake duration this port would have to invent |
 | `goto_alias` | 14 patterns | move to a named point rather than a route step |
 | `is_race` about `OBJI_SELF` | 10 patterns | **not work** — see section E |
@@ -158,6 +158,21 @@ here so the next pass does not spend a day on the guard and find nothing moves.
   this tree, so a pin would assert into silence. Check the listener side before assuming they are idle.
 - **18 `--implemented` audit candidates** — `python tools/client-extract/audit_stale_claims.py
   --implemented`. Most are accurate past-tense history; the yield is in repeated claims.
+
+## D-bis. The skill-index rule, and what it costs
+
+**An npc whose skill list cannot answer a pattern's indices is dropped from the pattern**, and if none
+is left the pattern is refused. 203 npcs and 36 patterns sit behind that today.
+
+The rule is too broad in one way, and it has now bitten once. The indices it counts include those in
+**best-effort handlers** — the ones the extractor is otherwise happy to drop. So teaching the extractor
+a new condition can *cost* a pattern: `Krall_WnH` was taken while its `on_spelled` was dropped whole,
+and reading that handler raised the index bar past what its one npc could answer. (That npc is not
+spawned here, so nothing in play changed.)
+
+The narrower rule is to drop the *handler* rather than the *npc* when the unanswerable index appears
+only in a best-effort handler. Worth doing, and worth measuring first: 203 npcs are behind the current
+rule and some of them will be there for indices the rotation genuinely needs.
 
 ## E. Boundaries, not backlog
 

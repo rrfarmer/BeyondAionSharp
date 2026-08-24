@@ -95,7 +95,8 @@ WORLD_EXTRACTORS = [("extract_spawn_conditions.py", "spawn_conditions.tsv")]
 # patterns/binding pair.
 STRING_EXTRACTORS = [("extract_string_ids.py", "string_ids.tsv"),
                      ("extract_npc_skill_lists.py", "npc_skill_lists.tsv"),
-                     ("extract_npc_autonomous_skills.py", "npc_autonomous_skills.tsv")]
+                     ("extract_npc_autonomous_skills.py", "npc_autonomous_skills.tsv"),
+                     ("extract_skill_categories.py", "skill_categories.tsv")]
 
 # Writes into game-server data rather than out/, because the server reads it directly.
 GAME_DATA_EXTRACTORS = [("extract_gated_spawns.py",
@@ -124,6 +125,8 @@ EMITTERS = [
      lambda out: [str(HERE / "out" / "pull_calls.tsv"), out]),
     ("emit_guard_answers_table.py", STATIC / "guard_answers" / "guard_answers.xml",
      lambda out: [str(HERE / "out" / "guard_answers.tsv"), out]),
+    ("emit_skill_categories_table.py", STATIC / "skills" / "retail_skill_categories.xml",
+     lambda out: [str(HERE / "out" / "skill_categories.tsv"), out]),
     ("emit_tiamat_beacons_table.py", GEN / "TiamatBeacons.cs",
      lambda out: [str(HERE / "out" / "tiamat_beacons.tsv"), out]),
     ("emit_idle_spawns_table.py", GEN / "IdleSpawns.cs",

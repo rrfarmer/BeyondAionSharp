@@ -70,6 +70,18 @@ public class SkillTemplate : L10n
     [XmlAttribute("skillsubtype")]
     public SkillSubType subType;
 
+    /// <summary>Java parity, and <b>nothing in this port's skill data sets it.</b></summary>
+    /// <remarks>
+    /// Not one of the 13,570 rows in <c>skill_templates.xml</c> carries a <c>skill_category</c>, here
+    /// or in the Java this came from, so <see cref="GetSkillCategory"/> answers <c>NONE</c> for every
+    /// skill in the game. The field is kept because it is Java's; do not read it expecting an answer.
+    /// <para>
+    /// The real categories are retail's, and live in
+    /// <c>skills/retail_skill_categories.xml</c> — see <c>SkillCategoryData</c>. They are held apart
+    /// rather than merged in here for the same reason <c>retail_autonomous.xml</c> is: this file is
+    /// aionemu's and a generated pass over it would be lost or fought at the next upstream port.
+    /// </para>
+    /// </remarks>
     [XmlAttribute("skill_category")]
     public SkillCategory skillCategory = SkillCategory.NONE;
 

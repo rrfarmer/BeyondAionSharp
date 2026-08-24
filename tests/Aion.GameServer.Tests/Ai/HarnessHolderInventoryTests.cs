@@ -42,7 +42,7 @@ public sealed class HarnessHolderInventoryTests
 		"AbsoluteStatsDataDh", "AiDataDh", "BattleCycleTableDh", "CustomNpcDropDh",
 		"DeathSpawnTableDh", "WakeIdleTableDh",
 		"GuardAnswerDataDh", "Materials",
-		"NpcDataDh", "NpcSkillDataDh",
+		"NpcDataDh", "NpcSkillDataDh", "SkillCategoryDataDh",
 		"PlayerExperienceTable", "SkillDataDh", "TribeRelations", "WalkerDataDh", "WorldMaps2", "ZoneInfo",
 	];
 

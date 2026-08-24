@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Aion.GameServer.Controllers.Attack;
+using Aion.GameServer.Dataholders;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
@@ -296,6 +298,23 @@ public static class When
     /// </para>
     /// </remarks>
     public static PatternCondition EventSkill(int skillId) => ai => ai.SpelledSkillId == skillId;
+
+    /// <summary>
+    /// <c>is_event_skill_category</c> — the skill this event carries is of that kind, rather than that
+    /// exact skill.
+    /// </summary>
+    /// <remarks>
+    /// Almost every use is on <c>on_friend_spelled</c>: a support npc watching for its friend to be
+    /// debuffed or healed, and answering the kind rather than the id. Retail asks four —
+    /// <c>PHYSICAL_DEBUFF</c>, <c>MENTAL_DEBUFF</c>, <c>HEAL</c>, <c>CHAIN_SKILL</c>.
+    /// <para>
+    /// The category comes from retail's own <c>skill_base.xml</c> and cannot be derived from this
+    /// port's skill data; see <see cref="Dataholders.SkillCategoryData"/>.
+    /// </para>
+    /// </remarks>
+    public static PatternCondition EventSkillCategory(SkillCategory category)
+        => ai => category != SkillCategory.NONE
+            && DataManager.SKILL_CATEGORY_DATA.Of(ai.SpelledSkillId) == category;
 
     /// <summary><c>is_npc_state</c> — what the NPC is doing right now.</summary>
     /// <remarks>
