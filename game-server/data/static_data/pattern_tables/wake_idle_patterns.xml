@@ -4,7 +4,7 @@
     out/wake_idle_patterns.tsv. Do not edit by hand; edit the extractor and re-run.
 
     What a retail npc does the moment it appears, and each time its own idle timer fires:
-    1571 patterns across 3948 npcs, 10048 actions.
+    1572 patterns across 3949 npcs, 10058 actions.
 
     Two handlers share this file and an npc may appear under both, so each element names its own.
     Branch order is the order written here; retail's lists are first-match-wins.
@@ -19086,6 +19086,11 @@
 			<action kind="var" a1="10" a2="0" a3="0" place="GUARDIAN_TIMER" x="0.0" y="0.0" z="0.0" />
 		</branch>
 	</npc>
+	<npc id="855440" handler="on_wake_up">  <!-- IDSeal_Temp_19 -->
+		<branch priority="1" comment="rung 0">
+			<action kind="var" a1="11" a2="0" a3="0" place="GUARDIAN_TIMER" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
 	<npc id="855441" handler="on_wake_up">  <!-- IDSeal_TrueBoss_Success -->
 		<branch priority="1" comment="rung 0">
 			<action kind="timer" a1="5000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
@@ -26775,6 +26780,35 @@
 	<npc id="855439" handler="on_idle_timer">  <!-- IDSeal_TrueBoss_Buff -->
 		<branch priority="2" comment="rung 0">
 			<action kind="broadcast" a1="22620" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+	</npc>
+	<npc id="855440" handler="on_idle_timer">  <!-- IDSeal_Temp_19 -->
+		<branch priority="46" comment="rung 0">
+			<guard token="count:1:30:31:1" />
+			<guard token="countbelow:1:40:30" />
+			<action kind="broadcast" a1="22654" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="45" comment="rung 1">
+			<guard token="count:1:20:21:1" />
+			<guard token="countbelow:1:30:20" />
+			<action kind="broadcast" a1="22653" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="44" comment="rung 2">
+			<guard token="count:1:10:11:1" />
+			<guard token="countbelow:1:20:10" />
+			<action kind="broadcast" a1="22652" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="43" comment="rung 3">
+			<guard token="count:1:1:2:1" />
+			<guard token="countbelow:1:10:0" />
+			<action kind="broadcast" a1="22651" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+			<action kind="timer" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
+		</branch>
+		<branch priority="40" comment="rung 4">
+			<action kind="timer" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" />
 		</branch>
 	</npc>
 	<npc id="855441" handler="on_idle_timer">  <!-- IDSeal_TrueBoss_Success -->

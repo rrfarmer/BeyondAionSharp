@@ -40587,3 +40587,82 @@ Pinned as `IncludingOneThatNeverFoughtAnybody`, driven with no wave in the room 
 subordinate present is the one that never fought. It sits forty-eight metres out: inside his
 fifty-metre shout, and far enough not to pick up a player of its own. Forty was not far enough --- it
 aggroed one, which would have put it in the very state the pin exists to stay out of.
+
+## Things the engine could already do and nothing could ask it to
+
+Three separate findings, all the same shape: the blocker was never the runtime.
+
+### `SANCTUARY` was refused on a technicality, and it is the most-used abnormal state in the dump
+
+`PORT_ABNORMALS` is the extractor's list of abnormal states this port names exactly, and it was
+missing two the enum has: **`SANCTUARY` (180 uses, more than any other state) and `DEFORM` (4)**. The
+refusals it produces are correct in principle -- retail's `*_GROUP` indicators are refused because
+deciding what "physical" or "mental" covers would be inventing retail's taxonomy, and `INVISIBLE` is
+refused because the port's nearest name is `HIDE` and "nearest" is a guess. Neither reason applies to
+a state spelled identically on both sides. Checked the whole list rather than the two that surfaced:
+
+| retail name | uses | in the port's enum |
+|---|---:|---|
+| `SANCTUARY` | 180 | yes -- **was refused** |
+| `CANNOT_ACT_GROUP` | 120 | no (group) |
+| `MENTAL_GROUP` | 116 | no (group) |
+| `PHYSICAL_GROUP` | 76 | no (group) |
+| `STUN_LIKE_GROUP` | 15 | no (group) |
+| `INVISIBLE` | 6 | no (`HIDE` is a guess) |
+| `DEFORM` | 4 | yes -- **was refused** |
+
+Also added the **subjectless `is_in_abnormal_state`**. Retail writes two forms; the extractor read only
+`is_obj_in_abnormal_state`, the one carrying an `<obj>`. The bare form asks about the npc itself, and
+the npcs that ask are sanctuary guards re-arming a thirty-second clock for as long as they hold the
+state.
+
+### Three counter guards were in the engine with no way to name them
+
+`When.CountBelow`, `When.CountAbove` and `When.Decrement` have existed since the summon-wave work.
+`PatternTableLoader` had no token for any of them, so retail's `set_intvar_if_less_than`,
+`set_intvar_if_larger_than` and `decrease_intvar` fell through to "condition {kind}" and refused their
+whole patterns. The mapping is exact, not approximate -- retail's compare-and-set is
+`TestAndSetCounterIfBelow` element for element.
+
+`decrease_intvar` is taken only in its always-passing form. The "pass only on reaching the bound"
+variant is a different condition and `When.Decrement` says so; guessing at it would put a silent wrong
+answer into every pattern that asks. `sub_intvar` is left alone for the same reason -- **all six uses
+in the dump set that flag**, so implementing it against `CountingBy` would have been dead code that
+looked like coverage.
+
+### `is_tribe` on `on_talked_by_user` is not a vocabulary item at all
+
+It was carried in the backlog as *"who may talk to it, by tribe"*, 28 handlers, sitting in the
+best-value table. That reading was wrong. Read one:
+
+`Gab1_TurretSwitch_01` is an **Abyss turret switch**. A player talks to it, and the tribe on the
+*talker* -- `gab1_01_point_02` and its siblings, which are transform tribes rather than anything a
+player is born with -- selects which turret to mount them on. The branch then casts, sets a spawn
+condition variable, `teleport_target_alias` onto the turret, and despawns.
+
+So the guard is one piece of a cluster, and the branch's own actions are refused independently:
+`teleport_target_alias`, `set_condition_spawn_variable`, and a player transform tribe this port has no
+source for. **Building `TalkerTribe` alone would gate handlers whose actions still cannot be built** --
+it buys nothing and reads as progress. 721 npcs run these patterns and **172 are spawned here**, so
+the cluster is worth someone's time; the single guard is not. Moved out of section A and written down
+as what it is.
+
+### What the pass was worth
+
+Battle table **3,938 -> 3,956 patterns and 30,166 -> 30,187 npcs**; optional arming handlers dropped
+**711 -> 694**. Two row-count guards in `BattleCycleAiTests` moved with it (3,167 -> 3,225 spawns;
+105,377 -> 105,576 casts) -- those totals exist so the loop cannot silently check nothing, and every
+row's real assertion passed at the new size.
+
+### And the round-trip gate was already failing
+
+`regen_check.py` reported two drifts that predate this work and reach nothing I touched:
+
+- **`TiamatRotation.cs`** was missing the `#nullable enable` its own emitter writes.
+- **`wake_variables.tsv`** carried a row the extractor no longer produces --- npc 855440,
+  `IDSeal_Temp_19`, `GUARDIAN_TIMER`. `extract_wake_variables.py` imports nothing from the modules
+  changed here, so this is older; the pattern is now refused for `action spawn`. The npc is in
+  `npc_templates` and bound, and **is not spawned anywhere in this port**, so nothing in play changes.
+
+Both regenerated from their own generators, because a gate that reports two known failures cannot tell
+anybody about a third. Worth running `regen_check.py` before assuming a drift it reports is yours.

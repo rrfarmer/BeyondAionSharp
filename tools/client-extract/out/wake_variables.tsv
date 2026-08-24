@@ -722,7 +722,6 @@ npc	pattern	order	name	set	modify	vanishes
 855138	LDF4_Advance_condition_14	10	v11	1	0	FALSE
 855138	LDF4_Advance_condition_14	11	v12	1	0	FALSE
 855138	LDF4_Advance_condition_14	12	v13	1	0	FALSE
-855440	IDSeal_Temp_19	0	GUARDIAN_TIMER	11	0	FALSE
 855485	IDSeal_Wave_Checker	0	LEVEL_CHECK_3	0	1	FALSE
 855500	IDSeal_Immortal_Success	0	IMMORTAL	10	0	FALSE
 855500	IDSeal_Immortal_Success	1	IMMORTAL_TIMER	10	0	FALSE

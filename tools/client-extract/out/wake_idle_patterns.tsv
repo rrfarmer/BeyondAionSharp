@@ -6932,6 +6932,16 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 855439	IDSeal_TrueBoss_Buff	on_idle_timer	0	2		0	broadcast	22620	100	0		0.0	0.0	0.0
 855439	IDSeal_TrueBoss_Buff	on_wake_up	0	1		0	timer	120000	0	0		0.0	0.0	0.0
 855439	IDSeal_TrueBoss_Buff	on_wake_up	0	1		1	var	10	0	0	GUARDIAN_TIMER	0.0	0.0	0.0
+855440	IDSeal_Temp_19	on_idle_timer	0	46	count:1:30:31:1|countbelow:1:40:30	0	broadcast	22654	100	0		0.0	0.0	0.0
+855440	IDSeal_Temp_19	on_idle_timer	0	46	count:1:30:31:1|countbelow:1:40:30	1	timer	0	0	0		0.0	0.0	0.0
+855440	IDSeal_Temp_19	on_idle_timer	1	45	count:1:20:21:1|countbelow:1:30:20	0	broadcast	22653	100	0		0.0	0.0	0.0
+855440	IDSeal_Temp_19	on_idle_timer	1	45	count:1:20:21:1|countbelow:1:30:20	1	timer	0	0	0		0.0	0.0	0.0
+855440	IDSeal_Temp_19	on_idle_timer	2	44	count:1:10:11:1|countbelow:1:20:10	0	broadcast	22652	100	0		0.0	0.0	0.0
+855440	IDSeal_Temp_19	on_idle_timer	2	44	count:1:10:11:1|countbelow:1:20:10	1	timer	0	0	0		0.0	0.0	0.0
+855440	IDSeal_Temp_19	on_idle_timer	3	43	count:1:1:2:1|countbelow:1:10:0	0	broadcast	22651	100	0		0.0	0.0	0.0
+855440	IDSeal_Temp_19	on_idle_timer	3	43	count:1:1:2:1|countbelow:1:10:0	1	timer	0	0	0		0.0	0.0	0.0
+855440	IDSeal_Temp_19	on_idle_timer	4	40		0	timer	0	0	0		0.0	0.0	0.0
+855440	IDSeal_Temp_19	on_wake_up	0	1		0	var	11	0	0	GUARDIAN_TIMER	0.0	0.0	0.0
 855441	IDSeal_TrueBoss_Success	on_idle_timer	0	2		0	var	10	0	0	VRITRA	0.0	0.0	0.0
 855441	IDSeal_TrueBoss_Success	on_idle_timer	0	2		1	var	26	0	0	SCENE	0.0	0.0	0.0
 855441	IDSeal_TrueBoss_Success	on_idle_timer	0	2		2	despawn_self	0	0	0		0.0	0.0	0.0

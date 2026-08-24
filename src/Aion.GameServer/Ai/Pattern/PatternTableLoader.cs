@@ -215,6 +215,30 @@ public static class PatternTableLoader
                 };
             }
 
+            case "countbelow":
+            case "countabove":
+            {
+                // Retail's `set_intvar_if_less_than` / `set_intvar_if_larger_than`: compare, and on a
+                // pass put `setTo` in the counter.
+                string[] parts = argument.Split(':');
+                if (parts.Length != 3) throw Unknown(token);
+                int counter = Int(parts[0], token);
+                int comparand = Int(parts[1], token);
+                int setTo = Int(parts[2], token);
+                return kind == "countbelow"
+                    ? When.CountBelow(counter, comparand, setTo)
+                    : When.CountAbove(counter, comparand, setTo);
+            }
+
+            case "decrement":
+            {
+                // Retail's `decrease_intvar`, the always-passing variant. The extractor refuses the
+                // other one rather than guess at it.
+                string[] parts = argument.Split(':');
+                if (parts.Length != 3) throw Unknown(token);
+                return When.Decrement(Int(parts[0], token), Int(parts[1], token), Int(parts[2], token));
+            }
+
             case "countby":
             {
                 string[] parts = argument.Split(':');

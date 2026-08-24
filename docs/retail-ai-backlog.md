@@ -28,8 +28,8 @@ extractors' own tallies.
 
 | table | patterns | npcs |
 |---|---|---|
-| battle cycles | 3,938 | 30,166 |
-| wake / idle | 1,571 | 3,948 |
+| battle cycles | 3,956 | 30,187 |
+| wake / idle | 1,572 | 3,949 |
 | death spawns | 678 | 1,927 |
 | guard answers | 4,242 answers | 3,696 |
 
@@ -42,9 +42,16 @@ subtly quieter than retail's. 711 handlers are dropped this way in the battle ta
 |---|---|---|
 | `is_npc_state NPC_STATE_WAKE_UP` | **69** (23 each on `on_attacked`, `on_see_npc`, `on_see_user`) | "only while still waking" — the port answers six npc states and not this one |
 | `activate_skillarea` | **33** (25 battle + 8 wake) | turns a skill area on; ground effects and hazard zones |
-| `is_tribe` on `on_talked_by_user` | **28** | who may talk to it, by tribe |
 | `goto_alias` | **14** | move to a named point rather than a route step |
-| `is_race` (wake table) | **10** | faction-gated wake behaviour |
+| `is_race` (wake table) | **10** | see the note below — the count understates it badly |
+
+**`is_race` is worth more than its row says.** The refusal count is 10; the two subjects the port cannot
+answer are `OBJI_SELF` and `OBJI_FRIEND`, and measured by who runs them, `OBJI_FRIEND` is **28 patterns,
+1,485 npcs, 217 of them spawned here**. `When.FriendRace` does not exist while `FriendHpBelow` and
+`FriendInAbnormalState` do, and `ai.Friend` is already a `Creature` — so it is a two-line addition in an
+established family. `OBJI_SELF` stays refused for the documented reason: an npc's own race is a
+constant, so the branch is decided at build time, and the table shares one branch list between npcs of
+different races.
 
 **The two readers are aligned now.** The wake and idle tables used to import a guard reader that knew
 2 condition kinds and an action reader that knew 10, against the battle reader's 20 and 22, purely
@@ -56,16 +63,31 @@ pipeline has no such pass) or a spawn group (these tables have no group column).
 runtime.** The value is that there is one vocabulary rather than two, so the next condition added
 reaches every table.
 
+**Since then, three things the engine could already do and nothing could ask it to.** `SANCTUARY` and
+`DEFORM` were missing from the extractor's abnormal-state allow-list while the port's enum named both
+— `SANCTUARY` is the most-used abnormal state in the whole dump — and the subjectless
+`is_in_abnormal_state` form was unread. `When.CountBelow`, `When.CountAbove` and `When.Decrement` had
+no loader token, so retail's compare-and-set counters refused their whole patterns. Net: **+18 battle
+patterns, +21 npcs, and 17 fewer dropped arming handlers**. Worth checking the engine before assuming
+a refusal means missing runtime.
+
 ## B. Whole patterns refused — the small tail
 
 Each of these blocks the entire pattern, so the npc runs nothing from it.
 
-`random_move` 29 · `switch_target_by_class_indicator` 9 · `control_door` 9 · `is_in_abnormal_state` 9 ·
-`spawn_on_target` told to attack with no hate points 8 · `switch_target` at `OBJI_CUR_TARGET` 7 ·
-`set_intvar_if_less_than` 7 · `despawn_by_nameid` 4 · a tail of ones and twos.
+`random_move` 29 · `switch_target_by_class_indicator` 9 · `control_door` 9 · `nothing arms the first
+timer` 9 · `spawn_on_target` told to attack with no hate points 8 · `switch_target` at
+`OBJI_CUR_TARGET` 7 · `is_in_abnormal_state` of `STUN_LIKE_GROUP` 4 · `despawn_by_nameid` 4 · a tail of
+ones and twos.
 
 `control_door` still needs one in-game observation to settle which `method` value opens versus closes;
 everything else is ordinary work.
+
+**Deliberately not taken, so nobody re-derives them:** the `*_GROUP` abnormal indicators
+(`STUN_LIKE_GROUP`, `CANNOT_ACT_GROUP`, `MENTAL_GROUP`, `PHYSICAL_GROUP`) and `INVISIBLE`, because the
+port has no name that means the same thing and "nearest" is a guess; `decrease_intvar` in its
+pass-only-at-the-bound form, which is a different condition; and `sub_intvar`, whose **six uses in the
+dump all set that flag**, so building it would be dead code that reads as coverage.
 
 ## C. Engine-level, and the theme worth a deliberate pass
 
@@ -102,6 +124,18 @@ the marker as a boss that has finished a fight.
 cleared by attribution. No encounter has been found that needs the counter half, and a counter has six
 write paths to the flag's one — so it was left rather than done speculatively. If an encounter turns up
 where an npc's out-of-combat counter is wiped by a stray hit, the change is the same three lines.
+
+## C-bis. Clusters, not vocabulary items
+
+Some refusals look like one missing guard and are really a feature nobody has built. Recording them
+here so the next pass does not spend a day on the guard and find nothing moves.
+
+- **Abyss turret switches** (`Gab1_TurretSwitch_*`) — **721 npcs run these patterns and 172 are spawned
+  here.** A player talks to the switch; the tribe on the *talker* selects which turret to mount them
+  on; the branch then casts, sets a spawn condition variable, teleports the player onto the turret by
+  alias, and despawns. Needs `teleport_target_alias`, `set_condition_spawn_variable`, and a player
+  transform tribe this port has no source for. This is where the 28 `is_tribe` handlers went; they were
+  carried in section A as "who may talk to it, by tribe", which was a guess and wrong.
 
 ## D. Encounters and hygiene
 

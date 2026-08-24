@@ -370,8 +370,17 @@ ABNORMAL_ROLES = {
     "OBJI_FRIEND": "FriendInAbnormalState",
 }
 
-#: The states this port's `AbnormalState` names. Retail's `*_GROUP` indicators and the three
-#: states absent from the enum are refused rather than approximated.
+#: The states this port's `AbnormalState` names, spelled the same way retail spells them.
+#:
+#: The test is an exact name match against the enum, and nothing else. Retail's `*_GROUP` indicators
+#: are refused because deciding what "physical" or "mental" covers would be inventing retail's taxonomy
+#: rather than porting it, and `INVISIBLE` is refused because the port calls its nearest thing `HIDE`
+#: and "nearest" is a guess. `CANNOT_ACT_GROUP` is both at once.
+#:
+#: `SANCTUARY` and `DEFORM` were missing from this list while the enum named both, which refused 184
+#: uses on a technicality -- `SANCTUARY` alone is the most-used abnormal state in the whole dump. The
+#: NPCs that ask are asking about themselves: a sanctuary guard re-arms a thirty-second clock for as
+#: long as it holds the state.
 PORT_ABNORMALS = {
     "POISON",
     "BLEED",
@@ -393,6 +402,8 @@ PORT_ABNORMALS = {
     "SNARE",
     "SLOW",
     "SPIN",
+    "SANCTUARY",
+    "DEFORM",
 }
 
 #: Retail's `is_user_class` subjects, and the condition each becomes.
@@ -621,6 +632,15 @@ def read_guards(block: str) -> list[str]:
                 else:
                     raise Unsayable(f"is_user_class of CLASSI_{one}")
             out.append("class:" + CLASS_SUBJECTS[user.group(1)] + ":" + "+".join(sorted(set(classes))))
+        elif kind == "is_in_abnormal_state":
+            # No `<obj>`: retail's subjectless form, which asks about the npc itself. Same state
+            # vocabulary as the form below, so the same refusals apply.
+            state = re.search(r"<abnormal_state>ABNSTATEI_(\w+)</abnormal_state>", body)
+            if not state:
+                raise Unsayable("is_in_abnormal_state with no state")
+            if state.group(1) not in PORT_ABNORMALS:
+                raise Unsayable(f"is_in_abnormal_state of {state.group(1)}")
+            out.append(f"abnormal:InAbnormalState:{state.group(1)}")
         elif kind == "is_obj_in_abnormal_state":
             # Only the states this port names exactly. Retail's group indicators are refused: see
             # `When.InAbnormalState` for why deciding what "physical" or "mental" covers would be
@@ -699,6 +719,37 @@ def read_guards(block: str) -> list[str]:
             out.append(f"waypoint:{index.group(1)}")
         elif kind == "is_last_waypoint":
             out.append("last_waypoint:")
+        elif kind in ("set_intvar_if_less_than", "set_intvar_if_larger_than"):
+            # Retail's compare-and-set: test the counter against `comparand` and, when it passes, put
+            # `intvar_to_set` in it. `When.CountBelow` and `When.CountAbove` are exactly this pair --
+            # they have been in the engine since the summon-wave work and no table could name them.
+            indicator = re.search(r"<intvar_indicator>([^<]+)</intvar_indicator>", body)
+            set_to = re.search(r"<intvar_to_set>(-?\d+)</intvar_to_set>", body)
+            comparand = re.search(r"<comparand>(-?\d+)</comparand>", body)
+            if not (indicator and set_to and comparand):
+                raise Unsayable(f"{kind} missing a field")
+            if indicator.group(1).strip() not in COUNTERS:
+                raise Unsayable(f"{kind} on a counter this port does not number")
+            name = "countbelow" if kind == "set_intvar_if_less_than" else "countabove"
+            out.append("%s:%d:%s:%s" % (
+                name, COUNTERS.index(indicator.group(1).strip()),
+                comparand.group(1), set_to.group(1)))
+        elif kind == "decrease_intvar":
+            # The mirror of `increase_intvar`, and only the FALSE variant. See `When.Decrement`: the
+            # "pass only on reaching the bound" reading is a different condition, and shipping a guess
+            # at it would put a silent one into every pattern that asks.
+            indicator = re.search(r"<intvar_indicator>([^<]+)</intvar_indicator>", body)
+            low = re.search(r"<lower_bound>(-?\d+)</lower_bound>", body)
+            high = re.search(r"<upper_bound>(-?\d+)</upper_bound>", body)
+            at_bound = re.search(r"<be_true_only_when_hit_the_bound>(\w+)</", body)
+            if not (indicator and low and high):
+                raise Unsayable("decrease_intvar missing a field")
+            if indicator.group(1).strip() not in COUNTERS:
+                raise Unsayable("decrease_intvar on a counter this port does not number")
+            if at_bound and at_bound.group(1).upper() == "TRUE":
+                raise Unsayable("decrease_intvar that passes only at the bound")
+            out.append("decrement:%d:%s:%s" % (
+                COUNTERS.index(indicator.group(1).strip()), low.group(1), high.group(1)))
         elif kind == "increase_intvar":
             # A condition that increments as it tests, like the flag idiom. All 1,409 uses in the dump
             # are conditions and none is an action; see `When.Counting`.
