@@ -359,7 +359,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(108262, casts);
+		Assert.Equal(108279, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -1090,13 +1090,18 @@ public sealed class BattleCycleAiTests
 				// Reading the rotation-less patterns gave six of the nine conditions data for the
 				// first time: the mappings were right and the patterns carrying them were skipped
 				// before anything was read.
-				["who:TargetIsPlayer"] = 153,
+				//
+				// `KilledByPlayer` then went 34 -> 60 when `use_skill` learned to aim at the friend's
+				// killer. That is this pin doing its job: those branches were being refused whole for
+				// their cast, so their guards were never read either, and the widening shows up here
+				// as a number rather than as silence.
+				["who:TargetIsPlayer"] = 155,
 				["who:AttackedByPlayer"] = 107,
 				["who:SpelledByPlayer"] = 100,
 				["who:TargetIsNpc"] = 60,
 				["who:SeenIsPlayer"] = 73,
 				["who:EventTargetIsNpc"] = 41,
-				["who:KilledByPlayer"] = 34,
+				["who:KilledByPlayer"] = 60,
 				["who:TalkerIsPlayer"] = 22,
 				["who:EventTargetIsPlayer"] = 10,
 			}.OrderBy(e => e.Key),

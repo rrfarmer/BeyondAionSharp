@@ -1079,6 +1079,26 @@ public static class Do
     public static PatternAction SkillOnMessageParam(int skillId)
         => ai => ai.CastSkillAt(ai.MessageParam as Creature, skillId);
 
+    /// <summary><c>use_skill target=OBJI_SEEN</c> — cast at whoever this NPC has just noticed.</summary>
+    /// <remarks>
+    /// <see cref="SkillOnSeenNow"/> was here first, for the hazard case; this is the ordinary queued
+    /// one. Together they are 104 retail casts across <c>on_see_user</c>, <c>on_see_user_move</c> and
+    /// <c>on_see_npc</c> — the greeting, the warning shot and the trap.
+    /// </remarks>
+    public static PatternAction SkillOnSeen(int skillId)
+        => ai => ai.CastSkillAt(ai.SeenCreature, skillId);
+
+    /// <summary><c>use_skill target=OBJI_KILLER</c> on <c>on_see_friend_killed_by_user</c>.</summary>
+    /// <remarks>
+    /// <b>The friend's killer, not this NPC's own.</b> The port keeps the two apart --
+    /// <c>ai.Killer</c> is whoever did most damage to <em>me</em> -- and retail spells both
+    /// <c>OBJI_KILLER</c>, leaving the handler to say which. Reading this one as the other would aim
+    /// the revenge cast at whoever last hit the avenger, usually nobody, so the mechanic would simply
+    /// not happen. Same trap as <c>flee_from OBJI_ATTACKER</c>, which already has this remapping.
+    /// </remarks>
+    public static PatternAction SkillOnFriendsKiller(int skillId)
+        => ai => ai.CastSkillAt(ai.FriendsKiller, skillId);
+
     /// <summary><c>use_skill target=OBJI_MESSAGE_SENDER</c>: at the npc that called.</summary>
     public static PatternAction SkillOnMessageSender(int skillId)
         => ai => ai.CastSkillAt(ai.MessageSender, skillId);

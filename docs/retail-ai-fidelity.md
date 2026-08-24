@@ -40692,3 +40692,69 @@ branch is decided at build time, and one branch list is shared between npcs of d
 the tables reaches it today, so it has cost nothing. It would not have stayed cheap: **an unreadable
 token refuses the whole file**, by deliberate design, so the first live one would have taken every
 pattern in the table down rather than one branch. Added beside `FriendRace`.
+
+## Ranking the refusals by who they affect, and the first thing that found
+
+`is_race` about a friend was carried as **10** and was worth **217 spawned npcs**. `control_door` was
+carried as **691** and is **9**. Both errors have the same cause: the extractor's tally counts
+*patterns*, and a pattern is not a unit of impact --- one pattern can be bound to three hundred npcs or
+to none.
+
+So the tally now prints **patterns and npcs affected, ranked by npcs**. Every refusal site already had
+`owners` in scope; it is a bookkeeping change, and the emitted table is byte-identical.
+
+### It reordered the priorities immediately
+
+The old top of the dropped-handler list, by patterns, was `is_npc_state NPC_STATE_WAKE_UP` at 69 and
+`activate_skillarea` at 25. The new top, by npcs:
+
+| dropped handler | patterns | npcs |
+|---|---:|---:|
+| `on_talked_by_user: is_tribe` | 28 | **488** |
+| `on_see_user: use_skill at a target this port cannot name` | 6 | **266** |
+| `on_friend_spelled: is_obj_in_abnormal_state PHYSICAL_GROUP` | 12 | **163** |
+| `on_friend_spelled: is_event_skill_category` | 11 | **147** |
+| `on_see_friend_killed_by_user: use_skill at a target...` | 19 | **145** |
+
+**Two rows of the same refusal, 411 npcs between them, and it had never appeared in a top-five.** Six
+patterns is nothing; 266 npcs is not.
+
+### What the target actually was
+
+Four targets `use_skill` could not name, and the handler tells you what each one means:
+
+| handler | target | uses | branch also despawns |
+|---|---|---:|---:|
+| `on_talked_by_user` | `OBJI_TALKER` | 698 | 636 |
+| `on_see_user` | `OBJI_SEEN` | 65 | 12 |
+| `on_see_friend_killed_by_user` | `OBJI_KILLER` | 26 | 0 |
+| `on_see_user_move` | `OBJI_SEEN` | 21 | 0 |
+| `on_see_npc` | `OBJI_SEEN` | 18 | 8 |
+| `on_stop_to_flee` | `OBJI_FLEE_FROM` | 14 | 0 |
+
+`OBJI_SEEN` and `OBJI_KILLER` are built. `OBJI_TALKER` is left: 636 of its 698 uses are in a branch
+that also despawns, which is the turret-switch shape, and those need the rest of that cluster anyway.
+
+**`OBJI_KILLER` is the trap.** Retail spells both killers the same and lets the handler say which; this
+port keeps `ai.Killer` (whoever damaged *me* most) apart from `ai.FriendsKiller`. Reading the friend's
+killer as the npc's own would aim the revenge cast at whoever last hit the avenger --- usually nobody,
+so the mechanic would simply not happen. `flee_from OBJI_ATTACKER` already carries exactly this
+remapping and exactly this warning; this follows it. A `use_skill` at the npc's *own* killer is refused
+rather than guessed, and no handler in the dump asks for one.
+
+The hazard rule now reaches role casts too: a trap that casts at whoever walked into it and then
+removes itself has to cast immediately, because the queue drains only while the npc is still there.
+Seven rows convert.
+
+### What it was worth
+
+**3,956 -> 3,963 patterns, 30,187 -> 30,198 npcs.** Both refusals left the top-five entirely. Three
+pins moved and all three are the kind that are supposed to: two row-count guards, and
+`TheIdentityGuardsTheTableCarriesAreTheOnesClaimed`, whose whole stated purpose is that *"a future
+widening that makes one of the six reachable shows up as a deliberate change here rather than as
+silence"*. `KilledByPlayer` went 34 -> 60 and `TargetIsPlayer` 153 -> 155 --- those branches were
+refused whole for their cast, so their guards had never been read either.
+
+**Next by this ranking:** `is_event_skill_category` on `on_friend_spelled`, 11 patterns and 147 npcs.
+Retail asks four categories --- `PHYSICAL_DEBUFF`, `MENTAL_DEBUFF`, `HEAL`, `CHAIN_SKILL` --- and
+`When.EventSkill` currently matches a skill id rather than a category, so it needs a category source.

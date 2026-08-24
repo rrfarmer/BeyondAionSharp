@@ -103,6 +103,11 @@ ROLES = {
     "OBJI_CASTER": "Caster",
     "OBJI_MESSAGE_PARAM": "MessageParam",
     "OBJI_MESSAGE_SENDER": "MessageSender",
+    "OBJI_SEEN": "Seen",
+
+    #: Retail has no separate indicator for it -- `on_see_friend_killed_by_user` writes `OBJI_KILLER`
+    #: and means the friend's killer. `read_actions` rewrites the role to this before the lookup.
+    "OBJI_FRIENDS_KILLER": "FriendsKiller",
 }
 
 #: Retail's attacker indicators: a creature picked by its place in the hate list, or by how hurt it is.
@@ -830,9 +835,19 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
             who = re.search(r"<target>(\w+)</target>", body)
             if not index:
                 raise Unsayable("use_skill without an index")
-            if not who or (who.group(1) not in TARGETS and who.group(1) not in ROLES):
+            named = who.group(1) if who else ""
+            # **The role means different creatures in different handlers**, the same trap `flee_from`
+            # documents above. Retail spells both killers `OBJI_KILLER` and lets the handler say which;
+            # this port keeps them in separate fields, and `ai.Killer` is whoever damaged *me* most.
+            # Aiming a revenge cast there would point it at whoever last hit the avenger -- usually
+            # nobody, so the cast would simply not happen.
+            if named == "OBJI_KILLER":
+                if handler not in ("on_see_friend_killed_by_user",
+                                   "on_sense_friend_killed_by_user"):
+                    raise Unsayable("use_skill at this npc's own killer")
+                named = "OBJI_FRIENDS_KILLER"
+            if named not in TARGETS and named not in ROLES:
                 raise Unsayable("use_skill at a target this port cannot name")
-            named = who.group(1)
             if named in ROLES:
                 out.append(("skill_at", int(index.group(1)), 0, 0, ROLES[named], 0.0, 0.0, 0.0, 0))
             else:
@@ -1187,6 +1202,14 @@ def main() -> int:
     refused: collections.Counter = collections.Counter()
     refused_owners = 0
     dropped: collections.Counter = collections.Counter()
+
+    # **Who is affected, beside how many patterns are.** The pattern count on its own is a misleading
+    # priority signal and has misled this backlog twice. `is_race` about a friend was carried as "10"
+    # and was worth 217 spawned npcs, because it cost handlers inside patterns that were taken anyway
+    # rather than blocking patterns whole. `control_door` was carried as 691 and is 9. Ranking by npcs
+    # gets both right.
+    refused_npcs: dict[str, set[int]] = collections.defaultdict(set)
+    dropped_npcs: dict[str, set[int]] = collections.defaultdict(set)
     patterns = 0
     for path in sorted(args.patterns_dir.rglob("NpcAIPatterns*.xml")):
         text = S.read_text(path)
@@ -1227,8 +1250,10 @@ def main() -> int:
                     except Unsayable as stopper:
                         # Keep the rotation, lose this way in.
                         dropped[f"{handler}: {stopper}"] += 1
+                        dropped_npcs[f"{handler}: {stopper}"].update(owners)
             except Unsayable as stopper:
                 refused[str(stopper)] += 1
+                refused_npcs[str(stopper)].update(owners)
                 continue
             # Without a rung that arms a timer nothing starts the chain and the rotation is inert.
             # A handler that merely exists is not enough -- it has to actually arm one.
@@ -1245,6 +1270,7 @@ def main() -> int:
                                 for _, _, _, actions in rungs for action in actions)}
                 if not any(h not in ENDINGS and h not in SIGNALS for h in armed):
                     refused["nothing arms the first timer"] += 1
+                    refused_npcs["nothing arms the first timer"].update(owners)
                     continue
             else:
                 # No rotation. The arming handlers have no timer to arm -- but **they are not only
@@ -1268,6 +1294,7 @@ def main() -> int:
                          if rungs and h != "on_wake_up"}
                 if not armed:
                     refused["no rotation and nothing sayable outside waking"] += 1
+                    refused_npcs["no rotation and nothing sayable outside waking"].update(owners)
                     continue
 
             # A skill index is only meaningful against one npc's list, so an owner whose list cannot
@@ -1288,6 +1315,7 @@ def main() -> int:
                 owners = able
             if not owners:
                 refused["no npc here whose skill list answers the indices"] += 1
+                refused_npcs["no npc here whose skill list answers the indices"].update(owners)
                 continue
 
             patterns += 1
@@ -1307,6 +1335,12 @@ def main() -> int:
                             if action[0] in ("skill", "skill_at", "skill_in_reach"):
                                 if action[0] == "skill" and hazard and action[4] == "ME":
                                     action = ("skill_now", skills[npc][action[1]]) + action[2:]
+                                elif action[0] == "skill_at" and hazard and action[4] == "Seen":
+                                    # Same hazard, different aim. A trap that casts at whoever walked
+                                    # into it and then removes itself has to cast immediately: the
+                                    # queue drains only while the npc is still there. 20 of the 104
+                                    # seen-casts are in a branch that despawns.
+                                    action = ("skill_at_now", skills[npc][action[1]]) + action[2:]
                                 else:
                                     action = (action[0], skills[npc][action[1]]) + action[2:]
                             rows.append((npc, named.group(1), handler, index, priority,
@@ -1322,13 +1356,21 @@ def main() -> int:
     npcs = {r[0] for r in rows}
     print(f"{patterns} battle rotations across {len(npcs)} npcs, {len(rows)} actions -> {args.out}")
     if dropped:
-        print(f"    {sum(dropped.values())} optional arming handlers dropped, rotation kept:")
-        for reason, count in dropped.most_common(5):
-            print(f"        {count:4d}  {reason}")
+        print(f"    {sum(dropped.values())} optional arming handlers dropped, rotation kept"
+              f"   (patterns / npcs affected):")
+        for reason, count in sorted(dropped.items(),
+                                    key=lambda kv: (-len(dropped_npcs[kv[0]]), -kv[1]))[:5]:
+            print(f"        {count:4d} / {len(dropped_npcs[reason]):5d}  {reason}")
     if refused_owners:
         print(f"    {refused_owners} npcs dropped from a pattern their skill list cannot answer")
-    for reason, count in refused.most_common():
-        print(f"    {count:4d} refused: {reason}")
+
+    # Ranked by npcs, not by patterns. A reason blocking one pattern that 300 npcs run outranks one
+    # blocking thirty that nobody here is bound to -- and the pattern count alone cannot say which is
+    # which. "0 npcs" is not a bug: it means no npc here was free to run the pattern anyway.
+    print("    refused   (patterns / npcs affected):")
+    for reason, count in sorted(refused.items(),
+                                key=lambda kv: (-len(refused_npcs[kv[0]]), -kv[1])):
+        print(f"        {count:4d} / {len(refused_npcs[reason]):5d}  {reason}")
     return 0
 
 

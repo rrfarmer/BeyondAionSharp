@@ -300,6 +300,7 @@ public static class PatternTableLoader
             case "skill_now": return Do.SkillOnSelfNow(Int(row.A1, kind));
             case "skill_in_reach": return Do.SkillOnRankedInReach(Ranked(row.Place, kind), Int(row.A1, kind));
             case "skill_at": return SkillAt(row.Place, Int(row.A1, kind), kind);
+            case "skill_at_now": return SkillAtNow(row.Place, Int(row.A1, kind), kind);
             case "arm": return Do.ArmTimer(Int(row.A1, kind), Int(row.A2, kind));
             case "despawn": return Do.Despawn(Int(row.A1, kind));
             case "despawn_self": return Do.DespawnSelf();
@@ -429,6 +430,20 @@ public static class PatternTableLoader
         "EventTarget" => Do.SkillOnEventTarget(skillId),
         "MessageParam" => Do.SkillOnMessageParam(skillId),
         "MessageSender" => Do.SkillOnMessageSender(skillId),
+        "Seen" => Do.SkillOnSeen(skillId),
+        "FriendsKiller" => Do.SkillOnFriendsKiller(skillId),
+        _ => throw Unknown(kind + " at " + place),
+    };
+
+    /// <summary>The immediate form, for a branch that casts and then removes the caster.</summary>
+    /// <remarks>
+    /// The queue drains only while the NPC has a target and still exists, so a queued cast in a
+    /// branch that also despawns is a cast that never happens. The extractor decides which rows need
+    /// this; see its hazard rule.
+    /// </remarks>
+    private static PatternAction SkillAtNow(string place, int skillId, string kind) => place switch
+    {
+        "Seen" => Do.SkillOnSeenNow(skillId),
         _ => throw Unknown(kind + " at " + place),
     };
 

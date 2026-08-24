@@ -28,7 +28,7 @@ extractors' own tallies.
 
 | table | patterns | npcs |
 |---|---|---|
-| battle cycles | 3,956 | 30,187 |
+| battle cycles | 3,963 | 30,198 |
 | wake / idle | 1,572 | 3,949 |
 | death spawns | 678 | 1,927 |
 | guard answers | 4,242 answers | 3,696 |
@@ -36,14 +36,24 @@ extractors' own tallies.
 ## A. Best value: one vocabulary item, dozens of handlers
 
 These are **partial** losses. The npc's rotation runs; one arming handler was dropped, so the fight is
-subtly quieter than retail's. 711 handlers are dropped this way in the battle table alone.
+subtly quieter than retail's.
 
-| item | dropped | what it means in play |
-|---|---|---|
-| `is_npc_state NPC_STATE_WAKE_UP` | **69** (23 each on `on_attacked`, `on_see_npc`, `on_see_user`) | "only while still waking" — the port answers six npc states and not this one |
-| `activate_skillarea` | **33** (25 battle + 8 wake) | turns a skill area on; ground effects and hazard zones |
-| `goto_alias` | **14** | move to a named point rather than a route step |
-| `is_race` about `OBJI_SELF` | **10** | not work — see below |
+**Read the tally by npcs, not by patterns.** `extract_battle_cycles.py` now prints both and ranks by
+npcs, because the pattern count has mis-set priorities here twice: `control_door` was carried as 691
+and is 9, and `is_race` about a friend was carried as 10 and was worth 217 spawned npcs. Six patterns
+is nothing; 266 npcs is not, and those were the same row.
+
+Ranked by npcs affected, which is what the extractor now prints:
+
+| item | npcs | what it means in play |
+|---|---:|---|
+| `is_obj_in_abnormal_state PHYSICAL_GROUP` on `on_friend_spelled` | 163 | **not work** — retail's group taxonomy has no exact name here, and picking a "nearest" is inventing it |
+| `is_event_skill_category` on `on_friend_spelled` | **147** | "a friend was hit with a debuff, or healed" — needs a skill *category* source; `When.EventSkill` matches an id, not a category. Retail asks four: `PHYSICAL_DEBUFF`, `MENTAL_DEBUFF`, `HEAL`, `CHAIN_SKILL` |
+| `activate_skillarea` on `on_talked_by_user` | **121** | turns a skill area on; `SkillAreaNpcAI` is an empty stub with no area registry |
+| `use_skill` at `OBJI_FLEE_FROM` on `on_stop_to_flee` | **113** | the parting shot at whoever it ran from |
+| `is_npc_state NPC_STATE_WAKE_UP` | 69 patterns | "only while still waking"; every use is a `do_nothing` suppression rung, so taking it needs a wake duration this port would have to invent |
+| `goto_alias` | 14 patterns | move to a named point rather than a route step |
+| `is_race` about `OBJI_SELF` | 10 patterns | **not work** — see section E |
 
 **`is_race` about a friend is done, and it is the clearest lesson in this file about reading the
 tally.** The refusal count said 10; the honest number was **217 spawned npcs**, because the condition
