@@ -70,7 +70,8 @@ everything else is ordinary work.
 ## C. Engine-level, and the theme worth a deliberate pass
 
 **Marker NPCs collide with combat machinery built for bosses.** Three encounters hit this and it was
-one underlying problem, not three. **Two of the three are now closed**; what is left is (2) below.
+one underlying problem, not three. **All three are now closed.** The theme is kept because the shape
+recurs, not because work is outstanding on it.
 
 The shape worth carrying forward: this machinery assumes an NPC that fights, and a marker is an NPC
 that merely *can be hit*. Being hit is enough to enter combat, and everything downstream then treats
@@ -84,8 +85,11 @@ the marker as a boss that has finished a fight.
    `DramataGC`, which chain a countdown of system messages and then spawn. Among hand-written classes
    exactly one arms a timer on waking, and it is Kingspin's web, which is pinned. Nothing else to walk
    through.
-2. **`NagaSubordinateAI`** — a subordinate that never engaged is now dismissed by its fuse. Found by
-   accident, via a comment asserting the opposite. *Correct, and unreviewed.*
+2. **`NagaSubordinateAI`** — a subordinate that never engaged is now dismissed by its fuse.
+   **Correct, and now reviewed.** Both bosses are spawned in Heiron, so the encounter is live; a
+   bystander subordinate is ordinary (his wave lands on whoever he is fighting, and that player dies or
+   runs); and the boss despawns his whole summon group on both exits, so nothing can outlive the fight
+   even if a fuse were lost. Pinned as `IncludingOneThatNeverFoughtAnybody`.
 3. **Kingspin's web sweep** — **fixed.** The diagnosis in this file was wrong twice: what puts a web
    in combat is *being hit*, not aggro (`inCombat` is set only in `HandleAttack`), and the fix named
    here — "a web has no `Cycle` rungs" — pointed at a slot the engine does not have. The real bug was

@@ -253,6 +253,44 @@ public sealed class NagaSummonerAiTests
 		Assert.Equal(0, Count(harness));
 	}
 
+	/// <summary>
+	/// <b>Including one that never fought anybody.</b> The dismissal is a two-second battle timer on the
+	/// subordinate, and this runtime used to refuse to fire a battle timer outside <c>AIState.FIGHT</c> —
+	/// so a subordinate that never engaged would have stood in Heiron until its twenty-minute
+	/// <c>live_time</c> ran out.
+	/// </summary>
+	/// <remarks>
+	/// Driven with no wave at all, so the only subordinate in the room is the one that never fought:
+	/// he is called at sixty and below, and this pin keeps him above it until the moment he crosses
+	/// forty and disperses.
+	/// <para>
+	/// A bystander is not far-fetched here. He drops his wave on <em>whoever he is fighting</em>, that
+	/// player dies or runs, and what is left is a subordinate with nobody to go for.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void IncludingOneThatNeverFoughtAnybody()
+	{
+		var (harness, boss, raid) = Engaged();
+		using BossAiHarness _h = harness;
+
+		// Forty-eight metres out: inside his fifty-metre shout, and far enough that the subordinate does
+		// not pick up a player of its own. Forty was not — it aggroed one, which would have put it in
+		// the fighting state this pin exists to stay out of.
+		Npc bystander = harness.SpawnWithAi(Subordinate, "naga_subordinate", 2900f, 2648f, 181f);
+		BossAiHarness.MakeMutuallyKnown(boss, bystander);
+
+		// Above ninety he calls nobody, so nothing else joins it.
+		Advance(harness, raid, boss, 12);
+		Assert.Contains(bystander, harness.LiveNpcs());
+		Assert.Null(bystander.GetTarget());
+
+		BossAiHarness.SetExactPercent(boss, 30);
+		Advance(harness, raid, boss, 20);
+
+		Assert.DoesNotContain(bystander, harness.LiveNpcs());
+	}
+
 	/// <summary>And while he stays in the band they stay with him.</summary>
 	[Fact]
 	public void AboveFortyTheyStay()

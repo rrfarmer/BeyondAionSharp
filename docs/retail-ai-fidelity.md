@@ -40560,3 +40560,30 @@ that has just gone home has dropped its aggro list. In the room it re-aggros who
 that is what makes it a trap -- but re-aggro is the aggro tick's job, not this engine's. Asserting
 through it would have pinned the harness. The diagnostics confirmed the chain end to end before the
 assertion was narrowed to what belongs here: flag survived, settle fired, sweep armed.
+
+## The naga subordinate, reviewed against the encounter it belongs to
+
+Carried as *correct, and unreviewed*. Reviewed now, and it holds.
+
+The change was that a subordinate which never engaged is still dismissed by its two-second fuse, which
+followed from removing the `AIState.FIGHT` gate on battle timers. The retail reading is stronger than
+it was when that was written: there is **no timer-cancelling action anywhere in retail's vocabulary**,
+and retail arms battle timers from `on_wake_up` and `on_die`. A fuse is a fuse.
+
+**The encounter is live here.** Both bosses -- 212310 High Mage Brashuna and 212307 Commander Gitimuka
+-- are spawned in Heiron (`210040000_Heiron.xml`). This is not one of the controller npcs this port
+never places.
+
+**A bystander subordinate is an ordinary outcome, not a corner case.** He drops his wave *on whoever he
+is fighting*; that player dies or runs; what is left is a subordinate with nobody to go for. Before the
+gate came off, one of those stood in the field until its twenty-minute `live_time` expired.
+
+**And there is a backstop, which is worth knowing before anybody worries about the timer-attribution
+change interacting with this.** The boss despawns his whole summon group on *both* exits --
+`OnLeaveAttack` and `OnDie` both run `Do.Despawn(Group)` -- so no subordinate can outlive the fight
+even if its own fuse were lost. The fuse is the dismissal; the group despawn is the sweep-up.
+
+Pinned as `IncludingOneThatNeverFoughtAnybody`, driven with no wave in the room at all so the only
+subordinate present is the one that never fought. It sits forty-eight metres out: inside his
+fifty-metre shout, and far enough not to pick up a player of its own. Forty was not far enough --- it
+aggroed one, which would have put it in the very state the pin exists to stay out of.
