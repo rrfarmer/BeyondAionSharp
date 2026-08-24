@@ -40824,3 +40824,59 @@ derive-it shortcut is refuted in the suite rather than only in a comment.
 
 The harness gained the holder, which its inventory pin caught and named — that pin exists so a new
 holder is a deliberate line rather than a silent dependency.
+
+## Two more roles, and then a check for the class of bug behind them
+
+### The parting shot
+
+`use_skill target=OBJI_FLEE_FROM` on `on_stop_to_flee`: 12 patterns, **113 npcs**. An npc that has run
+its distance turns and answers whoever chased it.
+
+`FleeFrom` used the creature to work out a direction and then forgot it, so there was nothing to aim
+at. `PatternAi.FledFrom` now keeps it, and **deliberately is not cleared by `StopFleeing`** --- that is
+the very moment `on_stop_to_flee` runs, so clearing it there would empty the field immediately before
+the only handler that reads it. That is exactly what already happens to `FleeingTo`. `CancelFlee`
+clears it instead: a new flee replaces it, a reset drops it.
+
+### Somebody else's health band
+
+`is_hp_in_boundary` about somebody else: 3 patterns, **65 npcs**. Retail names four subjects besides
+itself --- friend (18 uses), attacker (6), caster (5), current target (3) --- and this port could
+answer only the last, while the *threshold* form `is_hp_lower_than` had answered six subjects for ages.
+`FriendHpBetween`, `AttackerHpBetween` and `CasterHpBetween` fill the gap. `OBJI_SEEN` and
+`OBJI_MESSAGE_SENDER` never ask it, so they are absent rather than built untested.
+
+### The class of bug: names the extractor can emit and the loader cannot read
+
+Closing the hp gap turned up **three more** loader cases missing for names already in `HP_ROLES` ---
+`SeenHpBelow`, `CasterHpBelow`, `AttackerHpBelow`. With `MessageSenderRace` from the previous pass,
+that is twice this has been found **by accident**, which is the wrong way to find it:
+
+> `PatternTableLoader` refuses a token it cannot translate by design, and a refused token takes the
+> **whole file** down rather than one branch. So a missing case costs nothing at all until a pattern
+> using it becomes live, and then it costs everything.
+
+`tools/client-extract/check_loader_names.py` now compares the extractors' role maps against the
+loader's switches. It ran once and found **nine more**:
+
+| map | name |
+|---|---|
+| `ENEMY_ROLES` | `MessageSenderIsEnemy`, `EventTargetIsEnemy` |
+| `NPC_ROLES` | `AttackerIsNpc`, `CasterIsNpc`, `SeenIsNpc` |
+| `DISTANCE_ROLES` | `MessageParamBeyond`, `SeenBeyond` |
+| `FLEE_ROLES` | `FleeFromKiller`, `FleeFromMessageSender` |
+
+**Every one of the nine already existed in the engine.** They were one line each; nothing was missing
+but the wiring. All 93 names now answer, and `regen_check.py` runs the check first --- it needs neither
+the retail dump nor the committed tables, so it is the cheapest thing in the pipeline.
+
+The check is deliberately crude: the loader is C# and the check is Python, so it asks "does the loader
+mention this name at all" rather than parsing. A name in a comment would pass wrongly. That is the
+price of not writing a C# parser here, and it still catches the case that actually happens --- a name
+nobody wrote down twice.
+
+### What the pass was worth
+
+Dropped arming handlers **589 -> 561**. Actions 327,959 -> 328,481. Patterns and npcs unchanged at
+3,962 and 30,197, which is the signature of this kind of work: the rotations were already running and
+what came back is the handlers hanging off them.

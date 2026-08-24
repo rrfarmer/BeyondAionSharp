@@ -50,6 +50,15 @@ public static class PatternTableLoader
     /// <summary>Parameterless role tests: <c>who:</c>, <c>enemy:</c>, <c>flying:</c>, <c>state:</c>.</summary>
     private static readonly Dictionary<string, PatternCondition> Plain = new()
     {
+        // Seven of these were missing while the extractor could already emit them, and the check
+        // that found them is tools/client-extract/check_loader_names.py. They cost nothing until a
+        // pattern using one goes live, at which point an unreadable token refuses the whole file.
+        ["MessageSenderIsEnemy"] = When.MessageSenderIsEnemy,
+        ["EventTargetIsEnemy"] = When.EventTargetIsEnemy,
+        ["AttackerIsNpc"] = When.AttackerIsNpc,
+        ["CasterIsNpc"] = When.CasterIsNpc,
+        ["SeenIsNpc"] = When.SeenIsNpc,
+
         ["AttackedByPlayer"] = When.AttackedByPlayer,
         ["SpelledByPlayer"] = When.SpelledByPlayer,
         ["SeenIsPlayer"] = When.SeenIsPlayer,
@@ -121,6 +130,22 @@ public static class PatternTableLoader
             case "flying": return Named(argument + "Flying", token);
             case "state": return Named(States.TryGetValue(argument, out string? s) ? s : argument, token);
 
+            case "hp_of_between":
+            {
+                string[] parts = argument.Split(':');
+                if (parts.Length != 3) throw Unknown(token);
+                int low = Int(parts[1], token);
+                int high = Int(parts[2], token);
+                return parts[0] switch
+                {
+                    "FriendHpBetween" => When.FriendHpBetween(low, high),
+                    "AttackerHpBetween" => When.AttackerHpBetween(low, high),
+                    "CasterHpBetween" => When.CasterHpBetween(low, high),
+                    "TargetHpBetween" => When.TargetHpBetween(low, high),
+                    _ => throw Unknown(token),
+                };
+            }
+
             case "hp_of":
             {
                 (string name, string percent) = Split(argument);
@@ -130,6 +155,14 @@ public static class PatternTableLoader
                     "TargetHpBelow" => When.TargetHpBelow(value),
                     "FriendHpBelow" => When.FriendHpBelow(value),
                     "MessageSenderHpBelow" => When.MessageSenderHpBelow(value),
+
+                    // Emittable by the extractor and present in the engine, and this switch could not
+                    // answer them. Nothing in the tables reaches them today; an unreadable token
+                    // refuses the whole file, so the first live one would have taken every pattern
+                    // down rather than one branch. Same shape as MessageSenderRace.
+                    "SeenHpBelow" => When.SeenHpBelow(value),
+                    "CasterHpBelow" => When.CasterHpBelow(value),
+                    "AttackerHpBelow" => When.AttackerHpBelow(value),
                     _ => throw Unknown(token),
                 };
             }
@@ -160,6 +193,8 @@ public static class PatternTableLoader
                     "AttackerBeyond" => When.AttackerBeyond(value),
                     "CasterBeyond" => When.CasterBeyond(value),
                     "EventTargetBeyond" => When.EventTargetBeyond(value),
+                    "MessageParamBeyond" => When.MessageParamBeyond(value),
+                    "SeenBeyond" => When.SeenBeyond(value),
                     _ => throw Unknown(token),
                 };
             }
@@ -427,6 +462,8 @@ public static class PatternTableLoader
         "FleeFromEventTarget" => Do.FleeFromEventTarget(seconds),
         "FleeFromMessageParam" => Do.FleeFromMessageParam(seconds),
         "FleeFromFriendsAttacker" => Do.FleeFromFriendsAttacker(seconds),
+        "FleeFromKiller" => Do.FleeFromKiller(seconds),
+        "FleeFromMessageSender" => Do.FleeFromMessageSender(seconds),
         _ => throw Unknown("flee_" + name),
     };
 
@@ -439,6 +476,7 @@ public static class PatternTableLoader
         "MessageSender" => Do.SkillOnMessageSender(skillId),
         "Seen" => Do.SkillOnSeen(skillId),
         "FriendsKiller" => Do.SkillOnFriendsKiller(skillId),
+        "FledFrom" => Do.SkillOnFledFrom(skillId),
         _ => throw Unknown(kind + " at " + place),
     };
 

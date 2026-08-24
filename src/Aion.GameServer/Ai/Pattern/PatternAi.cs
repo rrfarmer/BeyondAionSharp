@@ -269,6 +269,20 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// </remarks>
     public (float X, float Y)? FleeingTo { get; private set; }
 
+    /// <summary>Retail's <c>OBJI_FLEE_FROM</c>: whoever this NPC ran from, still readable once it stops.</summary>
+    /// <remarks>
+    /// <c>FleeFrom</c> used the creature to pick a direction and then forgot it, so the one thing
+    /// retail does with it -- <c>use_skill target=OBJI_FLEE_FROM</c> on <c>on_stop_to_flee</c>, the
+    /// parting shot -- had nothing to aim at.
+    /// <para>
+    /// <b>Deliberately not cleared by <see cref="StopFleeing"/>.</b> That is the very moment
+    /// <c>on_stop_to_flee</c> runs, and clearing it there would empty the field immediately before the
+    /// only handler that reads it -- which is what already happens to <see cref="FleeingTo"/>. It is
+    /// cleared by <see cref="CancelFlee"/> instead: a new flee replaces it, and a reset drops it.
+    /// </para>
+    /// </remarks>
+    public Creature? FledFrom { get; private set; }
+
     public Creature? CurrentTarget => GetOwner().GetTarget() as Creature
         ?? GetAggroList().GetTarget(AggroTarget.MOST_HATED);
 
@@ -2075,6 +2089,7 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
             float y = here.GetY() + (dy / length * distance);
 
             FleeingTo = (x, y);
+            FledFrom = from;
             GetOwner().GetMoveController().MoveToPoint(x, y, here.GetZ());
 
             fleeing = ThreadPoolManager.GetInstance().Schedule(_ =>
@@ -2103,6 +2118,7 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
             fleeing.Cancel(true);
         fleeing = null;
         FleeingTo = null;
+        FledFrom = null;
     }
 
     /// <summary><c>spawn_on_target target_obj=OBJI_KILLER</c>.</summary>

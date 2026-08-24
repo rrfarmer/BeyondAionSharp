@@ -289,6 +289,39 @@ public sealed class KrallTrapperAiTests
 	}
 
 	/// <summary>
+	/// <b>And it still knows who it ran from once it has stopped.</b> Retail's
+	/// <c>use_skill target=OBJI_FLEE_FROM</c> on <c>on_stop_to_flee</c> is the parting shot — 12
+	/// patterns and 113 npcs — and it fires at the moment the running ends.
+	/// </summary>
+	/// <remarks>
+	/// So the creature has to outlive the stop, which is exactly what <c>FleeingTo</c> does not do:
+	/// <see cref="Aion.GameServer.Ai.Pattern.PatternAi.StopFleeing"/> clears the aim point before it
+	/// evaluates the handler. <c>FledFrom</c> is cleared by a new flee or a reset instead.
+	/// <para>
+	/// Pinned here rather than on a pattern that casts, because this trapper already flees for its own
+	/// reasons and the question is about the engine, not about its rotation.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void ItStillKnowsWhoItRanFromAfterTheEscapeEnds()
+	{
+		var (harness, krall, quarry) = Engaged(Loudmouth);
+		using BossAiHarness _h = harness;
+
+		var ai = (Aion.GameServer.Ai.Pattern.PatternAi)krall.GetAi();
+		Assert.Null(ai.FledFrom);
+
+		BossAiHarness.SetExactPercent(krall, 20);
+		Advance(harness, krall, quarry, 8);
+		Assert.Same(quarry, ai.FledFrom);
+
+		// Run the escape out. The aim point goes; who it ran from does not.
+		Advance(harness, krall, quarry, 6);
+		Assert.Null(ai.FleeingTo);
+		Assert.Same(quarry, ai.FledFrom);
+	}
+
+	/// <summary>
 	/// <b>A scout backs off every time it lays.</b> Two seconds rather than the heavy trappers' five,
 	/// and it comes back onto whoever is closest to dying.
 	/// </summary>

@@ -708,6 +708,34 @@ public static class When
             && target.GetLifeStats().GetHpPercentage() >= low
             && target.GetLifeStats().GetHpPercentage() <= high;
 
+    /// <summary><c>is_hp_in_boundary who=OBJI_FRIEND</c> — the friend is inside this band.</summary>
+    /// <remarks>
+    /// The boundary family exists for the same reason <see cref="TargetHpBetween"/> does: retail asks
+    /// about a band rather than a threshold when the answer should stop being true again. Retail names
+    /// four subjects besides itself — friend, attacker, caster and current target — and this port could
+    /// answer only the last.
+    /// <para>
+    /// An absent subject answers false, as everywhere else in this family: "somebody who is not there
+    /// is between 40 and 60 percent" is not true about anything.
+    /// </para>
+    /// </remarks>
+    public static PatternCondition FriendHpBetween(int low, int high)
+        => ai => ai.Friend is Creature friend
+            && friend.GetLifeStats().GetHpPercentage() >= low
+            && friend.GetLifeStats().GetHpPercentage() <= high;
+
+    /// <summary><c>is_hp_in_boundary who=OBJI_ATTACKER</c>.</summary>
+    public static PatternCondition AttackerHpBetween(int low, int high)
+        => ai => ai.LastAttacker is Creature attacker
+            && attacker.GetLifeStats().GetHpPercentage() >= low
+            && attacker.GetLifeStats().GetHpPercentage() <= high;
+
+    /// <summary><c>is_hp_in_boundary who=OBJI_CASTER</c>.</summary>
+    public static PatternCondition CasterHpBetween(int low, int high)
+        => ai => ai.LastCaster is Creature caster
+            && caster.GetLifeStats().GetHpPercentage() >= low
+            && caster.GetLifeStats().GetHpPercentage() <= high;
+
     /// <summary><c>is_hp_lower_than who=OBJI_FRIEND</c> — the friend taking the hit is below this.</summary>
     public static PatternCondition FriendHpBelow(int percent)
         => ai => ai.Friend is Creature friend
@@ -1106,6 +1134,17 @@ public static class Do
     /// </remarks>
     public static PatternAction SkillOnSeen(int skillId)
         => ai => ai.CastSkillAt(ai.SeenCreature, skillId);
+
+    /// <summary><c>use_skill target=OBJI_FLEE_FROM</c> — the parting shot.</summary>
+    /// <remarks>
+    /// Retail names this only on <c>on_stop_to_flee</c>, and only to cast: an NPC that has run its
+    /// distance turns and answers whoever chased it. 12 patterns and <b>113 npcs</b>.
+    /// <para>
+    /// See <see cref="PatternAi.FledFrom"/> for why the creature survives the stop that triggers this.
+    /// </para>
+    /// </remarks>
+    public static PatternAction SkillOnFledFrom(int skillId)
+        => ai => ai.CastSkillAt(ai.FledFrom, skillId);
 
     /// <summary><c>use_skill target=OBJI_KILLER</c> on <c>on_see_friend_killed_by_user</c>.</summary>
     /// <remarks>

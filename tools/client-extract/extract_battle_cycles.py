@@ -108,6 +108,9 @@ ROLES = {
     #: Retail has no separate indicator for it -- `on_see_friend_killed_by_user` writes `OBJI_KILLER`
     #: and means the friend's killer. `read_actions` rewrites the role to this before the lookup.
     "OBJI_FRIENDS_KILLER": "FriendsKiller",
+
+    #: Only ever on `on_stop_to_flee`, and only to cast: the parting shot at whoever gave chase.
+    "OBJI_FLEE_FROM": "FledFrom",
 }
 
 #: Retail's attacker indicators: a creature picked by its place in the hate list, or by how hurt it is.
@@ -245,6 +248,15 @@ HP_ROLES = {
     "OBJI_CASTER": "CasterHpBelow",
     "OBJI_ATTACKER": "AttackerHpBelow",
     "OBJI_MESSAGE_SENDER": "MessageSenderHpBelow",
+}
+
+#: The same question as a band. Retail names four subjects besides itself; `OBJI_SEEN` and
+#: `OBJI_MESSAGE_SENDER` never ask it, so they are absent rather than built untested.
+HP_BAND_ROLES = {
+    "OBJI_FRIEND": "FriendHpBetween",
+    "OBJI_CUR_TARGET": "TargetHpBetween",
+    "OBJI_CASTER": "CasterHpBetween",
+    "OBJI_ATTACKER": "AttackerHpBetween",
 }
 
 #: Retail's `is_distance_longer_than` subjects. `OBJI_SELF` is absent -- see the condition.
@@ -542,10 +554,18 @@ def read_guards(block: str) -> list[str]:
             who = re.search(r"<who>(\w+)</who>", body)
             low = re.search(r"<larger_than>(\d+)</larger_than>", body)
             high = re.search(r"<less_than>(\d+)</less_than>", body)
-            if not (low and high) or not who or who.group(1) != "OBJI_SELF":
-                raise Unsayable("is_hp_in_boundary about somebody else")
-            # Exclusive at both ends in retail; When.HpBetween is inclusive.
-            out.append(f"hp_between:{int(low.group(1)) + 1}:{int(high.group(1)) - 1}")
+            if not (low and high) or not who:
+                raise Unsayable("is_hp_in_boundary with no subject or bounds")
+            # Exclusive at both ends in retail; the When conditions are inclusive.
+            band = f"{int(low.group(1)) + 1}:{int(high.group(1)) - 1}"
+            if who.group(1) == "OBJI_SELF":
+                out.append(f"hp_between:{band}")
+            elif who.group(1) in HP_BAND_ROLES:
+                # Somebody else's band, which is a different creature and a different question --
+                # see the note on `is_hp_lower_than` above.
+                out.append(f"hp_of_between:{HP_BAND_ROLES[who.group(1)]}:{band}")
+            else:
+                raise Unsayable(f"is_hp_in_boundary about {who.group(1)}")
         elif kind in ("set_flag_var", "unset_flag_var",
                       "set_world_flag_var", "unset_world_flag_var", "is_world_flag_var"):
             indicator = re.search(r"<flagvar_indicator>([^<]+)</flagvar_indicator>", body)

@@ -198,6 +198,17 @@ def main():
 
     problems = []
 
+    # Needs neither the dump nor the committed tables: it compares the extractors' role maps against
+    # the loader's switches. Cheap, and it has already found nine names the loader could not read.
+    print("names: extractor role maps -> PatternTableLoader")
+    code, err = run("check_loader_names.py", [])
+    if code != 0:
+        problems.append("check_loader_names.py: " + err.strip().splitlines()[-1]
+                        if err.strip() else "check_loader_names.py reported missing names")
+        print("  MISSING  see check_loader_names.py output")
+    else:
+        print("  ok       every role name the extractors emit is answered")
+
     # The emit half reads only committed files, so it is checked either way. A missing pattern dump
     # should not mean "nothing to check" when half the pipeline is checkable without it.
     print("emit: committed table -> committed C#")

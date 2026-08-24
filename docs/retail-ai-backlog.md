@@ -49,9 +49,7 @@ Ranked by npcs affected, which is what the extractor now prints:
 |---|---:|---|
 | `is_obj_in_abnormal_state PHYSICAL_GROUP` on `on_friend_spelled` | 163 | **not work** — retail's group taxonomy has no exact name here, and picking a "nearest" is inventing it |
 | `activate_skillarea` on `on_talked_by_user` | **121** | turns a skill area on; `SkillAreaNpcAI` is an empty stub with no area registry |
-| `use_skill` at `OBJI_FLEE_FROM` on `on_stop_to_flee` | **113** | the parting shot at whoever it ran from |
-| `on_attacked: is_hp_in_boundary` about somebody else | 65 | a rung that reads the attacker's health band, not its own |
-| `is_npc_state NPC_STATE_WAKE_UP` | 69 patterns | "only while still waking"; every use is a `do_nothing` suppression rung, so taking it needs a wake duration this port would have to invent |
+| `is_npc_state NPC_STATE_WAKE_UP` on `on_attacked` / `on_see_npc` / `on_see_user` | 53 each | "only while still waking"; every use is a `do_nothing` suppression rung, so taking it needs a wake duration this port would have to invent |
 | `goto_alias` | 14 patterns | move to a named point rather than a route step |
 | `is_race` about `OBJI_SELF` | 10 patterns | **not work** — see section E |
 
@@ -192,6 +190,7 @@ Not work items — recorded so nobody re-derives them:
 ## How to work on this
 
 ```bash
+python tools/client-extract/check_loader_names.py   # cheapest check: needs no dump, no tables
 python tools/client-extract/regen_check.py          # run the whole pipeline, verify it round-trips
 dotnet test AionServer.slnx                         # ~55s
 python scripts/parity/check_fidelity.py             # structural gate
@@ -199,4 +198,10 @@ pwsh scripts/ci/check-warning-baseline.ps1          # warning gate
 ```
 
 Extractor refusal tallies are printed by each `extract_*.py` run and are the authority on what is
-blocked. Re-measure before setting a priority — this file did, and the old one was wrong.
+blocked. **Read the npc column, not the pattern column** — `extract_battle_cycles.py` prints both and
+ranks by npcs, because the pattern count has mis-set priorities here twice. Re-measure before setting
+a priority; this file did, and the old one was wrong.
+
+`check_loader_names.py` guards a bug this port has hit three times: a role name the extractor can emit
+and `PatternTableLoader` has no case for. It is free until a pattern using it goes live, and then it
+refuses the whole table rather than one branch. Run it after touching any `*_ROLES` map.
