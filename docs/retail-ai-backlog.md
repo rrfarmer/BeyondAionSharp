@@ -43,15 +43,17 @@ subtly quieter than retail's. 711 handlers are dropped this way in the battle ta
 | `is_npc_state NPC_STATE_WAKE_UP` | **69** (23 each on `on_attacked`, `on_see_npc`, `on_see_user`) | "only while still waking" — the port answers six npc states and not this one |
 | `activate_skillarea` | **33** (25 battle + 8 wake) | turns a skill area on; ground effects and hazard zones |
 | `goto_alias` | **14** | move to a named point rather than a route step |
-| `is_race` (wake table) | **10** | see the note below — the count understates it badly |
+| `is_race` about `OBJI_SELF` | **10** | not work — see below |
 
-**`is_race` is worth more than its row says.** The refusal count is 10; the two subjects the port cannot
-answer are `OBJI_SELF` and `OBJI_FRIEND`, and measured by who runs them, `OBJI_FRIEND` is **28 patterns,
-1,485 npcs, 217 of them spawned here**. `When.FriendRace` does not exist while `FriendHpBelow` and
-`FriendInAbnormalState` do, and `ai.Friend` is already a `Creature` — so it is a two-line addition in an
-established family. `OBJI_SELF` stays refused for the documented reason: an npc's own race is a
-constant, so the branch is decided at build time, and the table shares one branch list between npcs of
-different races.
+**`is_race` about a friend is done, and it is the clearest lesson in this file about reading the
+tally.** The refusal count said 10; the honest number was **217 spawned npcs**, because the condition
+was costing *handlers inside patterns that were taken anyway* rather than blocking patterns whole.
+Building `When.FriendRace` moved patterns and npcs **not at all** and moved actions **319,483 ->
+326,569**. Read the tally as "patterns blocked", never as "how much is missing".
+
+The remaining 10 are `OBJI_SELF` and are **not work**: an npc's own race is a constant, so the branch
+is decided at build time, and one branch list is shared between npcs of different races. Moved to
+section E.
 
 **The two readers are aligned now.** The wake and idle tables used to import a guard reader that knew
 2 condition kinds and an action reader that knew 10, against the battle reader's 20 and 22, purely
@@ -155,6 +157,9 @@ Not work items — recorded so nobody re-derives them:
   Either this port lacks the npc, or it is bound to a hand-written class.
 - **876 patterns with no rotation and nothing sayable outside waking.**
 - **220 npcs dropped from a pattern their skill list cannot answer** (197 + 23).
+- **`is_race` about `OBJI_SELF`** (10 patterns) — an npc's own race is a constant, so the branch is
+  always or never taken, and the table shares one branch list between npcs of different races. Deciding
+  it at extract time would mean giving each race its own copy of every shared list.
 - **16 walker routes** named by retail spawns and absent from every world file and the client pak.
 - **The runner encounter** (`BIDF5_R2_Runner`, 9 npcs) — no spawn rows and no routes in this port, so
   it cannot be driven here at all.

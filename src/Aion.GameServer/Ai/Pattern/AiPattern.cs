@@ -879,6 +879,20 @@ public static class When
     public static PatternCondition FriendInAbnormalState(AbnormalState state)
         => ai => ai.Friend is Creature who && who.GetEffectController().IsAbnormalSet(state);
 
+    /// <summary><c>is_race from=OBJI_FRIEND</c> — the friend this event is about is of that race.</summary>
+    /// <remarks>
+    /// The last of the friend family to be built, and the one that was worth most: 28 retail patterns
+    /// ask it, <b>1,485 npcs run them and 217 of those are spawned here</b>. The refusal tally showed
+    /// ten, which counts patterns blocked rather than npcs affected — a reminder that the two numbers
+    /// are not interchangeable.
+    /// <para>
+    /// An absent friend answers false, for the same reason <see cref="FriendHpBelow"/> does: "somebody
+    /// who is not there is Elyos" is not true about anything.
+    /// </para>
+    /// </remarks>
+    public static PatternCondition FriendRace(params Race[] races)
+        => ai => ai.Friend is Creature who && races.Contains(who.GetRace());
+
     /// <summary>
     /// <c>is_user</c> on <c>on_attacked</c> — the blow that just landed came from a player.
     /// </summary>

@@ -40666,3 +40666,29 @@ row's real assertion passed at the new size.
 
 Both regenerated from their own generators, because a gate that reports two known failures cannot tell
 anybody about a third. Worth running `regen_check.py` before assuming a drift it reports is yours.
+
+## `is_race` about a friend, and why its refusal count was the wrong number to read
+
+`When.FriendRace` was the last of its family missing --- `FriendHpBelow` and `FriendInAbnormalState`
+were both there, and `ai.Friend` was already a `Creature`, so the guard itself is one line.
+
+**The refusal tally said 10 and the honest number is 217.** Those are not the same measurement: the
+tally counts *patterns blocked whole*, and this condition was mostly costing *handlers inside patterns
+that were taken anyway*. Measured by who runs it, `is_race from=OBJI_FRIEND` is 28 retail patterns,
+1,485 npcs, **217 of them spawned in this port**.
+
+The result bears that out. Patterns and npcs did not move at all --- **3,956 and 30,187 both before and
+after** --- while actions went **319,483 -> 326,569**. Seven thousand actions on rotations that were
+already running: peel rules, rescue casts and calls that only fire for a friend of the right side.
+
+**And the wake table's ten `is_race` refusals did not move**, which settles what they are: `OBJI_SELF`.
+That one stays refused for the reason already written down --- an npc's own race is a constant, so the
+branch is decided at build time, and one branch list is shared between npcs of different races.
+
+### A landmine closed on the way past
+
+`RACE_ROLES` has mapped `OBJI_MESSAGE_SENDER` to `MessageSenderRace` for as long as it has existed, and
+`When.MessageSenderRace` is in the engine --- but `PatternTableLoader` had no case for it. Nothing in
+the tables reaches it today, so it has cost nothing. It would not have stayed cheap: **an unreadable
+token refuses the whole file**, by deliberate design, so the first live one would have taken every
+pattern in the table down rather than one branch. Added beside `FriendRace`.

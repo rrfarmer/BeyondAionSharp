@@ -178,6 +178,13 @@ public static class PatternTableLoader
                     "TalkerRace" => When.TalkerRace(value),
                     "EventTargetRace" => When.EventTargetRace(value),
                     "MessageParamRace" => When.MessageParamRace(value),
+                    "FriendRace" => When.FriendRace(value),
+
+                    // Already emittable and already in the engine, and this switch could not answer
+                    // it. Nothing in the tables reaches it today, so it cost nothing so far -- but an
+                    // unreadable token refuses the whole file, so the first live one would have taken
+                    // every pattern down with it rather than one branch.
+                    "MessageSenderRace" => When.MessageSenderRace(value),
                     _ => throw Unknown(token),
                 };
             }

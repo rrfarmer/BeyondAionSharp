@@ -273,6 +273,7 @@ RACE_ROLES = {
     "OBJI_EVENT_TARGET": "EventTargetRace",
     "OBJI_MESSAGE_PARAM": "MessageParamRace",
     "OBJI_MESSAGE_SENDER": "MessageSenderRace",
+    "OBJI_FRIEND": "FriendRace",
 }
 
 #: The only two retail race names that are not this port's enum name lowercased.
