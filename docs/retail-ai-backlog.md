@@ -259,8 +259,9 @@ The rest are the tables' own limits:
 ## How to work on this
 
 ```bash
-python tools/client-extract/check_loader_names.py   # cheapest check: needs no dump, no tables
-python tools/client-extract/check_dropped_fields.py # fields retail writes that no reader looks at
+python tools/client-extract/check_unreachable_engine.py  # engine offers it, nothing can ask
+python tools/client-extract/check_loader_names.py        # extractor asks, loader cannot answer
+python tools/client-extract/check_dropped_fields.py      # retail wrote it, no reader looks (needs dump)
 python tools/client-extract/regen_check.py          # run the whole pipeline, verify it round-trips
 dotnet test AionServer.slnx                         # ~55s
 python scripts/parity/check_fidelity.py             # structural gate
@@ -271,6 +272,10 @@ Extractor refusal tallies are printed by each `extract_*.py` run and are the aut
 blocked. **Read the npc column, not the pattern column** — `extract_battle_cycles.py` prints both and
 ranks by npcs, because the pattern count has mis-set priorities here twice. Re-measure before setting
 a priority; this file did, and the old one was wrong.
+
+**The three checks close one loop between them**: something retail writes reaches a reader, becomes a
+name the loader answers, and lands on a capability that exists. A break anywhere along that chain used
+to be silent, which is why every one was found by falling over the mechanic it broke.
 
 `check_dropped_fields.py` guards the costliest mistake in this port: a reader that looks at some of an
 element's fields and silently drops the rest. Three were found by hand and each was worth thousands of

@@ -200,6 +200,16 @@ def main():
 
     # Needs neither the dump nor the committed tables: it compares the extractors' role maps against
     # the loader's switches. Cheap, and it has already found nine names the loader could not read.
+    # The mirror of the check below, and just as cheap: a capability the engine offers that no token
+    # and no class can reach. Three were found by hand and each was worth thousands of rows.
+    print("reach: engine surface -> a token or a class")
+    code, err = run("check_unreachable_engine.py", [])
+    if code != 0:
+        problems.append("check_unreachable_engine.py: the engine offers something nothing can ask for")
+        print("  UNREACHED see check_unreachable_engine.py output")
+    else:
+        print("  ok       everything the engine offers can be asked for")
+
     print("names: extractor role maps -> PatternTableLoader")
     code, err = run("check_loader_names.py", [])
     if code != 0:

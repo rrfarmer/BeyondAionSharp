@@ -41224,3 +41224,42 @@ reason, along with the ones deliberately unread.
 number: it is that a field retail writes and nobody reads now shows up as a line rather than as a
 mechanic that quietly does not happen. Three of those were found by hand in one afternoon, and each was
 worth thousands of rows.
+
+## The third shape: what the engine offers and nothing can ask for
+
+Two checks now guard two of the three ways a mechanic goes missing here. The third is the mirror of the
+first, and it hides best: a capability that is **written, correct, and unreachable** --- no token in
+`PatternTableLoader` names it and no hand-written class calls it, so it sits there looking finished.
+
+Every one found by hand this session was worth thousands of rows: `When.FriendsAttackerIsEnemy` was
+4,481 rows of rescue branches that could not fire; `Do.HateFriendsAttacker` and `Do.HateFriendsKiller`
+were the rescue actions aimed at the wrong creature because the right one had no way to be named.
+
+`check_unreachable_engine.py` compares the engine's public surface against the loader and the
+hand-written classes. **189 conditions and actions, and after this session's work, 186 are reachable.**
+The three that are not are each explained rather than fixed:
+
+- **`When.Idle`** --- and this one nearly got deleted. It is unreachable *by design*: it exists to be
+  compared against. `ThePreciseIdleStateIsNotJustNotFighting` evaluates it beside `When.Idling` on the
+  same npc and requires them to disagree, so the distinction is pinned rather than described. Its
+  **doc comment was the actual defect** --- it claimed to implement
+  `is_npc_state(NPCI_SELF, NPC_STATE_IDLE)`, which is `Idling`'s job, so anyone reading it would have
+  reached for the wrong one. That is now what the remark says.
+- **`When.MessageParamIsMyTarget`** --- retail's `is_my_curent_target` (its own spelling) is 20 uses
+  across five subjects and this port answers one of them. Left until the family is worth building
+  rather than built for a third of it.
+- **`Do.TeleportTalker`** --- the Abyss turret-switch cluster, which needs an alias source 4.8 has no
+  equivalent for. Section E.
+
+### The three checks, and what each one catches
+
+| check | catches | needs the dump |
+|---|---|---|
+| `check_unreachable_engine.py` | the engine can do it and nothing can ask | no |
+| `check_loader_names.py` | the extractor can ask and the loader cannot answer | no |
+| `check_dropped_fields.py` | retail wrote it and no reader looks | yes |
+
+All three run from `regen_check.py`, the two cheap ones first. Between them they close the loop:
+something retail writes reaches a reader, becomes a name the loader answers, and lands on a capability
+that exists. **A break anywhere along that chain used to be silent**, which is why every one of them was
+found by falling over the mechanic it broke.

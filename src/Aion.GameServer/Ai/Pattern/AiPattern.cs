@@ -576,7 +576,25 @@ public static class When
 
     public static PatternCondition Fighting => ai => ai.InCombat;
 
-    /// <summary><c>is_npc_state(NPCI_SELF, NPC_STATE_IDLE)</c> — standing about.</summary>
+    /// <summary>
+    /// <b>Not fighting — which is not the same as <c>NPC_STATE_IDLE</c>, and this is not the condition
+    /// that answers it.</b> <see cref="Idling"/> is; the loader maps <c>state:idle</c> there.
+    /// </summary>
+    /// <remarks>
+    /// Kept deliberately, and only as a contrast: <c>ThePreciseIdleStateIsNotJustNotFighting</c>
+    /// evaluates the two side by side on the same NPC and requires them to disagree, so the distinction
+    /// is pinned rather than described. Reusing this one for retail's state check would fire 16 branches
+    /// at patrolling NPCs that retail keeps for NPCs standing still.
+    /// <para>
+    /// The two also diverge in the other direction, which the marker work measured: an aggressive NPC
+    /// that has been hit is <c>InCombat</c> while its state is still <c>IDLE</c>. Kingspin's webs are
+    /// the worked example.
+    /// </para>
+    /// <para>
+    /// <b>Nothing else names it</b>, by design. It is the one entry in `check_unreachable_engine.py`'s
+    /// explained list that exists to be compared against rather than called.
+    /// </para>
+    /// </remarks>
     public static PatternCondition Idle => ai => !ai.InCombat;
 
     /// <summary><c>is_message</c> — this branch belongs to one designer-assigned message number.</summary>
