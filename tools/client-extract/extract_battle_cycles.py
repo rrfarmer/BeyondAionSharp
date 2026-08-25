@@ -666,6 +666,14 @@ def read_guards(block: str, handler: str = "") -> list[str]:
             slot = flag_slot(indicator.group(1)) if indicator else None
             if slot is None:
                 raise Unsayable(f"{kind} in a flag family this port does not number")
+            if kind == "is_world_flag_var":
+                # `flag_expected` says which way round the question is, and 16 of its 19 uses expect
+                # FALSE. It was not read, so those 16 guards asked the opposite of what they mean --
+                # which fires the branch exactly when it should not.
+                expected = re.search(r"<flag_expected>(\w+)</flag_expected>", body)
+                if expected and expected.group(1).upper() == "FALSE":
+                    out.append(f"is_world_flag_clear:{slot}")
+                    continue
             out.append(f"{kind}:{slot}")
         elif kind == "is_message":
             number = re.search(r"<message_type>(\d+)</message_type>", body)
@@ -1142,7 +1150,18 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
                 raise Unsayable("spawn_on_multi_target told to attack with no hate points")
             if not (attacks and attacks.group(1).upper() == "TRUE"):
                 points = 0
-            out.append(("spawn_each", npc_id, int(cap.group(1)), points,
+            # **`num_to_spawn` is how many adds land on *each* creature, and this reader assumed one.**
+            # 279 of its 324 uses are one, which is why it went unnoticed; the other 45 are the
+            # mechanic. `num_to_spawn=4` with `total_set_to_spawn=3` is twelve adds, and one per target
+            # is three.
+            #
+            # Carried in the kind rather than a column because the row's eight fields are all spoken
+            # for, and only when it is more than one -- so 279 of the 324 rows do not move at all. The
+            # loader already reads prefixed kinds this way for `hate_at:` and `switch_to:`.
+            each = re.search(r"<num_to_spawn>(\d+)</num_to_spawn>", body)
+            per_target = int(each.group(1)) if each else 1
+            out.append(("spawn_each" if per_target <= 1 else f"spawn_each:{per_target}",
+                        npc_id, int(cap.group(1)), points,
                         MULTI_ORDER[order.group(1)],
                         float(valid.group(1)) if valid else 0.0,
                         float(reach.group(1)) if reach else 0.0,

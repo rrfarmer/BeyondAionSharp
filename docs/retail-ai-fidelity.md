@@ -41188,3 +41188,39 @@ Genuinely unread, and left that way with reasons:
 `who:TargetIsPlayer` went 155 -> 164 with no guard changing, which is worth knowing about that pin: it
 counts guard tokens **per row**, so a branch that gains an action repeats its guards in the tally. The
 number moved because those branches got their hate row, not because anything was read differently.
+
+## Two more from the same check, and then the check becomes permanent
+
+### `num_to_spawn` on a multi-target spawn
+
+**How many adds land on *each* creature.** The reader took `total_set_to_spawn` -- the cap on how many
+creatures get one -- and assumed the count per creature was one. 279 of the 324 uses are one, which is
+why it went unnoticed; the other **45 are the mechanic**. `num_to_spawn=4` against
+`total_set_to_spawn=3` is twelve adds, and one per target is three.
+
+Three npcs spawned in this port place fewer adds than retail because of it: `BIDF5_U3_Boss`,
+`IDCT_Boss_Hidden_Hard` and `IDDramata_Dramata`. A small number, and squarely the thing this work is
+for --- a boss placing a quarter of its adds is the fight being wrong.
+
+Carried in the kind (`spawn_each:4`) rather than a column, because the row's eight fields are all
+spoken for and the loader already reads prefixed kinds this way. Only written when it is above one, so
+**279 of the 324 rows do not move at all**.
+
+### `flag_expected`, which reverses a guard
+
+`is_world_flag_var` asks whether a world flag is set --- or *is not*, and `flag_expected` says which.
+**Sixteen of its nineteen uses expect FALSE**, and the field was unread, so those sixteen guards were
+asking the opposite question. A guard that reads backwards is worse than one that is missing: the
+branch fires exactly when it should not. `When.WorldFlagClear` is the other half and is one line.
+
+### The check is a tool now
+
+`tools/client-extract/check_dropped_fields.py`, run by `regen_check.py`. It lists what retail writes
+inside each element, lists what the reader searches for, and reports the difference. Fields read
+through a helper --- `timer_slot`, `SKILLI_INDEX_n` --- are named in an `EXPLAINED` table with the
+reason, along with the ones deliberately unread.
+
+**142 fields, every one either read or written down as a decision.** The point is not the current
+number: it is that a field retail writes and nobody reads now shows up as a line rather than as a
+mechanic that quietly does not happen. Three of those were found by hand in one afternoon, and each was
+worth thousands of rows.

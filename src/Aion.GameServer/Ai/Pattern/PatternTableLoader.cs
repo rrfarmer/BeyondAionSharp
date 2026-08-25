@@ -119,6 +119,7 @@ public static class PatternTableLoader
             case "set_world_flag_var": return When.FirstTimeInWorld(Int(argument, token));
             case "unset_world_flag_var": return When.ConsumingWorld(Int(argument, token));
             case "is_world_flag_var": return When.WorldFlagSet(Int(argument, token));
+            case "is_world_flag_clear": return When.WorldFlagClear(Int(argument, token));
 
             // Retail's one-based index, carried verbatim; When.AtWaypoint does the conversion.
             case "waypoint": return When.AtWaypoint(Int(argument, token));
@@ -335,6 +336,16 @@ public static class PatternTableLoader
         if (kind.StartsWith("switch_to:", StringComparison.Ordinal))
         {
             return SwitchTo(kind["switch_to:".Length..], kind);
+        }
+
+        // Retail's `num_to_spawn` on a multi-target spawn: how many land on each creature. Only
+        // written when it is more than one, so the ordinary row stays a bare "spawn_each".
+        if (kind.StartsWith("spawn_each:", StringComparison.Ordinal))
+        {
+            return Do.SpawnOnEachTarget(Int(row.A1, kind), Group(row.Group, kind), Float(row.X, kind),
+                Int(row.A2, kind), Order(row.Place, kind), Float(row.Y, kind),
+                (int)Float(row.Z, kind), Int(row.A3, kind),
+                Int(kind["spawn_each:".Length..], kind));
         }
 
         if (kind.StartsWith("flee_", StringComparison.Ordinal))

@@ -18456,7 +18456,7 @@
 			<guard token="set_flag_var:0" />
 			<action kind="arm" a1="0" a2="40000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="16392" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="spawn_each" a1="282406" a2="1" a3="100" place="Random" x="50.0" y="5.0" z="0.0" group="1" />
+			<action kind="spawn_each:2" a1="282406" a2="1" a3="100" place="Random" x="50.0" y="5.0" z="0.0" group="1" />
 		</branch>
 		<branch priority="19" comment="rung 1">
 			<guard token="timer:1" />
@@ -19354,7 +19354,7 @@
 			<action kind="arm" a1="1" a2="20000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="arm" a1="2" a2="10000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="19714" a2="0" a3="0" place="MOST_HATED" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="spawn_each" a1="282372" a2="1" a3="0" place="Random" x="50.0" y="5.0" z="5.0" group="1" />
+			<action kind="spawn_each:3" a1="282372" a2="1" a3="0" place="Random" x="50.0" y="5.0" z="5.0" group="1" />
 			<action kind="spawn" a1="282372" a2="5" a3="0" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="1" />
 		</branch>
 		<branch priority="3" comment="rung 4">
@@ -19362,7 +19362,7 @@
 			<guard token="hp_between:52:99" />
 			<action kind="arm" a1="1" a2="35000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="19714" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="spawn_each" a1="282372" a2="1" a3="0" place="Random" x="50.0" y="5.0" z="5.0" group="1" />
+			<action kind="spawn_each:3" a1="282372" a2="1" a3="0" place="Random" x="50.0" y="5.0" z="5.0" group="1" />
 		</branch>
 		<branch priority="2" comment="rung 5">
 			<guard token="timer:0" />
@@ -56264,7 +56264,7 @@
 			<guard token="timer:3" />
 			<guard token="hp_between:22:49" />
 			<action kind="skill" a1="18727" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="spawn_each" a1="282698" a2="1" a3="0" place="Random" x="50.0" y="5.0" z="15.0" group="1" />
+			<action kind="spawn_each:10" a1="282698" a2="1" a3="0" place="Random" x="50.0" y="5.0" z="15.0" group="1" />
 		</branch>
 		<branch priority="25" comment="rung 16">
 			<guard token="timer:0" />
@@ -63761,14 +63761,14 @@
 			<guard token="chance:50" />
 			<guard token="timer:23" />
 			<action kind="arm" a1="21" a2="13000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="spawn_each" a1="284859" a2="3" a3="1000000" place="Random" x="50.0" y="7.0" z="0.0" group="1" />
+			<action kind="spawn_each:4" a1="284859" a2="3" a3="1000000" place="Random" x="50.0" y="7.0" z="0.0" group="1" />
 			<action kind="skill" a1="21531" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="21532" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="44" comment="rung 5">
 			<guard token="timer:23" />
 			<action kind="arm" a1="21" a2="13000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="spawn_each" a1="284859" a2="3" a3="1000000" place="Random" x="50.0" y="7.0" z="0.0" group="1" />
+			<action kind="spawn_each:4" a1="284859" a2="3" a3="1000000" place="Random" x="50.0" y="7.0" z="0.0" group="1" />
 			<action kind="skill" a1="21532" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="21531" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
@@ -63782,14 +63782,14 @@
 			<guard token="chance:50" />
 			<guard token="timer:22" />
 			<action kind="arm" a1="21" a2="13000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="spawn_each" a1="284859" a2="3" a3="1000000" place="Random" x="50.0" y="7.0" z="0.0" group="1" />
+			<action kind="spawn_each:4" a1="284859" a2="3" a3="1000000" place="Random" x="50.0" y="7.0" z="0.0" group="1" />
 			<action kind="skill" a1="21531" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="21532" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="41" comment="rung 8">
 			<guard token="timer:22" />
 			<action kind="arm" a1="21" a2="13000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="spawn_each" a1="284859" a2="3" a3="1000000" place="Random" x="50.0" y="7.0" z="0.0" group="1" />
+			<action kind="spawn_each:4" a1="284859" a2="3" a3="1000000" place="Random" x="50.0" y="7.0" z="0.0" group="1" />
 			<action kind="skill" a1="21532" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="21531" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
@@ -63837,7 +63837,7 @@
 			<guard token="timer:18" />
 			<guard token="hp_between:22:99" />
 			<action kind="arm" a1="14" a2="13000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="spawn_each" a1="284860" a2="4" a3="1000000" place="Random" x="50.0" y="7.0" z="0.0" group="2" />
+			<action kind="spawn_each:2" a1="284860" a2="4" a3="1000000" place="Random" x="50.0" y="7.0" z="0.0" group="2" />
 			<action kind="skill" a1="21531" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="21532" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
@@ -63845,7 +63845,7 @@
 			<guard token="timer:18" />
 			<guard token="hp_between:22:99" />
 			<action kind="arm" a1="14" a2="13000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="spawn_each" a1="284860" a2="3" a3="1000000" place="Random" x="50.0" y="7.0" z="0.0" group="2" />
+			<action kind="spawn_each:2" a1="284860" a2="3" a3="1000000" place="Random" x="50.0" y="7.0" z="0.0" group="2" />
 			<action kind="skill" a1="21532" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="21531" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
@@ -63909,7 +63909,7 @@
 			<guard token="hp_between:52:64" />
 			<guard token="set_flag_var:5" />
 			<action kind="arm" a1="7" a2="13000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="spawn_each" a1="284860" a2="3" a3="1000000" place="Random" x="50.0" y="7.0" z="0.0" group="2" />
+			<action kind="spawn_each:2" a1="284860" a2="3" a3="1000000" place="Random" x="50.0" y="7.0" z="0.0" group="2" />
 			<action kind="skill" a1="21532" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="21531" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
@@ -63917,7 +63917,7 @@
 			<guard token="timer:13" />
 			<guard token="hp_between:67:79" />
 			<action kind="arm" a1="7" a2="13000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="spawn_each" a1="284859" a2="3" a3="1000000" place="Random" x="50.0" y="7.0" z="0.0" group="1" />
+			<action kind="spawn_each:4" a1="284859" a2="3" a3="1000000" place="Random" x="50.0" y="7.0" z="0.0" group="1" />
 			<action kind="skill" a1="21531" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="21532" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
@@ -63955,7 +63955,7 @@
 			<guard token="count:0:12:13:1" />
 			<action kind="arm" a1="10" a2="7500" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="21525" a2="0" a3="0" place="MOST_HATED" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="spawn_each" a1="284859" a2="3" a3="10000" place="Random" x="50.0" y="7.0" z="0.0" group="1" />
+			<action kind="spawn_each:4" a1="284859" a2="3" a3="10000" place="Random" x="50.0" y="7.0" z="0.0" group="1" />
 		</branch>
 		<branch priority="19" comment="rung 30">
 			<guard token="timer:9" />
@@ -64001,7 +64001,7 @@
 			<guard token="countbelow:0:10:10" />
 			<action kind="arm" a1="0" a2="4000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="arm" a1="7" a2="13000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="spawn_each" a1="284859" a2="3" a3="1000000" place="Random" x="50.0" y="7.0" z="0.0" group="1" />
+			<action kind="spawn_each:4" a1="284859" a2="3" a3="1000000" place="Random" x="50.0" y="7.0" z="0.0" group="1" />
 			<action kind="skill" a1="21531" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="21532" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
@@ -70166,7 +70166,7 @@
 			<action kind="spawn" a1="731630" a2="1" a3="0" place="for_the_fight_absolute" x="482.21" y="571.16" z="427.42" group="2" />
 			<action kind="sysmsg" a1="1401543" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="21887" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="spawn_each" a1="283132" a2="12" a3="0" place="Random" x="100.0" y="7.0" z="15.0" group="1" />
+			<action kind="spawn_each:2" a1="283132" a2="12" a3="0" place="Random" x="100.0" y="7.0" z="15.0" group="1" />
 			<action kind="arm" a1="3" a2="3000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="10" comment="rung 2">
@@ -70178,7 +70178,7 @@
 			<action kind="spawn" a1="731630" a2="1" a3="0" place="for_the_fight_absolute" x="482.21" y="571.16" z="427.42" group="2" />
 			<action kind="sysmsg" a1="1401543" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="21887" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="spawn_each" a1="283132" a2="12" a3="0" place="Random" x="100.0" y="9.0" z="15.0" group="1" />
+			<action kind="spawn_each:3" a1="283132" a2="12" a3="0" place="Random" x="100.0" y="9.0" z="15.0" group="1" />
 			<action kind="arm" a1="3" a2="3000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="9" comment="rung 3">
@@ -70190,7 +70190,7 @@
 			<action kind="spawn" a1="731630" a2="1" a3="0" place="for_the_fight_absolute" x="482.21" y="571.16" z="427.42" group="2" />
 			<action kind="sysmsg" a1="1401543" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="21887" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="spawn_each" a1="283132" a2="12" a3="0" place="Random" x="100.0" y="10.0" z="15.0" group="1" />
+			<action kind="spawn_each:4" a1="283132" a2="12" a3="0" place="Random" x="100.0" y="10.0" z="15.0" group="1" />
 		</branch>
 		<branch priority="8" comment="rung 4">
 			<guard token="timer:3" />
@@ -159169,7 +159169,7 @@
 	</variant>
 	<variant id="132" handler="on_see_user">
 		<branch priority="3" comment="rung 0">
-			<guard token="is_world_flag_var:5" />
+			<guard token="is_world_flag_clear:5" />
 			<guard token="set_flag_var:0" />
 			<action kind="sysmsg" a1="1401879" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="timer" a1="5000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174770,13 +174770,13 @@
 	</variant>
 	<variant id="59" handler="on_despawn">
 		<branch priority="1" comment="rung 0">
-			<guard token="is_world_flag_var:20" />
+			<guard token="is_world_flag_clear:20" />
 			<action kind="nothing" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</variant>
 	<variant id="60" handler="on_despawn">
 		<branch priority="1" comment="rung 0">
-			<guard token="is_world_flag_var:21" />
+			<guard token="is_world_flag_clear:21" />
 			<action kind="nothing" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</variant>

@@ -218,6 +218,16 @@ def main():
         print(f"\nretail pattern dump not found at {args.xml}; extract half skipped", file=sys.stderr)
         return 1 if problems else 2
 
+    # Needs the dump, so it lives on this side of the check. It has found three large silent losses
+    # -- see its docstring -- and every one of them was invisible until somebody went looking.
+    print("\nfields: retail elements -> extractor readers")
+    code, err = run("check_dropped_fields.py", [args.xml])
+    if code != 0:
+        problems.append("check_dropped_fields.py: a field retail writes is read by nobody")
+        print("  DROPPED  see check_dropped_fields.py output")
+    else:
+        print("  ok       every field retail writes is read, or explained")
+
     print("\nextract: retail patterns -> committed table")
     with tempfile.TemporaryDirectory() as tmp:
         tmpdir = pathlib.Path(tmp)

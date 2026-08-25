@@ -2212,8 +2212,15 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// three — and which players the cap keeps is the mechanic. A paralysis eye on two random players
     /// is a different fight from one on the two tanks.
     /// </remarks>
+    /// <param name="perTarget">
+    /// Retail's <c>num_to_spawn</c>, which this port read as one for as long as it has existed.
+    /// <b>279 of its 324 uses are one and 45 are not</b>, and where it is not, the difference is the
+    /// mechanic: <c>num_to_spawn=4</c> against <c>total_set_to_spawn=3</c> is twelve adds, and one per
+    /// target is three.
+    /// </param>
     public void SpawnOnEachTarget(int npcId, int spawnId, float validDistance, float range,
-        int liveSeconds, int maxTargets, MultiTargetOrder order, int attackHate = 0)
+        int liveSeconds, int maxTargets, MultiTargetOrder order, int attackHate = 0,
+        int perTarget = 1)
     {
         AggroList aggro = GetAggroList();
         IEnumerable<Creature> valid = aggro.StreamValidTargets(validDistance);
@@ -2228,14 +2235,15 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         {
             if (attackHate <= 0)
             {
-                SpawnAround(target.GetPosition(), npcId, spawnId, 1, range, liveSeconds);
+                SpawnAround(target.GetPosition(), npcId, spawnId, perTarget, range, liveSeconds);
                 continue;
             }
 
             // Each add is paired with the player it was placed on, not with the raid at large: this is
             // the op that puts one hazard on each of several people, and each hazard is theirs.
             var placed = new List<Npc>();
-            SpawnAroundInto(placed, target.GetPosition(), npcId, spawnId, 1, range, liveSeconds);
+            SpawnAroundInto(placed, target.GetPosition(), npcId, spawnId, perTarget, range,
+                liveSeconds);
             foreach (Npc summon in placed)
                 AttackAfterSpawn.NextTick(summon, target, attackHate);
         }

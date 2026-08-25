@@ -443,6 +443,15 @@ public static class When
     public static PatternCondition WorldFlagSet(int flag)
         => ai => WorldFlags.IsSet(ai.GetOwner().GetWorldMapInstance(), flag);
 
+    /// <summary><c>is_world_flag_var</c> with <c>flag_expected=FALSE</c> — the flag is <em>not</em> set.</summary>
+    /// <remarks>
+    /// <b>Sixteen of retail's nineteen uses expect FALSE</b>, and the field was not read at all, so
+    /// those sixteen guards were asking the opposite question. A guard that reads backwards is worse
+    /// than one that is missing: the branch fires exactly when it should not.
+    /// </remarks>
+    public static PatternCondition WorldFlagClear(int flag)
+        => ai => !WorldFlags.IsSet(ai.GetOwner().GetWorldMapInstance(), flag);
+
 
     /// <summary><c>test_probability</c>.</summary>
     public static PatternCondition Chance(int percent) => ai => ai.RollPercent(percent);
@@ -1259,9 +1268,10 @@ public static class Do
     /// both required — see the runtime for why neither has a default.
     /// </summary>
     public static PatternAction SpawnOnEachTarget(int npcId, int spawnId, float validDistance,
-        int maxTargets, MultiTargetOrder order, float range = 0f, int liveSeconds = 0, int attackHate = 0)
+        int maxTargets, MultiTargetOrder order, float range = 0f, int liveSeconds = 0, int attackHate = 0,
+        int perTarget = 1)
         => ai => ai.SpawnOnEachTarget(npcId, spawnId, validDistance, range, liveSeconds, maxTargets, order,
-            attackHate);
+            attackHate, perTarget);
 
     /// <summary><c>spawn_on_target_by_attacker_indicator</c> — on one attacker rather than the tank.</summary>
     /// <param name="range">Retail's <c>spawn_range</c> — the scatter around the target, often zero.</param>

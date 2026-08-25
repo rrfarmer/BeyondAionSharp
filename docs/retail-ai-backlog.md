@@ -260,6 +260,7 @@ The rest are the tables' own limits:
 
 ```bash
 python tools/client-extract/check_loader_names.py   # cheapest check: needs no dump, no tables
+python tools/client-extract/check_dropped_fields.py # fields retail writes that no reader looks at
 python tools/client-extract/regen_check.py          # run the whole pipeline, verify it round-trips
 dotnet test AionServer.slnx                         # ~55s
 python scripts/parity/check_fidelity.py             # structural gate
@@ -270,6 +271,11 @@ Extractor refusal tallies are printed by each `extract_*.py` run and are the aut
 blocked. **Read the npc column, not the pattern column** — `extract_battle_cycles.py` prints both and
 ranks by npcs, because the pattern count has mis-set priorities here twice. Re-measure before setting
 a priority; this file did, and the old one was wrong.
+
+`check_dropped_fields.py` guards the costliest mistake in this port: a reader that looks at some of an
+element's fields and silently drops the rest. Three were found by hand and each was worth thousands of
+rows — `broadcast_message param_obj`, `switch_target_by_attacker_indicator points_to_add`, and
+`is_world_flag_var flag_expected`, which reversed sixteen guards. Run it after touching any reader.
 
 `check_loader_names.py` guards a bug this port has hit three times: a role name the extractor can emit
 and `PatternTableLoader` has no case for. It is free until a pattern using it goes live, and then it
