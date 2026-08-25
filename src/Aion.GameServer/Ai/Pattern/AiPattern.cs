@@ -748,6 +748,23 @@ public static class When
     public static PatternCondition FriendsAttackerIsEnemy
         => ai => ai.FriendsAttacker is Creature attacker && attacker.IsEnemy(ai.GetOwner());
 
+    /// <summary><c>is_user obj_indicator=OBJI_ATTACKER</c> on a rescue handler.</summary>
+    /// <remarks>
+    /// The rescue handlers name their subjects exactly as an NPC names its own; see
+    /// <see cref="FriendsAttackerIsEnemy"/> and <c>PatternAi.FriendsAttacker</c>. A guard read the
+    /// other way asks about whoever last hit the rescuer, which in a rescue is usually nobody — so it
+    /// answers false and the branch never fires, silently.
+    /// </remarks>
+    public static PatternCondition FriendsAttackerIsPlayer => ai => ai.FriendsAttacker is Player;
+
+    /// <summary><c>is_user obj_indicator=OBJI_KILLER</c> on <c>on_see_friend_killed_by_user</c>.</summary>
+    public static PatternCondition FriendsKillerIsPlayer => ai => ai.FriendsKiller is Player;
+
+    /// <summary><c>is_distance_shorter_than who=OBJI_KILLER</c> on a friend-killed handler.</summary>
+    public static PatternCondition FriendsKillerWithin(int metres)
+        => ai => ai.FriendsKiller is Creature killer
+            && Aion.GameServer.Utils.PositionUtil.IsInRange(ai.GetOwner(), killer, metres);
+
     /// <summary>
     /// <c>is_enemy who=OBJI_MESSAGE_PARAM</c> — whoever a message named is hostile to this NPC.
     /// </summary>

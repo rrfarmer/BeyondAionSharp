@@ -167969,7 +167969,7 @@
 	</variant>
 	<variant id="68" handler="on_see_friend_attacked">
 		<branch priority="7" comment="rung 0">
-			<guard token="who:AttackedByPlayer" />
+			<guard token="who:FriendsAttackerIsPlayer" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<guard token="count:0:0:3:0" />
 			<action kind="skill" a1="17361" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -167977,7 +167977,7 @@
 	</variant>
 	<variant id="69" handler="on_see_friend_attacked">
 		<branch priority="7" comment="rung 0">
-			<guard token="who:AttackedByPlayer" />
+			<guard token="who:FriendsAttackerIsPlayer" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<action kind="skill" a1="17361" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
@@ -168057,14 +168057,14 @@
 	<variant id="80" handler="on_see_friend_attacked">
 		<branch priority="22" comment="rung 0">
 			<guard token="hp_of:FriendHpBelow:50" />
-			<guard token="who:AttackedByPlayer" />
+			<guard token="who:FriendsAttackerIsPlayer" />
 			<guard token="count:1:0:3:0" />
 			<action kind="skill" a1="20556" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</variant>
 	<variant id="81" handler="on_see_friend_attacked">
 		<branch priority="1" comment="rung 0">
-			<guard token="enemy:AttackerIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<action kind="flee_FleeFromFriendsAttacker" a1="5" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</variant>
@@ -168217,7 +168217,7 @@
 	</variant>
 	<variant id="99" handler="on_see_friend_attacked">
 		<branch priority="13" comment="rung 0">
-			<guard token="who:AttackedByPlayer" />
+			<guard token="who:FriendsAttackerIsPlayer" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<guard token="count:0:0:3:0" />
 			<action kind="skill" a1="16604" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -168225,7 +168225,7 @@
 	</variant>
 	<variant id="100" handler="on_see_friend_attacked">
 		<branch priority="13" comment="rung 0">
-			<guard token="who:AttackedByPlayer" />
+			<guard token="who:FriendsAttackerIsPlayer" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<guard token="skillready:16563" />
 			<action kind="skill" a1="16563" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -168233,7 +168233,7 @@
 	</variant>
 	<variant id="101" handler="on_see_friend_attacked">
 		<branch priority="7" comment="rung 0">
-			<guard token="who:AttackedByPlayer" />
+			<guard token="who:FriendsAttackerIsPlayer" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<guard token="count:0:0:3:0" />
 			<action kind="skill" a1="18522" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -168241,7 +168241,7 @@
 	</variant>
 	<variant id="102" handler="on_see_friend_attacked">
 		<branch priority="7" comment="rung 0">
-			<guard token="who:AttackedByPlayer" />
+			<guard token="who:FriendsAttackerIsPlayer" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<guard token="count:0:0:3:0" />
 			<action kind="skill" a1="19718" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174110,7 +174110,7 @@
 		</branch>
 		<branch priority="11" comment="rung 1">
 			<guard token="chance:25" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<action kind="arm" a1="1" a2="15000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="17213" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174130,7 +174130,7 @@
 		</branch>
 		<branch priority="11" comment="rung 1">
 			<guard token="chance:25" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<action kind="arm" a1="1" a2="15000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="17213" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174143,7 +174143,7 @@
 		</branch>
 		<branch priority="9" comment="rung 1">
 			<guard token="chance:25" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<action kind="arm" a1="1" a2="15000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="17125" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174156,7 +174156,7 @@
 		</branch>
 		<branch priority="11" comment="rung 1">
 			<guard token="chance:25" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<action kind="arm" a1="1" a2="15000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="17212" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174165,7 +174165,7 @@
 	<variant id="5" handler="on_friend_spelled">
 		<branch priority="9" comment="rung 0">
 			<guard token="chance:25" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<action kind="skill" a1="17211" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
@@ -174177,7 +174177,7 @@
 		</branch>
 		<branch priority="11" comment="rung 1">
 			<guard token="chance:25" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<action kind="arm" a1="1" a2="15000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="17212" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174186,7 +174186,7 @@
 	<variant id="7" handler="on_friend_spelled">
 		<branch priority="2" comment="rung 0">
 			<guard token="hp_of:FriendHpBelow:50" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="set_flag_var:0" />
 			<action kind="skill" a1="16432" a2="0" a3="0" place="MOST_HATED" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="16431" a2="0" a3="0" place="MOST_HATED" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174202,7 +174202,7 @@
 		<branch priority="1" comment="rung 0">
 			<guard token="chance:100" />
 			<guard token="hp_of:FriendHpBelow:35" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="set_flag_var:0" />
 			<action kind="skill" a1="16670" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="16667" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174219,7 +174219,7 @@
 	</variant>
 	<variant id="11" handler="on_friend_spelled">
 		<branch priority="2" comment="rung 0">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="skillready:16667" />
 			<action kind="skill" a1="16667" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
@@ -174232,14 +174232,14 @@
 			<action kind="skill" a1="16631" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="3" comment="rung 1">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="skillcategory:PHYSICAL_DEBUFF" />
 			<action kind="arm" a1="0" a2="6000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="say" a1="340568" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="16635" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="2" comment="rung 2">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="skillcategory:MENTAL_DEBUFF" />
 			<action kind="arm" a1="0" a2="6000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="say" a1="340568" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174248,13 +174248,13 @@
 	</variant>
 	<variant id="13" handler="on_friend_spelled">
 		<branch priority="4" comment="rung 0">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="skillcategory:PHYSICAL_DEBUFF" />
 			<action kind="say" a1="340317" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="16635" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="3" comment="rung 1">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="skillcategory:MENTAL_DEBUFF" />
 			<action kind="say" a1="340317" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="16635" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174275,14 +174275,14 @@
 	<variant id="15" handler="on_friend_spelled">
 		<branch priority="2" comment="rung 0">
 			<guard token="hp_of:FriendHpBelow:50" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<action kind="skill" a1="16563" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</variant>
 	<variant id="16" handler="on_friend_spelled">
 		<branch priority="2" comment="rung 0">
 			<guard token="chance:15" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="set_flag_var:5" />
 			<action kind="say" a1="340883" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill_at" a1="16602" a2="0" a3="0" place="FriendsAttacker" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174290,20 +174290,20 @@
 	</variant>
 	<variant id="17" handler="on_friend_spelled">
 		<branch priority="5" comment="rung 0">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="skillcategory:PHYSICAL_DEBUFF" />
 			<action kind="say" a1="340317" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="16635" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="4" comment="rung 1">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="skillcategory:MENTAL_DEBUFF" />
 			<action kind="say" a1="340317" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="16635" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="2" comment="rung 2">
 			<guard token="hp_of:FriendHpBelow:50" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<action kind="skill" a1="16563" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</variant>
@@ -174315,7 +174315,7 @@
 	<variant id="19" handler="on_friend_spelled">
 		<branch priority="2" comment="rung 0">
 			<guard token="chance:15" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="set_flag_var:5" />
 			<action kind="say" a1="340882" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill_at" a1="16602" a2="0" a3="0" place="FriendsAttacker" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174325,7 +174325,7 @@
 		<branch priority="1" comment="rung 0">
 			<guard token="chance:100" />
 			<guard token="hp_of:FriendHpBelow:35" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="set_flag_var:0" />
 			<action kind="skill" a1="16670" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="16395" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174341,7 +174341,7 @@
 	</variant>
 	<variant id="22" handler="on_friend_spelled">
 		<branch priority="1" comment="rung 0">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="hp_of:FriendHpBelow:75" />
 			<guard token="set_flag_var:1" />
 			<action kind="say" a1="340889" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174351,21 +174351,21 @@
 	<variant id="23" handler="on_friend_spelled">
 		<branch priority="14" comment="rung 0">
 			<guard token="hp_of_between:FriendHpBetween:47:74" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="set_flag_var:2" />
 			<action kind="skill" a1="17713" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="10" comment="rung 1">
 			<guard token="chance:15" />
 			<guard token="hp_of:FriendHpBelow:45" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="set_flag_var:1" />
 			<action kind="arm" a1="0" a2="10000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="17718" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="6" comment="rung 2">
 			<guard token="hp_below:45" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="set_flag_var:1" />
 			<action kind="skill" a1="17713" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
@@ -174373,7 +174373,7 @@
 	<variant id="24" handler="on_friend_spelled">
 		<branch priority="2" comment="rung 0">
 			<guard token="set_flag_var:0" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="hp_below:90" />
 			<action kind="hate_at:HateFriendsAttacker" a1="10" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill_at" a1="17462" a2="0" a3="0" place="FriendsAttacker" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174381,7 +174381,7 @@
 	</variant>
 	<variant id="25" handler="on_friend_spelled">
 		<branch priority="3" comment="rung 0">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="hp_of:FriendHpBelow:90" />
 			<guard token="state:fight" />
 			<guard token="set_flag_var:0" />
@@ -174398,7 +174398,7 @@
 	<variant id="27" handler="on_friend_spelled">
 		<branch priority="6" comment="rung 0">
 			<guard token="hp_of:FriendHpBelow:35" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="set_flag_var:1" />
 			<action kind="skill" a1="17713" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="say" a1="340974" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174407,7 +174407,7 @@
 		<branch priority="5" comment="rung 1">
 			<guard token="set_flag_var:0" />
 			<guard token="hp_of_between:FriendHpBetween:37:74" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<action kind="skill" a1="17713" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</variant>
@@ -174418,7 +174418,7 @@
 		</branch>
 		<branch priority="12" comment="rung 1">
 			<guard token="chance:25" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<guard token="skillready:17363" />
 			<action kind="skill" a1="17363" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174443,7 +174443,7 @@
 	<variant id="31" handler="on_friend_spelled">
 		<branch priority="10" comment="rung 0">
 			<guard token="chance:25" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<guard token="skillready:17361" />
 			<action kind="skill" a1="17361" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174451,7 +174451,7 @@
 	</variant>
 	<variant id="32" handler="on_friend_spelled">
 		<branch priority="3" comment="rung 0">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="hp_of:FriendHpBelow:90" />
 			<guard token="state:fight" />
 			<guard token="set_flag_var:0" />
@@ -174463,7 +174463,7 @@
 	<variant id="33" handler="on_friend_spelled">
 		<branch priority="12" comment="rung 0">
 			<guard token="chance:25" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<guard token="skillready:17363" />
 			<action kind="skill" a1="17363" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174472,7 +174472,7 @@
 	<variant id="34" handler="on_friend_spelled">
 		<branch priority="3" comment="rung 0">
 			<guard token="state:fight" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="set_flag_var:10" />
 			<action kind="arm" a1="0" a2="6000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill_at" a1="16785" a2="0" a3="0" place="FriendsAttacker" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174481,7 +174481,7 @@
 	</variant>
 	<variant id="35" handler="on_friend_spelled">
 		<branch priority="3" comment="rung 0">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="state:fight" />
 			<guard token="set_flag_var:10" />
 			<action kind="arm" a1="0" a2="6000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174492,7 +174492,7 @@
 	<variant id="36" handler="on_friend_spelled">
 		<branch priority="3" comment="rung 0">
 			<guard token="state:fight" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="set_flag_var:10" />
 			<action kind="say" a1="341777" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill_at" a1="16785" a2="0" a3="0" place="FriendsAttacker" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174501,7 +174501,7 @@
 	</variant>
 	<variant id="37" handler="on_friend_spelled">
 		<branch priority="3" comment="rung 0">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="state:fight" />
 			<guard token="set_flag_var:10" />
 			<action kind="say" a1="341777" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174511,13 +174511,13 @@
 	</variant>
 	<variant id="38" handler="on_friend_spelled">
 		<branch priority="7" comment="rung 0">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="skillcategory:PHYSICAL_DEBUFF" />
 			<guard token="skillready:16566" />
 			<action kind="skill" a1="16566" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="6" comment="rung 1">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="skillcategory:MENTAL_DEBUFF" />
 			<guard token="skillready:16566" />
 			<action kind="skill" a1="16566" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174534,7 +174534,7 @@
 	<variant id="40" handler="on_friend_spelled">
 		<branch priority="3" comment="rung 0">
 			<guard token="state:fight" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="set_flag_var:10" />
 			<action kind="skill" a1="18167" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="say" a1="341762" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174544,7 +174544,7 @@
 	</variant>
 	<variant id="41" handler="on_friend_spelled">
 		<branch priority="2" comment="rung 0">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="state:fight" />
 			<guard token="set_flag_var:10" />
 			<action kind="skill" a1="16737" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174556,7 +174556,7 @@
 	<variant id="42" handler="on_friend_spelled">
 		<branch priority="2" comment="rung 0">
 			<guard token="state:fight" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="set_flag_var:10" />
 			<action kind="skill" a1="18167" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="say" a1="341769" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174565,7 +174565,7 @@
 	</variant>
 	<variant id="43" handler="on_friend_spelled">
 		<branch priority="3" comment="rung 0">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="state:fight" />
 			<guard token="set_flag_var:10" />
 			<action kind="skill" a1="18167" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174575,7 +174575,7 @@
 	</variant>
 	<variant id="44" handler="on_friend_spelled">
 		<branch priority="3" comment="rung 0">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="state:fight" />
 			<guard token="set_flag_var:10" />
 			<action kind="say" a1="341771" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174603,7 +174603,7 @@
 	<variant id="47" handler="on_friend_spelled">
 		<branch priority="3" comment="rung 0">
 			<guard token="state:fight" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="set_flag_var:10" />
 			<action kind="say" a1="341777" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill_at" a1="16608" a2="0" a3="0" place="FriendsAttacker" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174612,7 +174612,7 @@
 	</variant>
 	<variant id="48" handler="on_friend_spelled">
 		<branch priority="3" comment="rung 0">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="state:fight" />
 			<guard token="set_flag_var:10" />
 			<action kind="say" a1="341777" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174622,19 +174622,19 @@
 	</variant>
 	<variant id="49" handler="on_friend_spelled">
 		<branch priority="12" comment="rung 0">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="skillcategory:PHYSICAL_DEBUFF" />
 			<action kind="skill" a1="16566" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="11" comment="rung 1">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="skillcategory:MENTAL_DEBUFF" />
 			<action kind="skill" a1="16566" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="10" comment="rung 2">
 			<guard token="chance:20" />
 			<guard token="hp_of:FriendHpBelow:50" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<action kind="arm" a1="0" a2="6000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="16563" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
@@ -174647,7 +174647,7 @@
 	</variant>
 	<variant id="51" handler="on_friend_spelled">
 		<branch priority="3" comment="rung 0">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="state:fight" />
 			<guard token="set_flag_var:10" />
 			<action kind="say" a1="341771" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174658,19 +174658,19 @@
 	<variant id="52" handler="on_friend_spelled">
 		<branch priority="2" comment="rung 0">
 			<guard token="hp_of:FriendHpBelow:40" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<action kind="skill" a1="16563" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</variant>
 	<variant id="53" handler="on_friend_spelled">
 		<branch priority="7" comment="rung 0">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="skillcategory:PHYSICAL_DEBUFF" />
 			<action kind="say" a1="340317" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="16635" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="6" comment="rung 1">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="skillcategory:MENTAL_DEBUFF" />
 			<action kind="say" a1="340317" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="16635" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174685,7 +174685,7 @@
 	</variant>
 	<variant id="55" handler="on_friend_spelled">
 		<branch priority="2" comment="rung 0">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="skillready:16463" />
 			<action kind="skill" a1="16463" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
@@ -174704,7 +174704,7 @@
 	</variant>
 	<variant id="58" handler="on_friend_spelled">
 		<branch priority="7" comment="rung 0">
-			<guard token="who:SpelledByPlayer" />
+			<guard token="who:FriendsAttackerIsPlayer" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<guard token="count:0:0:3:0" />
 			<action kind="skill" a1="17361" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174712,14 +174712,14 @@
 	</variant>
 	<variant id="59" handler="on_friend_spelled">
 		<branch priority="7" comment="rung 0">
-			<guard token="who:SpelledByPlayer" />
+			<guard token="who:FriendsAttackerIsPlayer" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<action kind="skill" a1="17361" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</variant>
 	<variant id="60" handler="on_friend_spelled">
 		<branch priority="7" comment="rung 0">
-			<guard token="who:SpelledByPlayer" />
+			<guard token="who:FriendsAttackerIsPlayer" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<action kind="skill" a1="17361" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
@@ -174755,7 +174755,7 @@
 	<variant id="65" handler="on_friend_spelled">
 		<branch priority="22" comment="rung 0">
 			<guard token="hp_of:FriendHpBelow:50" />
-			<guard token="who:SpelledByPlayer" />
+			<guard token="who:FriendsAttackerIsPlayer" />
 			<guard token="count:1:0:3:0" />
 			<action kind="skill" a1="20556" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
@@ -174773,7 +174773,7 @@
 		</branch>
 		<branch priority="12" comment="rung 1">
 			<guard token="chance:25" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<guard token="skillready:17361" />
 			<action kind="skill" a1="17361" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174786,7 +174786,7 @@
 		</branch>
 		<branch priority="9" comment="rung 1">
 			<guard token="chance:25" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<action kind="arm" a1="1" a2="15000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="17125" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174799,7 +174799,7 @@
 		</branch>
 		<branch priority="10" comment="rung 1">
 			<guard token="chance:25" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<guard token="skillready:17361" />
 			<action kind="skill" a1="17361" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174814,7 +174814,7 @@
 	<variant id="71" handler="on_friend_spelled">
 		<branch priority="2" comment="rung 0">
 			<guard token="hp_of:FriendHpBelow:50" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="set_flag_var:0" />
 			<action kind="skill" a1="16827" a2="0" a3="0" place="MOST_HATED" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill" a1="16839" a2="0" a3="0" place="MOST_HATED" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174823,7 +174823,7 @@
 	</variant>
 	<variant id="72" handler="on_friend_spelled">
 		<branch priority="2" comment="rung 0">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="state:fight" />
 			<guard token="set_flag_var:10" />
 			<action kind="skill" a1="18167" a2="0" a3="0" place="ME" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174835,7 +174835,7 @@
 	<variant id="73" handler="on_friend_spelled">
 		<branch priority="3" comment="rung 0">
 			<guard token="state:fight" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="set_flag_var:10" />
 			<action kind="say" a1="341771" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill_at" a1="18176" a2="0" a3="0" place="FriendsAttacker" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174844,7 +174844,7 @@
 	</variant>
 	<variant id="74" handler="on_friend_spelled">
 		<branch priority="3" comment="rung 0">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="hp_of:FriendHpBelow:90" />
 			<guard token="state:fight" />
 			<guard token="set_flag_var:0" />
@@ -174855,7 +174855,7 @@
 	</variant>
 	<variant id="75" handler="on_friend_spelled">
 		<branch priority="3" comment="rung 0">
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="state:fight" />
 			<guard token="set_flag_var:10" />
 			<action kind="arm" a1="0" a2="6000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174872,7 +174872,7 @@
 	<variant id="77" handler="on_friend_spelled">
 		<branch priority="3" comment="rung 0">
 			<guard token="state:fight" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="set_flag_var:10" />
 			<action kind="say" a1="341777" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill_at" a1="18167" a2="0" a3="0" place="FriendsAttacker" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174889,13 +174889,13 @@
 		<branch priority="10" comment="rung 0">
 			<guard token="chance:20" />
 			<guard token="hp_of:FriendHpBelow:50" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<action kind="skill" a1="17367" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</variant>
 	<variant id="80" handler="on_friend_spelled">
 		<branch priority="13" comment="rung 0">
-			<guard token="who:SpelledByPlayer" />
+			<guard token="who:FriendsAttackerIsPlayer" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<guard token="count:0:0:3:0" />
 			<action kind="skill" a1="16604" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174903,7 +174903,7 @@
 	</variant>
 	<variant id="81" handler="on_friend_spelled">
 		<branch priority="13" comment="rung 0">
-			<guard token="who:SpelledByPlayer" />
+			<guard token="who:FriendsAttackerIsPlayer" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<guard token="skillready:16563" />
 			<action kind="skill" a1="16563" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174911,7 +174911,7 @@
 	</variant>
 	<variant id="82" handler="on_friend_spelled">
 		<branch priority="7" comment="rung 0">
-			<guard token="who:SpelledByPlayer" />
+			<guard token="who:FriendsAttackerIsPlayer" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<guard token="count:0:0:3:0" />
 			<action kind="skill" a1="18522" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174919,7 +174919,7 @@
 	</variant>
 	<variant id="83" handler="on_friend_spelled">
 		<branch priority="7" comment="rung 0">
-			<guard token="who:SpelledByPlayer" />
+			<guard token="who:FriendsAttackerIsPlayer" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<guard token="count:0:0:3:0" />
 			<action kind="skill" a1="19718" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
@@ -174968,7 +174968,7 @@
 	<variant id="89" handler="on_friend_spelled">
 		<branch priority="9" comment="rung 0">
 			<guard token="chance:25" />
-			<guard token="enemy:CasterIsEnemy" />
+			<guard token="enemy:FriendsAttackerIsEnemy" />
 			<guard token="hp_of:FriendHpBelow:50" />
 			<action kind="skill" a1="17361" a2="0" a3="0" place="FRIEND" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
@@ -179305,8 +179305,8 @@
 	</variant>
 	<variant id="12" handler="on_see_friend_killed_by_user">
 		<branch priority="8" comment="rung 0">
-			<guard token="who:KilledByPlayer" />
-			<guard token="within:KillerWithin:10" />
+			<guard token="who:FriendsKillerIsPlayer" />
+			<guard token="within:FriendsKillerWithin:10" />
 			<guard token="count:0:0:3:0" />
 			<action kind="skill" a1="20648" a2="0" a3="0" place="MOST_HATED" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="hate_at:HateFriendsKiller" a1="50000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
@@ -179314,14 +179314,14 @@
 	</variant>
 	<variant id="13" handler="on_see_friend_killed_by_user">
 		<branch priority="8" comment="rung 0">
-			<guard token="who:KilledByPlayer" />
+			<guard token="who:FriendsKillerIsPlayer" />
 			<action kind="hate_at:HateFriendsKiller" a1="50000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="attack" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</variant>
 	<variant id="14" handler="on_see_friend_killed_by_user">
 		<branch priority="7" comment="rung 0">
-			<guard token="who:KilledByPlayer" />
+			<guard token="who:FriendsKillerIsPlayer" />
 			<action kind="hate_at:HateFriendsKiller" a1="50000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="attack" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="attack" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
@@ -179335,21 +179335,21 @@
 	</variant>
 	<variant id="16" handler="on_see_friend_killed_by_user">
 		<branch priority="14" comment="rung 0">
-			<guard token="who:KilledByPlayer" />
+			<guard token="who:FriendsKillerIsPlayer" />
 			<guard token="count:0:0:3:0" />
 			<action kind="skill_at" a1="16775" a2="0" a3="0" place="FriendsKiller" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</variant>
 	<variant id="17" handler="on_see_friend_killed_by_user">
 		<branch priority="14" comment="rung 0">
-			<guard token="who:KilledByPlayer" />
+			<guard token="who:FriendsKillerIsPlayer" />
 			<guard token="count:0:0:3:0" />
 			<action kind="skill_at" a1="17714" a2="0" a3="0" place="FriendsKiller" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</variant>
 	<variant id="18" handler="on_see_friend_killed_by_user">
 		<branch priority="8" comment="rung 0">
-			<guard token="who:KilledByPlayer" />
+			<guard token="who:FriendsKillerIsPlayer" />
 			<guard token="count:0:0:3:0" />
 			<action kind="hate_at:HateFriendsKiller" a1="50000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="attack" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
@@ -179357,7 +179357,7 @@
 	</variant>
 	<variant id="19" handler="on_see_friend_killed_by_user">
 		<branch priority="8" comment="rung 0">
-			<guard token="who:KilledByPlayer" />
+			<guard token="who:FriendsKillerIsPlayer" />
 			<guard token="count:0:0:3:0" />
 			<action kind="skill_at" a1="21286" a2="0" a3="0" place="FriendsKiller" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill_at" a1="21290" a2="0" a3="0" place="FriendsKiller" x="0.0" y="0.0" z="0.0" group="0" />
@@ -179372,14 +179372,14 @@
 	</variant>
 	<variant id="21" handler="on_see_friend_killed_by_user">
 		<branch priority="8" comment="rung 0">
-			<guard token="who:KilledByPlayer" />
+			<guard token="who:FriendsKillerIsPlayer" />
 			<guard token="count:0:0:3:0" />
 			<action kind="skill_at" a1="17314" a2="0" a3="0" place="FriendsKiller" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</variant>
 	<variant id="22" handler="on_see_friend_killed_by_user">
 		<branch priority="8" comment="rung 0">
-			<guard token="who:KilledByPlayer" />
+			<guard token="who:FriendsKillerIsPlayer" />
 			<guard token="count:0:0:3:0" />
 			<action kind="skill_at" a1="21293" a2="0" a3="0" place="FriendsKiller" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill_at" a1="21293" a2="0" a3="0" place="FriendsKiller" x="0.0" y="0.0" z="0.0" group="0" />
@@ -179387,7 +179387,7 @@
 	</variant>
 	<variant id="23" handler="on_see_friend_killed_by_user">
 		<branch priority="8" comment="rung 0">
-			<guard token="who:KilledByPlayer" />
+			<guard token="who:FriendsKillerIsPlayer" />
 			<guard token="count:0:0:3:0" />
 			<action kind="skill_at" a1="17446" a2="0" a3="0" place="FriendsKiller" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill_at" a1="17446" a2="0" a3="0" place="FriendsKiller" x="0.0" y="0.0" z="0.0" group="0" />
@@ -179408,8 +179408,8 @@
 	<variant id="26" handler="on_see_friend_killed_by_user">
 		<branch priority="13" comment="rung 0">
 			<guard token="chance:30" />
-			<guard token="who:KilledByPlayer" />
-			<guard token="within:KillerWithin:10" />
+			<guard token="who:FriendsKillerIsPlayer" />
+			<guard token="within:FriendsKillerWithin:10" />
 			<guard token="skillready:16842" />
 			<action kind="skill_at" a1="16842" a2="0" a3="0" place="FriendsKiller" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
@@ -179417,8 +179417,8 @@
 	<variant id="27" handler="on_see_friend_killed_by_user">
 		<branch priority="13" comment="rung 0">
 			<guard token="chance:30" />
-			<guard token="who:KilledByPlayer" />
-			<guard token="within:KillerWithin:10" />
+			<guard token="who:FriendsKillerIsPlayer" />
+			<guard token="within:FriendsKillerWithin:10" />
 			<guard token="skillready:17520" />
 			<action kind="skill_at" a1="17520" a2="0" a3="0" place="FriendsKiller" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
@@ -179426,16 +179426,16 @@
 	<variant id="28" handler="on_see_friend_killed_by_user">
 		<branch priority="13" comment="rung 0">
 			<guard token="chance:30" />
-			<guard token="who:KilledByPlayer" />
-			<guard token="within:KillerWithin:10" />
+			<guard token="who:FriendsKillerIsPlayer" />
+			<guard token="within:FriendsKillerWithin:10" />
 			<guard token="skillready:17003" />
 			<action kind="skill_at" a1="17003" a2="0" a3="0" place="FriendsKiller" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</variant>
 	<variant id="29" handler="on_see_friend_killed_by_user">
 		<branch priority="8" comment="rung 0">
-			<guard token="who:KilledByPlayer" />
-			<guard token="within:KillerWithin:10" />
+			<guard token="who:FriendsKillerIsPlayer" />
+			<guard token="within:FriendsKillerWithin:10" />
 			<guard token="count:0:0:3:0" />
 			<action kind="hate_at:HateFriendsKiller" a1="50000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="attack" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
@@ -179443,8 +179443,8 @@
 	</variant>
 	<variant id="30" handler="on_see_friend_killed_by_user">
 		<branch priority="7" comment="rung 0">
-			<guard token="who:KilledByPlayer" />
-			<guard token="within:KillerWithin:10" />
+			<guard token="who:FriendsKillerIsPlayer" />
+			<guard token="within:FriendsKillerWithin:10" />
 			<guard token="count:0:0:3:0" />
 			<action kind="hate_at:HateFriendsKiller" a1="50000" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="attack" a1="0" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
@@ -179454,14 +179454,14 @@
 	<variant id="31" handler="on_see_friend_killed_by_user">
 		<branch priority="7" comment="rung 0">
 			<guard token="chance:30" />
-			<guard token="within:KillerWithin:10" />
+			<guard token="within:FriendsKillerWithin:10" />
 			<guard token="count:0:0:3:0" />
 			<action kind="skill_at" a1="16570" a2="0" a3="0" place="FriendsKiller" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</variant>
 	<variant id="32" handler="on_see_friend_killed_by_user">
 		<branch priority="8" comment="rung 0">
-			<guard token="who:KilledByPlayer" />
+			<guard token="who:FriendsKillerIsPlayer" />
 			<guard token="count:0:0:3:0" />
 			<action kind="skill_at" a1="21411" a2="0" a3="0" place="FriendsKiller" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="skill_at" a1="21412" a2="0" a3="0" place="FriendsKiller" x="0.0" y="0.0" z="0.0" group="0" />

@@ -113,6 +113,27 @@ ROLES = {
 #: The same trap as `FRIEND_HATE_ROLES`, for `use_skill`: on the rescue handlers retail's
 #: `OBJI_ATTACKER` and `OBJI_CASTER` are whoever is hurting the *friend*, and reading them as the npc's
 #: own aimed 1,032 rows at whoever last hit the rescuer -- usually nobody.
+#: `is_enemy`, `is_user` and the distance guards on the rescue handlers. Same trap as
+#: `FRIEND_SKILL_ROLES`, and the bigger half of it: 4,481 rows of `is_enemy` alone.
+FRIEND_GUARD_ROLES = {
+    ("is_enemy", "on_see_friend_attacked", "OBJI_ATTACKER"): "enemy:FriendsAttackerIsEnemy",
+    ("is_enemy", "on_see_friend_attacked", "OBJI_CASTER"): "enemy:FriendsAttackerIsEnemy",
+    ("is_enemy", "on_friend_spelled", "OBJI_ATTACKER"): "enemy:FriendsAttackerIsEnemy",
+    ("is_enemy", "on_friend_spelled", "OBJI_CASTER"): "enemy:FriendsAttackerIsEnemy",
+    ("is_user", "on_see_friend_attacked", "OBJI_ATTACKER"): "who:FriendsAttackerIsPlayer",
+    ("is_user", "on_see_friend_attacked", "OBJI_CASTER"): "who:FriendsAttackerIsPlayer",
+    ("is_user", "on_friend_spelled", "OBJI_ATTACKER"): "who:FriendsAttackerIsPlayer",
+    ("is_user", "on_friend_spelled", "OBJI_CASTER"): "who:FriendsAttackerIsPlayer",
+    ("is_user", "on_see_friend_killed_by_user", "OBJI_KILLER"): "who:FriendsKillerIsPlayer",
+    ("is_user", "on_sense_friend_killed_by_user", "OBJI_KILLER"): "who:FriendsKillerIsPlayer",
+}
+
+#: The distance guards, whose token carries a metre count, so this holds the bare name.
+FRIEND_NEAR_ROLES = {
+    ("on_see_friend_killed_by_user", "OBJI_KILLER"): "FriendsKillerWithin",
+    ("on_sense_friend_killed_by_user", "OBJI_KILLER"): "FriendsKillerWithin",
+}
+
 FRIEND_SKILL_ROLES = {
     ("on_see_friend_attacked", "OBJI_ATTACKER"): "FriendsAttacker",
     ("on_see_friend_attacked", "OBJI_CASTER"): "FriendsAttacker",
@@ -571,8 +592,13 @@ class Unsayable(Exception):
     """The one element that stopped a rotation being ported, by name."""
 
 
-def read_guards(block: str) -> list[str]:
-    """The branch's conditions as tokens; raises Unsayable if one cannot be said."""
+def read_guards(block: str, handler: str = "") -> list[str]:
+    """The branch's conditions as tokens; raises Unsayable if one cannot be said.
+
+    `handler` is needed for the same reason `read_actions` needs it: retail spells the rescue
+    handlers' subjects exactly as it spells an npc's own, and a guard read the wrong way answers
+    about a creature that is usually absent -- so it is false, and the branch never fires.
+    """
     out: list[str] = []
     for element in re.finditer(r"<(\w+)>(.*?)</\1>", block, re.S):
         kind, body = element.group(1), element.group(2)
@@ -658,17 +684,29 @@ def read_guards(block: str) -> list[str]:
             # and the second names a role this port does not resolve to a creature.
             table = USER_ROLES if kind == "is_user" else NPC_ROLES
             who = re.search(r"<obj_indicator>(\w+)</obj_indicator>", body)
-            if not who or who.group(1) not in table:
-                raise Unsayable(f"{kind} about {who.group(1) if who else '?'}")
-            out.append("who:" + table[who.group(1)])
+            if not who:
+                raise Unsayable(f"{kind} about ?")
+            friend = FRIEND_GUARD_ROLES.get((kind, handler, who.group(1)))
+            if friend is not None:
+                out.append(friend)
+            elif who.group(1) in table:
+                out.append("who:" + table[who.group(1)])
+            else:
+                raise Unsayable(f"{kind} about {who.group(1)}")
         elif kind == "is_enemy":
             # Is whoever is in this role hostile to me? Every role retail asks about is one `PatternAi`
             # already tracks, so all 1,156 uses are sayable and none needs a new notion of hostility --
             # `Creature.IsEnemy` answers all of them, as it already did for the fortress guards.
             who = re.search(r"<who>(\w+)</who>", body)
-            if not who or who.group(1) not in ENEMY_ROLES:
-                raise Unsayable(f"is_enemy about {who.group(1) if who else '?'}")
-            out.append("enemy:" + ENEMY_ROLES[who.group(1)])
+            if not who:
+                raise Unsayable("is_enemy about ?")
+            friend = FRIEND_GUARD_ROLES.get((kind, handler, who.group(1)))
+            if friend is not None:
+                out.append(friend)
+            elif who.group(1) in ENEMY_ROLES:
+                out.append("enemy:" + ENEMY_ROLES[who.group(1)])
+            else:
+                raise Unsayable(f"is_enemy about {who.group(1)}")
         elif kind == "add_intvar":
             # The same condition-with-a-side-effect as `increase_intvar`, by a named step. See
             # `When.CountingBy`.
@@ -744,6 +782,10 @@ def read_guards(block: str) -> list[str]:
             metres = re.search(r"<distance>([-\d.]+)</distance>", body)
             if not who or not metres:
                 raise Unsayable("is_distance_shorter_than with no subject or distance")
+            near = FRIEND_NEAR_ROLES.get((handler, who.group(1))) if who else None
+            if near is not None:
+                out.append(f"within:{near}:{int(float(metres.group(1)))}")
+                continue
             if who.group(1) not in NEAR_ROLES:
                 # `OBJI_SELF` lands here: zero distance makes the branch always true, so it is decided
                 # at build time and emitting it would be a claim about the data, not a port of it.
@@ -1208,7 +1250,7 @@ def read_handler(body: str, name: str, dev, known, strings):
         guards: list[str] = []
         found = re.search(r"<conditions>(.*?)</conditions>", branch.group(1), re.S)
         if found:
-            guards = read_guards(found.group(1))
+            guards = read_guards(found.group(1), handler=name)
         actions: list[tuple] = []
         found = re.search(r"<actions>(.*?)</actions>", branch.group(1), re.S)
         if found:

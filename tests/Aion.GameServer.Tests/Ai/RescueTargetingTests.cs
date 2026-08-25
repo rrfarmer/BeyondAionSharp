@@ -87,6 +87,39 @@ public class RescueTargetingTests
 			"the rescuer put no hate on the creature hitting its friend");
 	}
 
+	/// <summary>
+	/// <b>And the guard half, which was the bigger one.</b> The same npc's <c>on_friend_spelled</c>
+	/// rung adds <c>is_enemy who=OBJI_CASTER</c> — the friend's caster — on top of the health check.
+	/// </summary>
+	/// <remarks>
+	/// <c>enemy:FriendsAttackerIsEnemy</c> is <b>4,481 rows</b>, and <c>When.FriendsAttackerIsEnemy</c>
+	/// sat in the engine with no case in <c>PatternTableLoader</c>, so no table could name it. Read as
+	/// the rescuer's own caster instead, the guard asks about a creature that has not cast anything —
+	/// so it is false, and every one of those rescue branches was unreachable.
+	/// <para>
+	/// The discriminator is the same as the pin above: nobody has cast on the watcher, so the old
+	/// reading answers false while looking like a rung that simply did not match.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void TheEnemyGuardAsksAboutTheFriendsCasterNotItsOwn()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc watcher = harness.Spawn(Sentinel, 300f, 300f, 200f);
+		Npc victim = harness.Spawn(Sentinel, 302f, 300f, 200f);
+		Player raider = harness.SpawnPlayer(303f, 300f, 200f, race: Race.ELYOS);
+		BossAiHarness.MakeMutuallyKnown(watcher, victim);
+		BossAiHarness.MakeMutuallyKnown(watcher, raider);
+
+		var ai = (Aion.GameServer.Ai.Pattern.PatternAi)watcher.GetAi();
+		Assert.Null(ai.LastCaster);
+
+		BossAiHarness.SetExactPercent(victim, 40);
+		Aion.GameServer.Ai.FriendCombatNotice.Raise(victim, raider, spelled: true);
+
+		Assert.Equal(100, watcher.GetAggroList().GetHate(raider));
+	}
+
 	/// <summary>A friend still healthy is not worth answering, which is retail's own guard.</summary>
 	[Fact]
 	public void AHealthyFriendDrawsNoRescue()

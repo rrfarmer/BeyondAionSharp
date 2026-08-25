@@ -29,7 +29,7 @@ MAPS = {
         "ENEMY_ROLES", "NEAR_ROLES", "DISTANCE_ROLES", "CLASS_SUBJECTS",
         "USER_ROLES", "NPC_ROLES", "SWITCH_ROLES", "HATE_ROLES", "FLEE_ROLES",
         # Keyed by (handler, role) rather than by role, which the value scan does not care about.
-        "FRIEND_HATE_ROLES",
+        "FRIEND_HATE_ROLES", "FRIEND_SKILL_ROLES", "FRIEND_GUARD_ROLES", "FRIEND_NEAR_ROLES",
     ],
 }
 
@@ -48,9 +48,12 @@ def main() -> int:
                 missing.append(f"{module_name}.{map_name} does not exist")
                 continue
             for indicator, name in table.items():
-                # Some maps store a token prefix rather than a bare name, e.g. "flee_FleeFromSeen"
-                # and "switch_to:TargetKiller". The name is the part the loader answers.
-                bare = re.split(r"[:_]", name)[-1] if name.startswith(("flee_", "switch_to:")) else name
+                # Some maps store a whole token rather than a bare name -- "switch_to:TargetKiller",
+                # "enemy:FriendsAttackerIsEnemy", "flee_FleeFromSeen". The loader answers the last
+                # part, so that is what is checked.
+                bare = name.rsplit(":", 1)[-1]
+                if bare.startswith("flee_"):
+                    bare = bare[len("flee_"):]
                 checked += 1
                 if bare not in loader:
                     missing.append(

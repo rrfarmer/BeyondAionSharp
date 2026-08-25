@@ -41040,3 +41040,51 @@ case in the loader; the checker now covers 101 of them.
 
 **3,962 -> 3,968 patterns, 30,197 -> 30,227 npcs**, 1,185 rows now naming a `Friends*` role, and three
 new pins on behaviour that had never been exercised at all.
+
+## Sweeping for the whole class instead of finding a fifth by accident
+
+Four elements had now been caught misreading the rescue handlers' subjects, each one found by falling
+over it. So rather than wait for a fifth, every element that names a subject under a rescue handler was
+listed and checked --- **conditions included**, which turned out to be where most of it was.
+
+| element | subject | uses | was |
+|---|---|---:|---|
+| `is_enemy` | `OBJI_CASTER` / `OBJI_ATTACKER` | 202 | the rescuer's own caster |
+| `is_user` | `OBJI_ATTACKER` / `OBJI_CASTER` / `OBJI_KILLER` | 80 | its own |
+| `is_distance_shorter_than` | `OBJI_KILLER` | 13 | its own killer |
+| `broadcast_message` | `param_obj` | 20 | not read at all |
+| `is_tribe` | `OBJI_ATTACKER` | 2 | not read at all |
+
+**`is_enemy` is the one that mattered: 4,481 rows in the emitted table.** A guard read the wrong way
+asks about a creature that, in a rescue, has done nothing at all --- so it answers false and *the whole
+branch never fires*. `When.FriendsAttackerIsEnemy` was already in the engine, with no case in
+`PatternTableLoader`, so no table could name it.
+
+`read_guards` had no `handler` parameter, which is part of why the guards were missed: `read_actions`
+had taken one for a while, and the same question in a condition had no way to be asked.
+
+Three conditions were new --- `FriendsAttackerIsPlayer`, `FriendsKillerIsPlayer`,
+`FriendsKillerWithin` --- and each is two lines.
+
+### The census pin did its job
+
+`TheIdentityGuardsTheTableCarriesAreTheOnesClaimed` exists so that a widening "shows up as a deliberate
+change here rather than as silence", and it showed exactly where the counts went:
+
+    KilledByPlayer   60 -> 0      every one was on on_see_friend_killed_by_user
+    AttackedByPlayer 107 -> 84
+    SpelledByPlayer  100 -> 77
+    FriendsKillerIsPlayer     0 -> 60
+    FriendsAttackerIsPlayer   0 -> 46
+
+`KilledByPlayer` going to **zero** is the clearest statement of the bug: not one use of it was ever
+about the npc's own killer.
+
+### And the checker grew to match
+
+`check_loader_names.py` now reads the four `(handler, role)` maps as well as the plain ones, and strips
+a token prefix rather than only the two it knew about --- `enemy:FriendsAttackerIsEnemy` would have
+passed unchecked otherwise. 121 names, all answered.
+
+**4,604 guard rows and 1,185 action rows now name a friend-aware role**, and four pins cover behaviour
+that had none.

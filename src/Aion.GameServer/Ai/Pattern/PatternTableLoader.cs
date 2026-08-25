@@ -54,6 +54,12 @@ public static class PatternTableLoader
         // that found them is tools/client-extract/check_loader_names.py. They cost nothing until a
         // pattern using one goes live, at which point an unreadable token refuses the whole file.
         ["MessageSenderIsEnemy"] = When.MessageSenderIsEnemy,
+
+        // The rescue handlers' subjects. FriendsAttackerIsEnemy was in the engine and unreachable
+        // from a table, which is 4,481 rows of rescue branches that could not fire.
+        ["FriendsAttackerIsEnemy"] = When.FriendsAttackerIsEnemy,
+        ["FriendsAttackerIsPlayer"] = When.FriendsAttackerIsPlayer,
+        ["FriendsKillerIsPlayer"] = When.FriendsKillerIsPlayer,
         ["EventTargetIsEnemy"] = When.EventTargetIsEnemy,
         ["AttackerIsNpc"] = When.AttackerIsNpc,
         ["CasterIsNpc"] = When.CasterIsNpc,
@@ -179,6 +185,7 @@ public static class PatternTableLoader
                     "KillerWithin" => When.KillerWithin(value),
                     "MessageParamWithin" => When.MessageParamWithin(value),
                     "MessageSenderWithin" => When.MessageSenderWithin(value),
+                    "FriendsKillerWithin" => When.FriendsKillerWithin(value),
                     _ => throw Unknown(token),
                 };
             }

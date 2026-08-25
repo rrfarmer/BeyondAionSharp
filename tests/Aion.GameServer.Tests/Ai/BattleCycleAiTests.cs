@@ -1096,14 +1096,21 @@ public sealed class BattleCycleAiTests
 				// their cast, so their guards were never read either, and the widening shows up here
 				// as a number rather than as silence.
 				["who:TargetIsPlayer"] = 155,
-				["who:AttackedByPlayer"] = 107,
-				["who:SpelledByPlayer"] = 100,
+				["who:AttackedByPlayer"] = 84,
+				["who:SpelledByPlayer"] = 77,
 				["who:TargetIsNpc"] = 60,
 				["who:SeenIsPlayer"] = 73,
 				["who:EventTargetIsNpc"] = 41,
-				["who:KilledByPlayer"] = 60,
 				["who:TalkerIsPlayer"] = 22,
 				["who:EventTargetIsPlayer"] = 10,
+
+				// **The rescue handlers' own, and where three of the counts above went.**
+				// `KilledByPlayer` was 60 and is now 0: every one of them sat on
+				// `on_see_friend_killed_by_user`, where retail's `OBJI_KILLER` is the *friend's*
+				// killer. `AttackedByPlayer` 107 -> 84 and `SpelledByPlayer` 100 -> 77 the same way.
+				// They were asking about a creature that, in a rescue, is nobody.
+				["who:FriendsKillerIsPlayer"] = 60,
+				["who:FriendsAttackerIsPlayer"] = 46,
 			}.OrderBy(e => e.Key),
 			seen.OrderBy(e => e.Key));
 	}
