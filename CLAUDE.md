@@ -17,6 +17,14 @@ pattern data outranks aionemu, whose version is an approximation. Those changes 
 logged in `docs/retail-ai-fidelity.md` — read it before "correcting" NPC skill,
 summon, or shout data back toward Java, and add to it when making such a change.
 
+**The retail dump is 5.8; this port is 4.8.** The exception above is about *behavior*,
+not about content: retail names npcs, skills, routes and mechanics that 4.8 does not
+have, and those are **boundaries to record, not gaps to close**. Never add a 4.8
+template, spawn or skill so that a 5.8 pattern will fit. Every extractor under
+`tools/client-extract/` refuses what this port does not have and prints the count —
+keep it that way, and see section E of `docs/retail-ai-backlog.md` for what the
+boundary currently costs.
+
 ## Always watch for Java ↔ C# semantic gaps
 
 These differ in ways that silently change behavior. Check them on every port/fix:

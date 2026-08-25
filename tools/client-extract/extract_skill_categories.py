@@ -16,6 +16,11 @@ overwhelming majority of skills. Retail names it outright, so the field is porte
 
 `SKILLCTG_NONE` is dropped: it is 12,341 of the 14,393 records and means "no category", which an
 absent row already says.
+
+**The dump is 5.8 and this port is 4.8**, so some of what retail names does not exist here. Skills with
+no template in `skill_templates.xml` are dropped too, and the count is printed rather than passed over:
+a row for a skill nothing can cast is inert, but it is still 5.8 content in a 4.8 file, and every other
+extractor here refuses what this port does not have.
 """
 from __future__ import annotations
 
@@ -49,13 +54,24 @@ def categories(path: pathlib.Path):
                 yield int(number.group(1)), category[len("SKILLCTG_"):]
 
 
+def port_skills(repo: pathlib.Path) -> set[int]:
+    """Every skill 4.8 has a template for."""
+    text = (repo / "game-server/data/static_data/skills/skill_templates.xml").read_text(
+        encoding="utf-8", errors="ignore")
+    return {int(m) for m in re.findall(r'<skill_template\s+skill_id="(\d+)"', text)}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("xml_dir", type=pathlib.Path)
     ap.add_argument("out", type=pathlib.Path)
+    ap.add_argument("--repo", type=pathlib.Path, default=pathlib.Path(__file__).parents[2])
     args = ap.parse_args()
 
-    rows = sorted(categories(args.xml_dir / "skill_base.xml"))
+    here = port_skills(args.repo)
+    everything = sorted(categories(args.xml_dir / "skill_base.xml"))
+    rows = [(skill, category) for skill, category in everything if skill in here]
+    absent = len(everything) - len(rows)
     with args.out.open("w", encoding="utf-8", newline="\n") as out:
         out.write("skill\tcategory\n")
         for skill, category in rows:
@@ -65,6 +81,7 @@ def main() -> int:
     print(f"{len(rows)} skills carry a retail category -> {args.out}")
     for category, count in tally.most_common():
         print(f"    {count:5d}  {category}")
+    print(f"    {absent} dropped: 5.8 names the skill and this 4.8 port has no template for it")
     return 0
 
 

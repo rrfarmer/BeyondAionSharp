@@ -20,8 +20,11 @@ XML_HEADER = '''<?xml version="1.0" encoding="UTF-8"?>
     debuff, a mental one, or healed. This port had no category for a skill, so the condition could
     not be read at all.
 
-    Grouped by category rather than listed per skill, because 2,052 rows of one skill each is
-    larger and says less. Skills retail gives no category are absent; an absent skill has none.
+    Grouped by category rather than listed per skill, because a row per skill is larger and says
+    less. Skills retail gives no category are absent; an absent skill has none.
+
+    The dump is 5.8 and this port is 4.8, so skills 4.8 has no template for are dropped by the
+    extractor rather than carried here inert. It prints how many.
 
     **This is not derivable from skill_templates.xml.** Retail's PHYSICAL_DEBUFF is mostly
     skilltype="MAGICAL" here, and this port's MAGICAL/DEBUFF signature covers 1,382 skills of which

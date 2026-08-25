@@ -5,6 +5,25 @@ Standing list of open work on the retail (5.8) NPC AI port. Re-measured 2026-08-
 `docs/retail-ai-fidelity.md` is the running log — why each decision was made, in order. It is 40,000
 lines and is not a to-do list. **This file is the to-do list.** Keep it short; move detail to the log.
 
+## Before anything else: the dump is 5.8 and this port is 4.8
+
+**Most of what is "missing" is a version difference, and version differences are not work.** Retail's
+5.8 files name npcs, skills, routes and whole mechanics that 4.8 does not have. The right response is
+to record the boundary, never to add a 4.8 template or spawn so that a 5.8 pattern will fit.
+
+The extractors already hold that line, and it is worth knowing how much of the backlog it accounts
+for:
+
+| | |
+|---|---|
+| patterns refused for *no npc here free to run it* | **6,899** — the version gap plus hand-written classes |
+| npcs the battle table drives | 30,197, and **every one has a 4.8 template** |
+| skill categories retail names / kept here | 2,052 / **1,977** (75 name a skill 4.8 lacks) |
+| walker routes retail names and 4.8 has not | 16 |
+
+So the tables carry nothing 4.8 cannot run. When a refusal turns out to be "5.8 has this and 4.8 does
+not", it belongs in section E and stops being a to-do.
+
 ## First, a correction to the numbers
 
 Earlier backlogs in the log carried figures like *"`control_door` (691); `enable_area` (575);
@@ -33,10 +52,17 @@ extractors' own tallies.
 | death spawns | 678 | 1,927 |
 | guard answers | 4,242 answers | 3,696 |
 
-## A. Best value: one vocabulary item, dozens of handlers
+## A. Dropped handlers — and this section is nearly empty now
 
 These are **partial** losses. The npc's rotation runs; one arming handler was dropped, so the fight is
 subtly quieter than retail's.
+
+**Worth saying plainly: what is left here is not work.** Every tractable item in this section has been
+taken. The three below are a group taxonomy 4.8 has no exact name for, a suppression rung that needs an
+invented wake duration, and a constant. The two that *looked* like the biggest — `activate_skillarea`
+and `goto_alias` — turned out to be 4.8-versus-5.8 boundaries and moved to section E.
+
+If you are looking for the next real thing, it is in section B or D, not here.
 
 **Read the tally by npcs, not by patterns.** `extract_battle_cycles.py` now prints both and ranks by
 npcs, because the pattern count has mis-set priorities here twice: `control_door` was carried as 691
@@ -48,9 +74,7 @@ Ranked by npcs affected, which is what the extractor now prints:
 | item | npcs | what it means in play |
 |---|---:|---|
 | `is_obj_in_abnormal_state PHYSICAL_GROUP` on `on_friend_spelled` | 163 | **not work** — retail's group taxonomy has no exact name here, and picking a "nearest" is inventing it |
-| `activate_skillarea` on `on_talked_by_user` | **121** | turns a skill area on; `SkillAreaNpcAI` is an empty stub with no area registry |
 | `is_npc_state NPC_STATE_WAKE_UP` on `on_attacked` / `on_see_npc` / `on_see_user` | 53 each | "only while still waking"; every use is a `do_nothing` suppression rung, so taking it needs a wake duration this port would have to invent |
-| `goto_alias` | 14 patterns | move to a named point rather than a route step |
 | `is_race` about `OBJI_SELF` | 10 patterns | **not work** — see section E |
 
 **`is_race` about a friend is done, and it is the clearest lesson in this file about reading the
@@ -174,7 +198,25 @@ rule and some of them will be there for indices the rotation genuinely needs.
 
 ## E. Boundaries, not backlog
 
-Not work items — recorded so nobody re-derives them:
+Not work items — recorded so nobody re-derives them.
+
+**The first three are 4.8-versus-5.8**, and they are the shape to watch for: retail's 5.8 patterns ask
+for a mechanism 4.8 has no source for, and the fix would be to *invent* the mechanism rather than port
+it.
+
+- **`activate_skillarea`** (121 npcs) — checked both sides: `SkillAreaNpcAI` is an empty stub here
+  **and in the 4.8 Java**, so the C# is a faithful port and there is no area registry on either side to
+  turn anything on. 4.8's skill areas are npcs a skill summons (`SummonSkillAreaEffect`), which is a
+  different mechanism, not a smaller version of this one. Building a registry to satisfy 5.8 patterns
+  would be inventing a subsystem 4.8 does not have.
+- **`goto_alias` and `teleport_target_alias`** (14 and 1) — retail moves an npc, or a player, to a
+  *named point*. 4.8's world and spawn data have no alias concept at all; the only `alias` in this tree
+  is on item templates and means something else. Taking these needs an alias source extracted from the
+  client first, which is a data project rather than a vocabulary item.
+- **The Abyss turret switches** (172 npcs spawned here) — see section C-bis; they need the alias
+  mechanism above plus a player transform tribe this port has no source for.
+
+The rest are the tables' own limits:
 
 - **10,948 patterns refused for having no npc here free to run them** (6,899 battle + 4,049 wake).
   Either this port lacks the npc, or it is bound to a hand-written class.
@@ -184,6 +226,8 @@ Not work items — recorded so nobody re-derives them:
   always or never taken, and the table shares one branch list between npcs of different races. Deciding
   it at extract time would mean giving each race its own copy of every shared list.
 - **16 walker routes** named by retail spawns and absent from every world file and the client pak.
+- **75 skill categories** retail names for skills 4.8 has no template for. Dropped by the extractor,
+  which prints the count.
 - **The runner encounter** (`BIDF5_R2_Runner`, 9 npcs) — no spawn rows and no routes in this port, so
   it cannot be driven here at all.
 

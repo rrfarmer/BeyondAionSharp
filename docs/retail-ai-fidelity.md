@@ -40880,3 +40880,25 @@ nobody wrote down twice.
 Dropped arming handlers **589 -> 561**. Actions 327,959 -> 328,481. Patterns and npcs unchanged at
 3,962 and 30,197, which is the signature of this kind of work: the rotations were already running and
 what came back is the handlers hanging off them.
+
+## The 4.8 / 5.8 boundary, measured and written down
+
+A reminder worth acting on rather than nodding at: **this port is 4.8 and the pattern dump is 5.8.**
+Things will not match, and forcing them is worse than leaving them.
+
+Checked what has actually been ported against what 4.8 has:
+
+- **The battle table drives 30,197 npcs and every one of them has a 4.8 template.** Nothing forced.
+  The 6,899 patterns refused for *no npc here free to run it* are largely this boundary working.
+- **The skill categories were the one thing carrying 5.8 content**: of 2,052 rows, 75 named a skill
+  with no template in this tree. Inert — nothing can cast a skill that does not exist — but still 5.8
+  content in a 4.8 file, and every other extractor here refuses what the port lacks. Now filtered, and
+  the extractor prints the drop rather than passing over it. 2,052 -> **1,977**.
+
+Everything else added recently is engine capability rather than content — a role the loader can now
+read, a creature the AI now remembers — and those are version-neutral: they answer a question 4.8
+patterns ask just as readily.
+
+The constraint is now stated in `CLAUDE.md` beside the sanctioned retail-AI exception, because that
+exception is about **behaviour, not content**, and the two are easy to conflate. It is also the first
+section of the backlog, with the numbers above, so the next person reads it before picking work.

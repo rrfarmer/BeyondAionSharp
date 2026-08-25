@@ -36,9 +36,14 @@ public class SkillCategoryTableTests
 	{
 		StaticTableFixture.EnsureLoaded();
 
-		// 2,052 of retail's 14,393 skills carry a category; the other 12,341 are SKILLCTG_NONE and
-		// are deliberately absent, because "not listed" and "no category" have to mean the same thing.
-		Assert.Equal(2052, DataManager.SKILL_CATEGORY_DATA.Size);
+		// Retail names a category for 2,052 of its 14,393 skills; the other 12,341 are SKILLCTG_NONE
+		// and are deliberately absent, because "not listed" and "no category" have to mean the same
+		// thing.
+		//
+		// 1,977 of those 2,052 survive here. **The dump is 5.8 and this port is 4.8**, so 75 name a
+		// skill with no template in this tree and the extractor drops them rather than carrying 5.8
+		// content into a 4.8 file. That number is expected to move if the port's skill data does.
+		Assert.Equal(1977, DataManager.SKILL_CATEGORY_DATA.Size);
 	}
 
 	/// <summary>Every category the AI asks about has skills in it, so no branch is dead on arrival.</summary>
