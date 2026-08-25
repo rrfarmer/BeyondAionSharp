@@ -41263,3 +41263,66 @@ All three run from `regen_check.py`, the two cheap ones first. Between them they
 something retail writes reaches a reader, becomes a name the loader answers, and lands on a capability
 that exists. **A break anywhere along that chain used to be silent**, which is why every one of them was
 found by falling over the mechanic it broke.
+
+## Which of retail's handlers this port reads, counted
+
+The three checks cover the chain from a retail *element* to an engine capability. They say nothing
+about the link before all of them: **a handler kind the extractors do not list is never opened at
+all**, so every branch inside it is invisible --- no refusal, no tally, nothing.
+
+Counted across the dump, weighted by npcs bound to the pattern and spawned in this port. The port reads
+**22 handlers**; retail writes 57.
+
+### The one that looked big
+
+**`on_enter_abnormal_state` --- 272 blocks, 7,931 npcs, 1,701 spawned here**, and by a wide margin the
+largest unread handler. Read the contents before believing the number:
+
+- **245 of the 272 blocks do exactly one thing: `broadcast_message`.** Plus 28 `do_nothing`. It is a
+  shout, not a mechanic.
+- **224 of its 258 state guards ask about retail's group taxonomy** --- `MENTAL_GROUP` (100),
+  `CANNOT_ACT_GROUP` (74), `PHYSICAL_GROUP` (50) --- which this port refuses by policy because it has
+  no name that means the same thing. What is left is about 26 branches on named states.
+- It needs an engine event when an effect lands, and **neither this port's `EffectController` nor the
+  4.8 Java's notifies the AI at all.** That is infrastructure both sides lack, not a port of one.
+
+So: a shout, guarded by a taxonomy 4.8 has no names for, behind an event neither tree has. The 1,701
+counts npcs bound to a pattern *containing* the handler, and most of their branches would be refused on
+arrival. Boundary, not backlog.
+
+### The rest, by npcs spawned here
+
+| handler | blocks | spawned | note |
+|---|---:|---:|---|
+| `on_sense_friend_killed_by_user` | 67 | 129 | same action vocabulary as the `see` form, which *is* read |
+| `on_hyperlink_clicked` | 137 | 124 | dialog infrastructure |
+| `on_stop_to_random_move` | 70 | 85 | pairs with `random_move`, already a boundary |
+| `on_see_spell` | 84 | 71 | needs an observed-cast event |
+| `on_damaged` | 141 | 56 | distinct from `on_attacked` |
+| `on_see_friend_attacking` | 129 | 56 | a friend *starting* a fight |
+| `on_most_hating_updated` | 132 | 54 | the tank changed |
+| `on_friend_spelling` | 106 | 48 | mid-cast rather than after |
+| `on_leave_abnormal_state` | 42 | 47 | the other half of the one above |
+| a tail of twenty-two more | | < 30 each | |
+
+**`on_sense_friend_killed_by_user` is the closest to free and still not free.** Its actions are the same
+vocabulary as `on_see_friend_killed_by_user`, which is read, and the friend-role remaps already name it.
+What is not answerable from the data is what *sense* means against *see* --- almost certainly a
+line-of-sight or range rule --- and this port raises one friend-killed event. Reading the `sense`
+branches into it would make an npc answer a death it should not have noticed. That is the difference the
+data does not state, so it stays open rather than guessed.
+
+### And the one I picked as cheapest was not
+
+The census entry above named `on_most_hating_updated` as *"the one most likely to be both cheap and
+real: the aggro list already knows when its top entry changes"*. The hook does exist ---
+`CreatureController.OnAddHate` fires on every hate change --- and the handler is still not worth
+opening: **173 of its 199 actions are `do_nothing`.**
+
+That is retail's way of occupying a priority slot so a lower rung cannot fire, and in a handler nothing
+reads it suppresses nothing. The remainder is 26 `display_system_message` branches whose substitution
+parameters this port does not take either.
+
+Same shape as `is_npc_state NPC_STATE_WAKE_UP`, whose 335 uses are all `do_nothing` suppression, and the
+same verdict. **The recommendation was wrong and is corrected in place** --- which is the argument for
+reading a handler's contents before its count, made against my own guess this time.

@@ -176,6 +176,31 @@ here so the next pass does not spend a day on the guard and find nothing moves.
   transform tribe this port has no source for. This is where the 28 `is_tribe` handlers went; they were
   carried in section A as "who may talk to it, by tribe", which was a guess and wrong.
 
+## D-quater. Handlers no extractor opens
+
+**A handler kind the extractors do not list is never opened**, so its branches are invisible — no
+refusal, no tally line. The port reads 22 of retail's 57. The census is in the log; what is worth
+picking up, by npcs spawned here:
+
+| handler | spawned | why it is not done |
+|---|---:|---|
+| `on_sense_friend_killed_by_user` | 129 | same actions as the `see` form; what *sense* means against *see* is not stated, and this port raises one friend-killed event |
+| `on_hyperlink_clicked` | 124 | dialog infrastructure |
+| `on_see_spell` | 71 | needs an observed-cast event |
+| `on_damaged` | 56 | distinct from `on_attacked`; worth reading what the difference buys |
+| `on_most_hating_updated` | 54 | **not work** — 173 of its 199 actions are `do_nothing` |
+| `on_friend_spelling` / `on_see_friend_attacking` | 48 / 56 | mid-action rather than after |
+
+**`on_most_hating_updated` looked like the cheap one and is not.** The port has the hook already —
+`CreatureController.OnAddHate` fires on every hate change — but **173 of the handler's 199 actions are
+`do_nothing`**, which is retail's way of occupying a priority slot so a lower rung cannot fire. In a
+handler nothing reads, those suppress nothing. What is left is 26 `display_system_message` branches
+whose substitution parameters this port does not take either. Same shape as
+`is_npc_state NPC_STATE_WAKE_UP`, and the same verdict.
+
+Measuring it cost two minutes and corrected a recommendation this file had already made — which is the
+argument for reading a handler's contents before its count.
+
 ## D. Encounters and hygiene
 
 - **`percent_to_add` on both switch elements** — all 3,693 uses carry one, and it is deliberately
@@ -236,6 +261,11 @@ it.
   client first, which is a data project rather than a vocabulary item.
 - **The Abyss turret switches** (172 npcs spawned here) — see section C-bis; they need the alias
   mechanism above plus a player transform tribe this port has no source for.
+- **`on_enter_abnormal_state`** (1,701 npcs spawned here, and the number is misleading) — the largest
+  handler no extractor opens. 245 of its 272 blocks only broadcast; 224 of its 258 state guards ask
+  about retail's group taxonomy, which this port refuses by policy; and it needs an engine event when
+  an effect lands, which **neither this port nor the 4.8 Java has**. A shout, behind a taxonomy 4.8
+  cannot name, behind infrastructure neither tree has.
 - **`random_move`** (135 npcs spawned here) — retail gives a duration and no range; 4.8 takes the range
   from the spawn row, and 112 of the 135 have `random_walk="0"` on every row. The 23 that do have a
   range use it only in combat handlers, where `StartRandomWalking` would take the npc out of the fight.
