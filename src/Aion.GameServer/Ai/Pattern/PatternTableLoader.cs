@@ -435,6 +435,12 @@ public static class PatternTableLoader
         "HateTarget" => Do.HateTarget(points),
         "HateAttacker" => Do.HateAttacker(points),
         "HateCaster" => Do.HateCaster(points),
+        "HateKiller" => Do.HateKiller(points),
+
+        // The rescue handlers' subjects, which retail spells the same as an npc's own. Both
+        // helpers were already in the engine and neither was reachable from a table.
+        "HateFriendsAttacker" => Do.HateFriendsAttacker(points),
+        "HateFriendsKiller" => Do.HateFriendsKiller(points),
         "HateSeen" => Do.HateSeen(points),
         "HateEventTarget" => Do.HateEventTarget(points),
         "HateMessageParam" => Do.HateMessageParam(points),
@@ -476,6 +482,7 @@ public static class PatternTableLoader
         "MessageSender" => Do.SkillOnMessageSender(skillId),
         "Seen" => Do.SkillOnSeen(skillId),
         "FriendsKiller" => Do.SkillOnFriendsKiller(skillId),
+        "FriendsAttacker" => Do.SkillOnFriendsAttacker(skillId),
         "FledFrom" => Do.SkillOnFledFrom(skillId),
         _ => throw Unknown(kind + " at " + place),
     };

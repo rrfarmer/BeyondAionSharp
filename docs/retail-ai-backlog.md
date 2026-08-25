@@ -47,7 +47,7 @@ extractors' own tallies.
 
 | table | patterns | npcs |
 |---|---|---|
-| battle cycles | 3,962 | 30,197 |
+| battle cycles | 3,968 | 30,227 |
 | wake / idle | 1,572 | 3,949 |
 | death spawns | 678 | 1,927 |
 | guard answers | 4,242 answers | 3,696 |
@@ -178,6 +178,12 @@ here so the next pass does not spend a day on the guard and find nothing moves.
 
 ## D. Encounters and hygiene
 
+- **`percent_to_add` on `switch_target`** — every one of the 1,321 uses carries one, and it is
+  deliberately unmodelled: the element does not say what the percentage is *of*, and a guess puts a
+  silent wrong number into a hate list. Answering it needs an observation, not a decision.
+- **`HateEventTarget` is the only member of its family that does not also set the target.** Harmless
+  today; worth knowing before someone routes a new subject through it.
+
 - **Kaidan's low-health rung** — needs the skill index list resolved for thirteen shaman npcs first;
   they may not agree the way the wave attackers' index 0 did (22 of 22).
 - **The other 65 `on_see_user_move` patterns** — 105 npcs gained the handler; one encounter is pinned.
@@ -185,20 +191,6 @@ here so the next pass does not spend a day on the guard and find nothing moves.
   this tree, so a pin would assert into silence. Check the listener side before assuming they are idle.
 - **18 `--implemented` audit candidates** — `python tools/client-extract/audit_stale_claims.py
   --implemented`. Most are accurate past-tense history; the yield is in repeated claims.
-
-## D-ter. `switch_target` drops its hate — 1,321 uses
-
-Found while taking `switch_target` at `OBJI_CUR_TARGET`. **Every one of retail's 1,321 `switch_target`
-uses carries `points_to_add`**, often five million, and this port's `switch_to:TargetX` helpers do
-nothing but `SetTarget()`. So the npc turns to face the new creature while the hate list still names
-somebody else, and the next aggro decision can undo it.
-
-Both halves are already in the engine and next to each other — `Do.TargetAttacker()` and
-`Do.HateAttacker(points)` — so this is composition, not new machinery. Roughly 1,250 uses across seven
-subjects are affected; measure the npcs before starting, the way the tally note above says.
-
-`percent_to_add` is a separate question and should stay unmodelled: the element does not say what the
-percentage is *of*, and a guess puts a silent wrong number into a hate list.
 
 ## D-bis. The skill-index rule, and what it costs
 

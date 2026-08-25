@@ -1085,6 +1085,21 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         GetAggroList().AddHate(target, hate);
     }
 
+    /// <summary>Puts hate on whoever killed this NPC's quarry and turns to face them.</summary>
+    /// <remarks>
+    /// The last of the family, added when <c>switch_target</c> started carrying its
+    /// <c>points_to_add</c>: every other subject already had one, and <c>OBJI_KILLER</c> is 130 rows
+    /// across 77 npcs spawned here.
+    /// </remarks>
+    public void HateKiller(int hate)
+    {
+        if (Killer is not Creature killer || killer.IsDead())
+            return;
+
+        GetAggroList().AddHate(killer, hate);
+        GetOwner().SetTarget(killer);
+    }
+
     /// <summary>Puts hate on whoever just cast on this NPC and turns to face them.</summary>
     public void HateCaster(int hate)
     {

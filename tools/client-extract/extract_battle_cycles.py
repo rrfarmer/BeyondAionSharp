@@ -105,12 +105,23 @@ ROLES = {
     "OBJI_MESSAGE_SENDER": "MessageSender",
     "OBJI_SEEN": "Seen",
 
-    #: Retail has no separate indicator for it -- `on_see_friend_killed_by_user` writes `OBJI_KILLER`
-    #: and means the friend's killer. `read_actions` rewrites the role to this before the lookup.
-    "OBJI_FRIENDS_KILLER": "FriendsKiller",
 
     #: Only ever on `on_stop_to_flee`, and only to cast: the parting shot at whoever gave chase.
     "OBJI_FLEE_FROM": "FledFrom",
+}
+
+#: The same trap as `FRIEND_HATE_ROLES`, for `use_skill`: on the rescue handlers retail's
+#: `OBJI_ATTACKER` and `OBJI_CASTER` are whoever is hurting the *friend*, and reading them as the npc's
+#: own aimed 1,032 rows at whoever last hit the rescuer -- usually nobody.
+FRIEND_SKILL_ROLES = {
+    ("on_see_friend_attacked", "OBJI_ATTACKER"): "FriendsAttacker",
+    ("on_see_friend_attacked", "OBJI_CASTER"): "FriendsAttacker",
+    ("on_friend_spelled", "OBJI_ATTACKER"): "FriendsAttacker",
+    ("on_friend_spelled", "OBJI_CASTER"): "FriendsAttacker",
+    ("on_friend_spelling", "OBJI_ATTACKER"): "FriendsAttacker",
+    ("on_friend_spelling", "OBJI_CASTER"): "FriendsAttacker",
+    ("on_see_friend_killed_by_user", "OBJI_KILLER"): "FriendsKiller",
+    ("on_sense_friend_killed_by_user", "OBJI_KILLER"): "FriendsKiller",
 }
 
 #: Retail's attacker indicators: a creature picked by its place in the hate list, or by how hurt it is.
@@ -356,6 +367,40 @@ HATE_ROLES = {
     "OBJI_ATTACKER": "HateAttacker",
     "OBJI_CASTER": "HateCaster",
     "OBJI_EVENT_TARGET": "HateEventTarget",
+    "OBJI_KILLER": "HateKiller",
+}
+
+
+def hate_role(role: str, handler: str) -> str:
+    """The hate helper for a subject, on the handler that says which creature it means.
+
+    **Retail spells the rescue handlers' subjects the same as its own**, and they are not the same
+    creature. On `on_see_friend_attacked` and `on_friend_spelled`, `OBJI_ATTACKER` and `OBJI_CASTER`
+    are whoever hurt the *friend*; on `on_see_friend_killed_by_user`, `OBJI_KILLER` is the friend's
+    killer. This port keeps those in their own fields, and reading one as the other aims the rescue at
+    whoever last hit the rescuer -- usually nobody, so the mechanic silently does not happen.
+
+    `flee_from` has carried this remapping and this warning for a long time. Nothing else did, so
+    `switch_target` on those handlers had been pointing 331 rows at the wrong creature since it was
+    written.
+    """
+    return FRIEND_HATE_ROLES.get((handler, role)) or HATE_ROLES[role]
+
+
+#: The remap above, as data rather than as branches -- `check_loader_names.py` reads the `*_ROLES`
+#: maps in this module, so a name that only a function could return would not be checked.
+#:
+#: `NoteFriendInTrouble` fills `FriendsAttacker` for the spelled event as well as the attacked one,
+#: which is why that field is documented as retail's `OBJI_ATTACKER` *and* `OBJI_CASTER`.
+FRIEND_HATE_ROLES = {
+    ("on_see_friend_attacked", "OBJI_ATTACKER"): "HateFriendsAttacker",
+    ("on_see_friend_attacked", "OBJI_CASTER"): "HateFriendsAttacker",
+    ("on_friend_spelled", "OBJI_ATTACKER"): "HateFriendsAttacker",
+    ("on_friend_spelled", "OBJI_CASTER"): "HateFriendsAttacker",
+    ("on_friend_spelling", "OBJI_ATTACKER"): "HateFriendsAttacker",
+    ("on_friend_spelling", "OBJI_CASTER"): "HateFriendsAttacker",
+    ("on_see_friend_killed_by_user", "OBJI_KILLER"): "HateFriendsKiller",
+    ("on_sense_friend_killed_by_user", "OBJI_KILLER"): "HateFriendsKiller",
 }
 
 #: Retail's `is_distance_shorter_than` subjects. `OBJI_SELF` is absent -- see the condition.
@@ -869,15 +914,19 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
                 raise Unsayable("use_skill without an index")
             named = who.group(1) if who else ""
             # **The role means different creatures in different handlers**, the same trap `flee_from`
-            # documents above. Retail spells both killers `OBJI_KILLER` and lets the handler say which;
-            # this port keeps them in separate fields, and `ai.Killer` is whoever damaged *me* most.
-            # Aiming a revenge cast there would point it at whoever last hit the avenger -- usually
-            # nobody, so the cast would simply not happen.
+            # documents above and `FRIEND_HATE_ROLES` documents for the hate actions. Retail spells the
+            # rescue handlers' subjects exactly as it spells an npc's own, and on those handlers they
+            # are whoever is hurting the *friend*. Reading one as the other aims the rescue at whoever
+            # last hit the rescuer -- usually nobody, so the cast simply does not happen.
+            friend_role = FRIEND_SKILL_ROLES.get((handler, named))
+            if friend_role is not None:
+                out.append(("skill_at", int(index.group(1)), 0, 0, friend_role,
+                            0.0, 0.0, 0.0, 0))
+                continue
             if named == "OBJI_KILLER":
-                if handler not in ("on_see_friend_killed_by_user",
-                                   "on_sense_friend_killed_by_user"):
-                    raise Unsayable("use_skill at this npc's own killer")
-                named = "OBJI_FRIENDS_KILLER"
+                # Its own killer, which no handler in the dump actually asks for. Refused rather than
+                # guessed at.
+                raise Unsayable("use_skill at this npc's own killer")
             if named not in TARGETS and named not in ROLES:
                 raise Unsayable("use_skill at a target this port cannot name")
             if named in ROLES:
@@ -912,37 +961,43 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
             if not who or who.group(1) not in HATE_ROLES:
                 raise Unsayable(f"add_hate_point at {who.group(1) if who else '?'}")
             hate = re.search(r"<point[s]?_to_add>(-?\d+)</", body)
-            out.append(("hate_at:" + HATE_ROLES[who.group(1)],
+            out.append(("hate_at:" + hate_role(who.group(1), handler),
                         int(hate.group(1)) if hate else 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
         elif kind == "switch_target":
-            # Every subject retail names. `SwitchTarget` takes an `AggroTarget` -- a rank in the hate
-            # list -- and cannot name a creature by its part in the event, so each role has its own
-            # one-line helper instead.
+            # **This is not a targeting action, and reading it as one lost most of what it does.**
+            # `switch_target` carries `points_to_add`, and all 1,321 uses in the dump carry some --
+            # often five million, which is a taunt. It was emitted as `switch_to:TargetX`, whose
+            # helpers do nothing but `SetTarget`, so the npc turned to face the new creature while the
+            # hate list still named somebody else and the next aggro decision could undo it. That is
+            # most visible on the rescue handlers -- `on_see_friend_attacked`, `on_friend_spelled`,
+            # `on_see_friend_killed_by_user` -- where a guard would look at the attacker without ever
+            # committing to it.
             #
-            # **`OBJI_CUR_TARGET` used to be refused here as "a no-op", and that was wrong.** The
-            # element is not only a switch: it carries `points_to_add`, and all 1,321 uses in the dump
-            # carry some. Aimed at the creature already targeted there is no switch left, so the hate
-            # *is* the action -- one use adds five hundred thousand points, which is a boss cementing
-            # itself onto whoever it is fighting. `HATE_ROLES` already names the same subject and the
-            # loader already answers it, so this reuses both.
+            # The `Hate*` family does both: it adds the hate and sets the target. So each subject maps
+            # onto its own one, and the switch-only helpers are left for the case retail never
+            # actually writes -- a switch carrying no hate at all.
             #
-            # `percent_to_add` is not modelled, here or anywhere else in this port's `switch_target`
-            # handling. The element does not say what the percentage is *of*, and guessing would put a
-            # silent wrong number into a hate list. See docs/retail-ai-backlog.md.
+            # `AggroInfo.AddHate` was already widened to saturate rather than wrap **for exactly this
+            # element**; see its remark. The machinery was ready and the action was not sending it
+            # anything.
+            #
+            # `percent_to_add` stays unmodelled. The element does not say what the percentage is *of*,
+            # and a guess puts a silent wrong number into a hate list. See docs/retail-ai-backlog.md.
             who = re.search(r"<target>(\w+)</target>", body)
             if not who:
                 raise Unsayable("switch_target with no subject")
-            if who.group(1) == "OBJI_CUR_TARGET":
-                points = re.search(r"<points_to_add>(-?\d+)</points_to_add>", body)
-                if not points or int(points.group(1)) <= 0:
-                    # Nothing left to do: no switch, and no hate either.
+            if who.group(1) not in HATE_ROLES:
+                raise Unsayable(f"{kind} at {who.group(1)}")
+            points = re.search(r"<points_to_add>(-?\d+)</points_to_add>", body)
+            if not points or int(points.group(1)) <= 0:
+                # No hate and, at the current target, no switch either. Everywhere else the switch
+                # still stands on its own.
+                if who.group(1) == "OBJI_CUR_TARGET":
                     raise Unsayable("switch_target at the current target with no hate to add")
-                out.append(("hate_at:" + HATE_ROLES[who.group(1)], int(points.group(1)),
-                            0, 0, "", 0.0, 0.0, 0.0, 0))
-            elif who.group(1) in SWITCH_ROLES:
                 out.append((SWITCH_ROLES[who.group(1)], 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
             else:
-                raise Unsayable(f"{kind} at {who.group(1)}")
+                out.append(("hate_at:" + hate_role(who.group(1), handler), int(points.group(1)),
+                            0, 0, "", 0.0, 0.0, 0.0, 0))
         elif kind == "attack_most_hating":
             out.append(("attack", 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
         elif kind == "spawn_on_target_by_attacker_indicator":

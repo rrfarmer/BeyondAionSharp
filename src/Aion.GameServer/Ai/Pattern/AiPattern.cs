@@ -1146,6 +1146,23 @@ public static class Do
     public static PatternAction SkillOnFledFrom(int skillId)
         => ai => ai.CastSkillAt(ai.FledFrom, skillId);
 
+    /// <summary>
+    /// <c>use_skill target=OBJI_ATTACKER</c> or <c>OBJI_CASTER</c> on the rescue handlers — cast at
+    /// whoever is hurting this NPC's friend.
+    /// </summary>
+    /// <remarks>
+    /// <b>1,032 rows were aiming at the wrong creature.</b> Retail spells the rescue handlers'
+    /// subjects exactly as it spells an NPC's own, and <c>on_see_friend_attacked</c> /
+    /// <c>on_friend_spelled</c> mean the friend's. Read as <see cref="SkillOnAttacker"/> they resolved
+    /// to whoever last hit the *rescuer* — usually nobody, so a healer's rescue landed on no one.
+    /// <para>
+    /// One field serves both subjects: <c>NoteFriendInTrouble</c> fills <c>FriendsAttacker</c> for the
+    /// spelled event as well as the attacked one.
+    /// </para>
+    /// </remarks>
+    public static PatternAction SkillOnFriendsAttacker(int skillId)
+        => ai => ai.CastSkillAt(ai.FriendsAttacker, skillId);
+
     /// <summary><c>use_skill target=OBJI_KILLER</c> on <c>on_see_friend_killed_by_user</c>.</summary>
     /// <remarks>
     /// <b>The friend's killer, not this NPC's own.</b> The port keeps the two apart --
@@ -1498,6 +1515,9 @@ public static class Do
 
     /// <summary><c>switch_target target=OBJI_CASTER</c> with its <c>points_to_add</c>.</summary>
     public static PatternAction HateCaster(int hate) => ai => ai.HateCaster(hate);
+
+    /// <summary><c>switch_target target=OBJI_KILLER</c> with its <c>points_to_add</c>.</summary>
+    public static PatternAction HateKiller(int hate) => ai => ai.HateKiller(hate);
 
     /// <summary><c>broadcast_message param_obj=OBJI_KILLER</c>.</summary>
     public static PatternAction BroadcastAboutKiller(int messageType, float range)

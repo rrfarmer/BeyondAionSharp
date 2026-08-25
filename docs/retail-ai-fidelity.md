@@ -40984,3 +40984,59 @@ than riding along with a 32-npc fix.
 **`percent_to_add` stays unmodelled either way.** The element does not say what the percentage is *of*
 --- the target's own hate, the top of the list, something else --- and a guess there puts a silent
 wrong number into a hate list, which is the quietest kind of wrong there is.
+
+## The rescue handlers were aiming at the wrong creature — in three places
+
+Started as the measured pass on *`switch_target` drops its hate*, filed one entry ago. It grew, because
+carrying the hate exposed a second bug that had been sitting under it.
+
+### First, the hate that was never sent
+
+`switch_target` carries `points_to_add` in all 1,321 uses and was emitted as `switch_to:TargetX`, whose
+helpers do nothing but `SetTarget`. So the npc turned to face the new creature while the hate list
+still named somebody else. **1,803 rows across 1,101 npcs, 272 of them spawned here.**
+
+The `Hate*` family already does both — add the hate, set the target — so each subject maps onto its
+own. `OBJI_KILLER` was the only one with no helper; `HateKiller` is one line beside its siblings.
+
+**`AggroInfo.AddHate` had already been widened to saturate rather than wrap, and its remark names this
+element explicitly:** *"Retail's switch_target carries points_to_add=2147483647 to mean 'top of the
+list, permanently'"*. The machinery was ready and the action was not sending it anything.
+
+### Then, the creature it was aimed at
+
+**Retail spells the rescue handlers' subjects exactly as it spells an npc's own.** On
+`on_see_friend_attacked` and `on_friend_spelled`, `OBJI_ATTACKER` and `OBJI_CASTER` are whoever is
+hurting the *friend*; on `on_see_friend_killed_by_user`, `OBJI_KILLER` is the friend's killer. This
+port keeps those in their own fields, and reading one as the other aims the rescue at whoever last hit
+the **rescuer** — which, in a rescue, is usually nobody.
+
+Wrong in three places, and none of them pinned:
+
+| element | rows | was resolving to |
+|---|---:|---|
+| `use_skill` | **1,032** | the rescuer's own `LastAttacker` / `LastCaster` |
+| `switch_target` | 814 | same |
+| `add_hate_point` | included above | same |
+| ...and the friend's killer | 130 | the rescuer's own killer |
+
+`flee_from` was the **only** element that had ever carried the remapping, and it carries a comment
+warning about exactly this trap. Nothing else consulted it. `Do.SkillOnFriendsAttacker` did not exist;
+`HateFriendsAttacker` and `HateFriendsKiller` did, in the engine, with no way for a table to name them.
+
+**The failure mode is why it survived.** An absent creature makes the action a no-op rather than an
+error, so a healer's rescue simply never happened and nothing said so. The pin that catches it has to
+assert on a rescuer *nobody has touched* — with `LastAttacker` null, the old reading produces no hate
+at all while looking exactly like a rescue that had not triggered.
+
+### Kept as data, so the next one is caught by machine
+
+Both remaps are `(handler, role)` dictionaries rather than branches, because
+`check_loader_names.py` reads this module's `*_ROLES` maps and a name only a function could return
+would not be checked. That is the third time this session that a name the extractor can emit had no
+case in the loader; the checker now covers 101 of them.
+
+### What it was worth
+
+**3,962 -> 3,968 patterns, 30,197 -> 30,227 npcs**, 1,185 rows now naming a `Friends*` role, and three
+new pins on behaviour that had never been exercised at all.
