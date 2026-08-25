@@ -129,6 +129,29 @@ FRIEND_GUARD_ROLES = {
 }
 
 #: The distance guards, whose token carries a metre count, so this holds the bare name.
+#: Retail's `broadcast_message param_obj`, and the rescue remap that applies to it like everything
+#: else. **Every one of the 6,822 uses names a creature**; the table named none of them until now.
+BROADCAST_ROLES = {
+    "OBJI_SELF": "Self",
+    "OBJI_CUR_TARGET": "Target",
+    "OBJI_EVENT_TARGET": "EventTarget",
+    "OBJI_ATTACKER": "Attacker",
+    "OBJI_CASTER": "Caster",
+    "OBJI_KILLER": "Killer",
+    "OBJI_SEEN": "Seen",
+    "OBJI_TALKER": "Talker",
+    "OBJI_FLEE_FROM": "FledFrom",
+}
+
+FRIEND_BROADCAST_ROLES = {
+    ("on_see_friend_attacked", "OBJI_ATTACKER"): "FriendsAttacker",
+    ("on_see_friend_attacked", "OBJI_CASTER"): "FriendsAttacker",
+    ("on_friend_spelled", "OBJI_ATTACKER"): "FriendsAttacker",
+    ("on_friend_spelled", "OBJI_CASTER"): "FriendsAttacker",
+    ("on_see_friend_killed_by_user", "OBJI_KILLER"): "FriendsKiller",
+    ("on_sense_friend_killed_by_user", "OBJI_KILLER"): "FriendsKiller",
+}
+
 FRIEND_NEAR_ROLES = {
     ("on_see_friend_killed_by_user", "OBJI_KILLER"): "FriendsKillerWithin",
     ("on_sense_friend_killed_by_user", "OBJI_KILLER"): "FriendsKillerWithin",
@@ -980,6 +1003,18 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
             if not who or who.group(1) not in AGGRO:
                 raise Unsayable("switch_target_by_attacker_indicator at an indicator this port lacks")
             out.append(("switch_to", 0, 0, 0, AGGRO[who.group(1)], 0.0, 0.0, 0.0, 0))
+            # **The same hate `switch_target` carries, in its ranked sibling.** All 2,372 uses carry
+            # `points_to_add` and `SwitchTarget` only calls `SetTarget`, so the npc turned to the Nth
+            # most hated while the hate list still ranked somebody else first -- and the next aggro
+            # decision put it back. Retail's taunts onto the second and third most hated could not hold.
+            #
+            # Emitted as a second row rather than a combined action because both already exist and
+            # compose exactly: `SwitchTarget` sets the owner's target, and `HateTarget` reads
+            # `CurrentTarget`, which is now that creature.
+            points = re.search(r"<points_to_add>(-?\d+)</points_to_add>", body)
+            if points and int(points.group(1)) > 0:
+                out.append(("hate_at:HateTarget", int(points.group(1)),
+                            0, 0, "", 0.0, 0.0, 0.0, 0))
         elif kind == "use_skill_by_attacker_indicator":
             index = re.search(r"SKILLI_INDEX_(\d+)", body)
             who = re.search(r"<target>(\w+)</target>", body)
@@ -1229,12 +1264,26 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
                         int(modify.group(1)) if modify else 0, 0,
                         name.group(1).strip(), 0.0, 0.0, 0.0, 0))
         elif kind == "broadcast_message":
+            # **The `param_obj` used to be dropped, and it is the whole point of the message.** A
+            # broadcast reaches its listeners with a named creature; 1,008 action rows and 239 guard
+            # rows on the listening side read exactly that name, and an unnamed message makes every one
+            # of them a no-op.
             message = re.search(r"<message_type>(\d+)</message_type>", body)
             reach = re.search(r"<range_as_meter>(\d+)</", body)
             if not message:
                 return None
-            out.append(("broadcast", int(message.group(1)),
-                        int(reach.group(1)) if reach else 0, 0, "", 0.0, 0.0, 0.0, 0))
+            named = re.search(r"<param_obj>(\w+)</param_obj>", body)
+            role = named.group(1) if named else ""
+            place = (FRIEND_BROADCAST_ROLES.get((handler, role))
+                     or BROADCAST_ROLES.get(role))
+            if place is None:
+                # No subject at all, which retail never actually writes. Kept because a message with
+                # no name is still a message.
+                out.append(("broadcast", int(message.group(1)),
+                            int(reach.group(1)) if reach else 0, 0, "", 0.0, 0.0, 0.0, 0))
+            else:
+                out.append(("broadcast_at", int(message.group(1)),
+                            int(reach.group(1)) if reach else 0, 0, place, 0.0, 0.0, 0.0, 0))
         else:
             raise Unsayable(f"action {kind}")
     return out

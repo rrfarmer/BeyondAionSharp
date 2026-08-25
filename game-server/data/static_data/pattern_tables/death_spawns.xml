@@ -361,13 +361,13 @@
 	<npc id="217186">  <!-- IDF4Re_Drana_golem -->
 		<branch priority="7" comment="on_die 0">
 			<action kind="spawn" a1="282379" a2="1" a3="5" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="1" />
-			<action kind="broadcast" a1="10" a2="30" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="10" a2="30" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="217196">  <!-- IDF4Re_Drana_golem -->
 		<branch priority="7" comment="on_die 0">
 			<action kind="spawn" a1="282379" a2="1" a3="5" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="1" />
-			<action kind="broadcast" a1="10" a2="30" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="10" a2="30" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="217204">  <!-- IDF4Re_Drana_Named_C -->
@@ -1123,7 +1123,7 @@
 	<npc id="217648">  <!-- IDF4Re_Drana_golem -->
 		<branch priority="7" comment="on_die 0">
 			<action kind="spawn" a1="282379" a2="1" a3="5" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="1" />
-			<action kind="broadcast" a1="10" a2="30" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="10" a2="30" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="217649">  <!-- IDF4Re_Drana_Named_H -->
@@ -1235,13 +1235,13 @@
 	</npc>
 	<npc id="217800">  <!-- IDArena_Solo_S3_Sprigg -->
 		<branch priority="7" comment="on_die 0">
-			<action kind="broadcast" a1="1001" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="1001" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="var" a1="0" a2="1" a3="0" place="Condition_S2B" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="217801">  <!-- IDArena_Solo_S3_Cherubim -->
 		<branch priority="7" comment="on_die 0">
-			<action kind="broadcast" a1="1002" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="1002" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="var" a1="0" a2="1" a3="0" place="Condition_S2B" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
@@ -1646,7 +1646,7 @@
 	<npc id="219165">  <!-- LDF4a_WindPath_Control_Monster -->
 		<branch priority="7" comment="on_die 0">
 			<action kind="spawn" a1="207087" a2="1" a3="0" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="7299" a2="200" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="7299" a2="200" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="219199">  <!-- TDown_DrakanSc_Noble_60_Ae_Link -->
@@ -1998,7 +1998,7 @@
 		<branch priority="11" comment="on_killed_by_user 0">
 			<guard token="who:KilledByPlayer" />
 			<action kind="var" a1="1" a2="0" a3="0" place="IDF5_R2_Sync2_Sum" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="22108" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="22108" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
@@ -2092,7 +2092,7 @@
 			<guard token="who:KilledByPlayer" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="spawn" a1="801967" a2="1" a3="0" place="for_the_fight_absolute" x="125.0" y="889.0" z="414.0" group="0" />
-			<action kind="broadcast" a1="22258" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="22258" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="230855">  <!-- IDVritra_Base_Boss4 -->
@@ -2102,86 +2102,86 @@
 			<action kind="var" a1="0" a2="-1" a3="0" place="BOSS2_SUM_02" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="var" a1="0" a2="-1" a3="0" place="BOSS2_SUM_03" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="spawn" a1="801967" a2="1" a3="0" place="for_the_fight_absolute" x="321.0" y="886.0" z="414.0" group="0" />
-			<action kind="broadcast" a1="22258" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="22258" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="230856">  <!-- IDVritra_Base_Boss3 -->
 		<branch priority="32" comment="on_killed_by_user 0">
 			<guard token="who:KilledByPlayer" />
 			<action kind="spawn" a1="801967" a2="1" a3="0" place="for_the_fight_absolute" x="519.0" y="889.0" z="414.0" group="0" />
-			<action kind="broadcast" a1="22258" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="22258" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="231075">  <!-- IDRuneWP_A1_VriIU_Wi_SN_65_Ah -->
 		<branch priority="100" comment="on_die 0">
 			<action kind="var" a1="0" a2="1" a3="0" place="cProtection01" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="21131" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="21131" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="231076">  <!-- IDRuneWP_A1_VriCU_Fi_65_Ae -->
 		<branch priority="100" comment="on_die 0">
 			<action kind="var" a1="0" a2="1" a3="0" place="cProtection01" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="21132" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="21132" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="231077">  <!-- IDRuneWP_A1_VriCU_Pr_65_Ae -->
 		<branch priority="100" comment="on_die 0">
 			<action kind="var" a1="0" a2="1" a3="0" place="cProtection01" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="21133" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="21133" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="231079">  <!-- IDRuneWP_A2_VriIU_As_65_Ae -->
 		<branch priority="100" comment="on_die 0">
 			<action kind="var" a1="0" a2="1" a3="0" place="cProtection02" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="21141" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="21141" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="231080">  <!-- IDRuneWP_A2_VriCU_Ra_65_Ae -->
 		<branch priority="100" comment="on_die 0">
 			<action kind="var" a1="0" a2="1" a3="0" place="cProtection02" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="21142" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="21142" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="231081">  <!-- IDRuneWP_A2_VriCU_Pr_65_Ae -->
 		<branch priority="100" comment="on_die 0">
 			<action kind="var" a1="0" a2="1" a3="0" place="cProtection02" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="21143" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="21143" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="231083">  <!-- IDRuneWP_A3_VriIU_Wi_65_Ae -->
 		<branch priority="100" comment="on_die 0">
 			<action kind="var" a1="0" a2="1" a3="0" place="cProtection03" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="21151" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="21151" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="231084">  <!-- IDRuneWP_A3_VriCU_Fi_65_Ae -->
 		<branch priority="100" comment="on_die 0">
 			<action kind="var" a1="0" a2="1" a3="0" place="cProtection03" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="21152" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="21152" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="231085">  <!-- IDRuneWP_A3_VriCU_Pr_65_Ae -->
 		<branch priority="100" comment="on_die 0">
 			<action kind="var" a1="0" a2="1" a3="0" place="cProtection03" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="21153" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="21153" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="231087">  <!-- IDRuneWP_A4_VriIU_As_65_Ae -->
 		<branch priority="100" comment="on_die 0">
 			<action kind="var" a1="0" a2="1" a3="0" place="cProtection04" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="21161" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="21161" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="231088">  <!-- IDRuneWP_A4_VriCU_Fi_65_Ae -->
 		<branch priority="100" comment="on_die 0">
 			<action kind="var" a1="0" a2="1" a3="0" place="cProtection04" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="21162" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="21162" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="231089">  <!-- IDRuneWP_A4_VriCU_Ra_65_Ae -->
 		<branch priority="100" comment="on_die 0">
 			<action kind="var" a1="0" a2="1" a3="0" place="cProtection04" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="21163" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="21163" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="231598">  <!-- LF2_1_KillerCtrl -->
@@ -2570,7 +2570,7 @@
 		<branch priority="11" comment="on_killed_by_user 0">
 			<guard token="who:KilledByPlayer" />
 			<action kind="var" a1="1" a2="0" a3="0" place="IDF5_R2_Sync2_Sum" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="22108" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="22108" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
@@ -3285,12 +3285,12 @@
 		<branch priority="7" comment="on_killed_by_npc 1">
 			<guard token="who:KilledByNpc" />
 			<guard token="race:KillerRace:ELYOS" />
-			<action kind="broadcast" a1="1002" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="1002" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="6" comment="on_killed_by_npc 2">
 			<guard token="who:KilledByNpc" />
 			<guard token="race:KillerRace:ASMODIANS" />
-			<action kind="broadcast" a1="1002" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="1002" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="9" comment="on_killed_by_user 0">
 			<guard token="who:KilledByPlayer" />
@@ -3299,12 +3299,12 @@
 		<branch priority="7" comment="on_killed_by_user 1">
 			<guard token="who:KilledByPlayer" />
 			<guard token="race:KillerRace:ELYOS" />
-			<action kind="broadcast" a1="1002" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="1002" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="6" comment="on_killed_by_user 2">
 			<guard token="who:KilledByPlayer" />
 			<guard token="race:KillerRace:ASMODIANS" />
-			<action kind="broadcast" a1="1002" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="1002" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="234646">  <!-- LDF4_Advance_Killer_Dr -->
@@ -6038,13 +6038,13 @@
 	<npc id="236526">  <!-- IDYun_Nmd3_FallOff -->
 		<branch priority="5" comment="on_die 0">
 			<action kind="var" a1="1" a2="0" a3="0" place="DISPEL_ARIANA" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="500" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="500" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="236527">  <!-- IDYun_Nmd3_FallOff -->
 		<branch priority="5" comment="on_die 0">
 			<action kind="var" a1="1" a2="0" a3="0" place="DISPEL_ARIANA" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="500" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="500" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="236707">  <!-- IDYun_Temp_31 -->
@@ -6162,7 +6162,7 @@
 		<branch priority="16" comment="on_die 0">
 			<action kind="spawn" a1="701237" a2="1" a3="300" place="for_the_fight_absolute" x="2804.0" y="2715.0" z="360.5" group="1" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="9999" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="9999" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="say" a1="1500498" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
@@ -6170,7 +6170,7 @@
 		<branch priority="16" comment="on_die 0">
 			<action kind="spawn" a1="701237" a2="1" a3="300" place="for_the_fight_absolute" x="2804.0" y="2715.0" z="360.5" group="1" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="9999" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="9999" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="say" a1="1500498" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
@@ -6178,7 +6178,7 @@
 		<branch priority="16" comment="on_die 0">
 			<action kind="spawn" a1="701237" a2="1" a3="300" place="for_the_fight_absolute" x="2804.0" y="2715.0" z="360.5" group="1" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="9999" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="9999" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="say" a1="1500498" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
@@ -6186,7 +6186,7 @@
 		<branch priority="16" comment="on_die 0">
 			<action kind="spawn" a1="701237" a2="1" a3="300" place="for_the_fight_absolute" x="2804.0" y="2715.0" z="360.5" group="1" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="9999" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="9999" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="say" a1="1500498" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
@@ -6194,7 +6194,7 @@
 		<branch priority="16" comment="on_die 0">
 			<action kind="spawn" a1="701237" a2="1" a3="300" place="for_the_fight_absolute" x="2804.0" y="2715.0" z="360.5" group="1" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="9999" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="9999" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="say" a1="1500498" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
@@ -6202,7 +6202,7 @@
 		<branch priority="16" comment="on_die 0">
 			<action kind="spawn" a1="701237" a2="1" a3="300" place="for_the_fight_absolute" x="2804.0" y="2715.0" z="360.5" group="1" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="9999" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="9999" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="say" a1="1500498" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
@@ -6210,7 +6210,7 @@
 		<branch priority="16" comment="on_die 0">
 			<action kind="spawn" a1="701237" a2="1" a3="300" place="for_the_fight_absolute" x="2804.0" y="2715.0" z="360.5" group="1" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="9999" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="9999" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="say" a1="1500498" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
@@ -6218,7 +6218,7 @@
 		<branch priority="16" comment="on_die 0">
 			<action kind="spawn" a1="701237" a2="1" a3="300" place="for_the_fight_absolute" x="2804.0" y="2715.0" z="360.5" group="1" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="9999" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="9999" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="say" a1="1500498" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
@@ -6226,7 +6226,7 @@
 		<branch priority="16" comment="on_die 0">
 			<action kind="spawn" a1="701237" a2="1" a3="300" place="for_the_fight_absolute" x="2804.0" y="2715.0" z="360.5" group="1" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="9999" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="9999" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="say" a1="1500498" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
@@ -6234,7 +6234,7 @@
 		<branch priority="16" comment="on_die 0">
 			<action kind="spawn" a1="701237" a2="1" a3="300" place="for_the_fight_absolute" x="2804.0" y="2715.0" z="360.5" group="1" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="9999" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="9999" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="say" a1="1500498" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
@@ -6242,7 +6242,7 @@
 		<branch priority="16" comment="on_die 0">
 			<action kind="spawn" a1="701237" a2="1" a3="300" place="for_the_fight_absolute" x="2804.0" y="2715.0" z="360.5" group="1" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="9999" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="9999" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="say" a1="1500498" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
@@ -6250,7 +6250,7 @@
 		<branch priority="16" comment="on_die 0">
 			<action kind="spawn" a1="701237" a2="1" a3="300" place="for_the_fight_absolute" x="2804.0" y="2715.0" z="360.5" group="1" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="9999" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="9999" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="say" a1="1500498" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
@@ -6258,7 +6258,7 @@
 		<branch priority="16" comment="on_die 0">
 			<action kind="spawn" a1="701237" a2="1" a3="300" place="for_the_fight_absolute" x="2804.0" y="2715.0" z="360.5" group="1" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="9999" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="9999" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="say" a1="1500498" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
@@ -6266,7 +6266,7 @@
 		<branch priority="16" comment="on_die 0">
 			<action kind="spawn" a1="701237" a2="1" a3="300" place="for_the_fight_absolute" x="2804.0" y="2715.0" z="360.5" group="1" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="9999" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="9999" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="say" a1="1500498" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
@@ -9853,7 +9853,7 @@
 	</npc>
 	<npc id="280931">  <!-- ND2_FhW -->
 		<branch priority="7" comment="on_die 0">
-			<action kind="broadcast" a1="6601" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="6601" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="spawn" a1="281044" a2="1" a3="12" place="for_the_fight_absolute" x="600.0" y="745.0" z="200.0" group="2" />
 		</branch>
 	</npc>
@@ -9978,7 +9978,7 @@
 		<branch priority="4" comment="on_die 0">
 			<action kind="spawn" a1="215453" a2="1" a3="300" place="absolute" x="310.0" y="983.0" z="111.0" group="3" />
 			<action kind="spawn" a1="215451" a2="1" a3="300" place="absolute" x="312.0" y="986.0" z="111.0" group="4" />
-			<action kind="broadcast" a1="3409" a2="10" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="3409" a2="10" a3="0" place="Target" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="281216">  <!-- IDSlk_MateSum -->
@@ -10021,7 +10021,7 @@
 		<branch priority="4" comment="on_die 0">
 			<action kind="spawn" a1="215453" a2="1" a3="300" place="absolute" x="310.0" y="983.0" z="111.0" group="3" />
 			<action kind="spawn" a1="215451" a2="1" a3="300" place="absolute" x="312.0" y="986.0" z="111.0" group="4" />
-			<action kind="broadcast" a1="3409" a2="10" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="3409" a2="10" a3="0" place="Target" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="281383">  <!-- IDTP_Fanatic_Boss_EL -->
@@ -10677,7 +10677,7 @@
 		<branch priority="11" comment="on_killed_by_user 0">
 			<guard token="who:KilledByPlayer" />
 			<action kind="var" a1="1" a2="0" a3="0" place="IDF5_R2_Sync2_Sum" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="22108" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="22108" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
@@ -10900,7 +10900,7 @@
 		<branch priority="58" comment="on_killed_by_user 0">
 			<guard token="who:KilledByPlayer" />
 			<action kind="say" a1="1500778" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="22258" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="22258" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="spawn" a1="801967" a2="1" a3="0" place="for_the_fight_absolute" x="916.0" y="889.0" z="414.0" group="0" />
 			<action kind="spawn" a1="702659" a2="1" a3="0" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
@@ -10913,14 +10913,14 @@
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="spawn" a1="801967" a2="1" a3="0" place="for_the_fight_absolute" x="719.0" y="889.0" z="414.0" group="0" />
 			<action kind="spawn" a1="702659" a2="1" a3="0" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="22258" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="22258" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="284432">  <!-- IDVritra_Base_Boss3 -->
 		<branch priority="32" comment="on_killed_by_user 0">
 			<guard token="who:KilledByPlayer" />
 			<action kind="spawn" a1="801967" a2="1" a3="0" place="for_the_fight_absolute" x="519.0" y="889.0" z="414.0" group="0" />
-			<action kind="broadcast" a1="22258" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="22258" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="284433">  <!-- IDVritra_Base_Boss4 -->
@@ -10930,7 +10930,7 @@
 			<action kind="var" a1="0" a2="-1" a3="0" place="BOSS2_SUM_02" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="var" a1="0" a2="-1" a3="0" place="BOSS2_SUM_03" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="spawn" a1="801967" a2="1" a3="0" place="for_the_fight_absolute" x="321.0" y="886.0" z="414.0" group="0" />
-			<action kind="broadcast" a1="22258" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="22258" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="284434">  <!-- IDVritra_Base_Boss5 -->
@@ -10938,15 +10938,15 @@
 			<guard token="who:KilledByPlayer" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="spawn" a1="801967" a2="1" a3="0" place="for_the_fight_absolute" x="125.0" y="889.0" z="414.0" group="0" />
-			<action kind="broadcast" a1="22258" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="22258" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="284500">  <!-- IDRuneWp_AncientArm_N_65_Al -->
 		<branch priority="900" comment="on_die 0">
 			<action kind="var" a1="2" a2="0" a3="0" place="cSetCharge" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="var" a1="2" a2="0" a3="0" place="cSetFastCharge" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="21101" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="21102" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="21101" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="21102" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="var" a1="1" a2="0" a3="0" place="cSetIdPortal" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
@@ -10971,37 +10971,37 @@
 	<npc id="284502">  <!-- IDRuneWP_A1_VriIU_Wi_SN_65_Ah -->
 		<branch priority="100" comment="on_die 0">
 			<action kind="var" a1="0" a2="1" a3="0" place="cProtection01" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="21131" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="21131" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="284503">  <!-- IDRuneWP_A3_VriIU_Wi_65_Ae -->
 		<branch priority="100" comment="on_die 0">
 			<action kind="var" a1="0" a2="1" a3="0" place="cProtection03" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="21151" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="21151" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="284504">  <!-- IDRuneWP_A2_VriIU_As_65_Ae -->
 		<branch priority="100" comment="on_die 0">
 			<action kind="var" a1="0" a2="1" a3="0" place="cProtection02" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="21141" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="21141" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="284505">  <!-- IDRuneWP_A1_VriCU_Fi_65_Ae -->
 		<branch priority="100" comment="on_die 0">
 			<action kind="var" a1="0" a2="1" a3="0" place="cProtection01" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="21132" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="21132" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="284506">  <!-- IDRuneWP_A2_VriCU_Ra_65_Ae -->
 		<branch priority="100" comment="on_die 0">
 			<action kind="var" a1="0" a2="1" a3="0" place="cProtection02" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="21142" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="21142" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="284507">  <!-- IDRuneWP_A1_VriCU_Pr_65_Ae -->
 		<branch priority="100" comment="on_die 0">
 			<action kind="var" a1="0" a2="1" a3="0" place="cProtection01" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="21133" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="21133" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="284510">  <!-- IDRuneWP_Main_Charger_65_e -->
@@ -11516,7 +11516,7 @@
 		<branch priority="52" comment="on_killed_by_user 0">
 			<guard token="who:KilledByPlayer" />
 			<action kind="var" a1="10" a2="0" a3="0" place="BOSS" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="22542" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="22542" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="spawn" a1="702659" a2="1" a3="0" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="despawn" a1="2" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
@@ -11537,12 +11537,12 @@
 		<branch priority="7" comment="on_killed_by_npc 1">
 			<guard token="who:KilledByNpc" />
 			<guard token="race:KillerRace:ELYOS" />
-			<action kind="broadcast" a1="1002" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="1002" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="6" comment="on_killed_by_npc 2">
 			<guard token="who:KilledByNpc" />
 			<guard token="race:KillerRace:ASMODIANS" />
-			<action kind="broadcast" a1="1002" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="1002" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="9" comment="on_killed_by_user 0">
 			<guard token="who:KilledByPlayer" />
@@ -11551,12 +11551,12 @@
 		<branch priority="7" comment="on_killed_by_user 1">
 			<guard token="who:KilledByPlayer" />
 			<guard token="race:KillerRace:ELYOS" />
-			<action kind="broadcast" a1="1002" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="1002" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="6" comment="on_killed_by_user 2">
 			<guard token="who:KilledByPlayer" />
 			<guard token="race:KillerRace:ASMODIANS" />
-			<action kind="broadcast" a1="1002" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="1002" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="286787">  <!-- Bionic_EhA -->
@@ -11661,7 +11661,7 @@
 	<npc id="287025">  <!-- Test_Basic_Monster_AI_JKA_4 -->
 		<branch priority="10" comment="on_die 0">
 			<action kind="spawn" a1="287027" a2="1" a3="0" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="2" />
-			<action kind="broadcast" a1="1005" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="1005" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="287090">  <!-- Test_Basic_Monster_AI_KMD_2 -->
@@ -11688,7 +11688,7 @@
 	</npc>
 	<npc id="287204">  <!-- Test_GHB_Nepilim_65_N -->
 		<branch priority="7" comment="on_die 0">
-			<action kind="broadcast" a1="8888" a2="1000" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="8888" a2="1000" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="7" comment="on_killed_by_user 0">
 			<guard token="who:KilledByPlayer" />
@@ -11964,7 +11964,7 @@
 	<npc id="296511">  <!-- BGuard_TowerChiefF4A -->
 		<branch priority="10" comment="on_killed_by_user 0">
 			<guard token="who:KilledByPlayer" />
-			<action kind="broadcast" a1="10032" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="10032" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="spawn" a1="296512" a2="1" a3="18" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="1" />
 			<action kind="spawn" a1="296512" a2="1" a3="18" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="1" />
 			<action kind="spawn" a1="296512" a2="1" a3="18" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="1" />
@@ -11974,7 +11974,7 @@
 	<npc id="296513">  <!-- BGuard_TowerChiefF4B -->
 		<branch priority="10" comment="on_killed_by_user 0">
 			<guard token="who:KilledByPlayer" />
-			<action kind="broadcast" a1="10034" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="10034" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="spawn" a1="296514" a2="1" a3="18" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="1" />
 			<action kind="spawn" a1="296514" a2="1" a3="18" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="1" />
 			<action kind="spawn" a1="296514" a2="1" a3="18" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="1" />
@@ -11984,7 +11984,7 @@
 	<npc id="296516">  <!-- BGuard_TowerChiefF4A -->
 		<branch priority="10" comment="on_killed_by_user 0">
 			<guard token="who:KilledByPlayer" />
-			<action kind="broadcast" a1="10032" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="10032" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="spawn" a1="296512" a2="1" a3="18" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="1" />
 			<action kind="spawn" a1="296512" a2="1" a3="18" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="1" />
 			<action kind="spawn" a1="296512" a2="1" a3="18" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="1" />
@@ -11994,7 +11994,7 @@
 	<npc id="296518">  <!-- BGuard_TowerChiefF4B -->
 		<branch priority="10" comment="on_killed_by_user 0">
 			<guard token="who:KilledByPlayer" />
-			<action kind="broadcast" a1="10034" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="10034" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="spawn" a1="296514" a2="1" a3="18" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="1" />
 			<action kind="spawn" a1="296514" a2="1" a3="18" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="1" />
 			<action kind="spawn" a1="296514" a2="1" a3="18" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="1" />
@@ -12004,7 +12004,7 @@
 	<npc id="296521">  <!-- BGuard_TowerChiefF4A -->
 		<branch priority="10" comment="on_killed_by_user 0">
 			<guard token="who:KilledByPlayer" />
-			<action kind="broadcast" a1="10032" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="10032" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="spawn" a1="296512" a2="1" a3="18" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="1" />
 			<action kind="spawn" a1="296512" a2="1" a3="18" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="1" />
 			<action kind="spawn" a1="296512" a2="1" a3="18" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="1" />
@@ -12014,7 +12014,7 @@
 	<npc id="296523">  <!-- BGuard_TowerChiefF4B -->
 		<branch priority="10" comment="on_killed_by_user 0">
 			<guard token="who:KilledByPlayer" />
-			<action kind="broadcast" a1="10034" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="10034" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="spawn" a1="296514" a2="1" a3="18" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="1" />
 			<action kind="spawn" a1="296514" a2="1" a3="18" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="1" />
 			<action kind="spawn" a1="296514" a2="1" a3="18" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="1" />
@@ -12295,13 +12295,13 @@
 	<npc id="701712">  <!-- LDF5b_6021_Explosion_Box_04 -->
 		<branch priority="7" comment="on_die 0">
 			<action kind="spawn" a1="701777" a2="1" a3="0" place="for_the_fight_absolute" x="2718.0" y="2588.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31014" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31014" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="701717">  <!-- LDF5b_6021_Explosion_Box_09 -->
 		<branch priority="7" comment="on_die 0">
 			<action kind="spawn" a1="701778" a2="1" a3="0" place="for_the_fight_absolute" x="2601.0" y="2798.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31019" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31019" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="701719">  <!-- LDF5b_6021_Explosion_Box_11 -->
@@ -12309,25 +12309,25 @@
 			<guard token="who:KilledByNpc" />
 			<guard token="race:KillerRace:ASMODIANS" />
 			<action kind="spawn" a1="701781" a2="1" a3="0" place="for_the_fight_absolute" x="2703.0" y="2652.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31021" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31021" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="7" comment="on_killed_by_npc 1">
 			<guard token="who:KilledByNpc" />
 			<guard token="race:KillerRace:ELYOS" />
 			<action kind="spawn" a1="701775" a2="1" a3="0" place="for_the_fight_absolute" x="2703.0" y="2652.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31021" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31021" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="8" comment="on_killed_by_user 0">
 			<guard token="who:KilledByPlayer" />
 			<guard token="race:KillerRace:ASMODIANS" />
 			<action kind="spawn" a1="701781" a2="1" a3="0" place="for_the_fight_absolute" x="2703.0" y="2652.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31021" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31021" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="7" comment="on_killed_by_user 1">
 			<guard token="who:KilledByPlayer" />
 			<guard token="race:KillerRace:ELYOS" />
 			<action kind="spawn" a1="701775" a2="1" a3="0" place="for_the_fight_absolute" x="2703.0" y="2652.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31021" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31021" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="701720">  <!-- LDF5b_6021_Explosion_Box_12 -->
@@ -12335,37 +12335,37 @@
 			<guard token="who:KilledByNpc" />
 			<guard token="race:KillerRace:ASMODIANS" />
 			<action kind="spawn" a1="701782" a2="1" a3="0" place="for_the_fight_absolute" x="2613.0" y="2734.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31022" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31022" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="7" comment="on_killed_by_npc 1">
 			<guard token="who:KilledByNpc" />
 			<guard token="race:KillerRace:ELYOS" />
 			<action kind="spawn" a1="701776" a2="1" a3="0" place="for_the_fight_absolute" x="2613.0" y="2734.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31022" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31022" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="8" comment="on_killed_by_user 0">
 			<guard token="who:KilledByPlayer" />
 			<guard token="race:KillerRace:ASMODIANS" />
 			<action kind="spawn" a1="701782" a2="1" a3="0" place="for_the_fight_absolute" x="2613.0" y="2734.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31022" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31022" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="7" comment="on_killed_by_user 1">
 			<guard token="who:KilledByPlayer" />
 			<guard token="race:KillerRace:ELYOS" />
 			<action kind="spawn" a1="701776" a2="1" a3="0" place="for_the_fight_absolute" x="2613.0" y="2734.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31022" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31022" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="701787">  <!-- LDF5b_6021_Explosion_Box_04 -->
 		<branch priority="7" comment="on_die 0">
 			<action kind="spawn" a1="701777" a2="1" a3="0" place="for_the_fight_absolute" x="2718.0" y="2588.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31014" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31014" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="701788">  <!-- LDF5b_6021_Explosion_Box_09 -->
 		<branch priority="7" comment="on_die 0">
 			<action kind="spawn" a1="701778" a2="1" a3="0" place="for_the_fight_absolute" x="2601.0" y="2798.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31019" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31019" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="701789">  <!-- LDF5b_6021_Explosion_Box_11 -->
@@ -12373,25 +12373,25 @@
 			<guard token="who:KilledByNpc" />
 			<guard token="race:KillerRace:ASMODIANS" />
 			<action kind="spawn" a1="701781" a2="1" a3="0" place="for_the_fight_absolute" x="2703.0" y="2652.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31021" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31021" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="7" comment="on_killed_by_npc 1">
 			<guard token="who:KilledByNpc" />
 			<guard token="race:KillerRace:ELYOS" />
 			<action kind="spawn" a1="701775" a2="1" a3="0" place="for_the_fight_absolute" x="2703.0" y="2652.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31021" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31021" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="8" comment="on_killed_by_user 0">
 			<guard token="who:KilledByPlayer" />
 			<guard token="race:KillerRace:ASMODIANS" />
 			<action kind="spawn" a1="701781" a2="1" a3="0" place="for_the_fight_absolute" x="2703.0" y="2652.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31021" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31021" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="7" comment="on_killed_by_user 1">
 			<guard token="who:KilledByPlayer" />
 			<guard token="race:KillerRace:ELYOS" />
 			<action kind="spawn" a1="701775" a2="1" a3="0" place="for_the_fight_absolute" x="2703.0" y="2652.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31021" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31021" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="701790">  <!-- LDF5b_6021_Explosion_Box_12 -->
@@ -12399,37 +12399,37 @@
 			<guard token="who:KilledByNpc" />
 			<guard token="race:KillerRace:ASMODIANS" />
 			<action kind="spawn" a1="701782" a2="1" a3="0" place="for_the_fight_absolute" x="2613.0" y="2734.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31022" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31022" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="7" comment="on_killed_by_npc 1">
 			<guard token="who:KilledByNpc" />
 			<guard token="race:KillerRace:ELYOS" />
 			<action kind="spawn" a1="701776" a2="1" a3="0" place="for_the_fight_absolute" x="2613.0" y="2734.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31022" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31022" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="8" comment="on_killed_by_user 0">
 			<guard token="who:KilledByPlayer" />
 			<guard token="race:KillerRace:ASMODIANS" />
 			<action kind="spawn" a1="701782" a2="1" a3="0" place="for_the_fight_absolute" x="2613.0" y="2734.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31022" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31022" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="7" comment="on_killed_by_user 1">
 			<guard token="who:KilledByPlayer" />
 			<guard token="race:KillerRace:ELYOS" />
 			<action kind="spawn" a1="701776" a2="1" a3="0" place="for_the_fight_absolute" x="2613.0" y="2734.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31022" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31022" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="701791">  <!-- LDF5b_6021_Explosion_Box_04 -->
 		<branch priority="7" comment="on_die 0">
 			<action kind="spawn" a1="701777" a2="1" a3="0" place="for_the_fight_absolute" x="2718.0" y="2588.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31014" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31014" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="701792">  <!-- LDF5b_6021_Explosion_Box_09 -->
 		<branch priority="7" comment="on_die 0">
 			<action kind="spawn" a1="701778" a2="1" a3="0" place="for_the_fight_absolute" x="2601.0" y="2798.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31019" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31019" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="701793">  <!-- LDF5b_6021_Explosion_Box_11 -->
@@ -12437,25 +12437,25 @@
 			<guard token="who:KilledByNpc" />
 			<guard token="race:KillerRace:ASMODIANS" />
 			<action kind="spawn" a1="701781" a2="1" a3="0" place="for_the_fight_absolute" x="2703.0" y="2652.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31021" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31021" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="7" comment="on_killed_by_npc 1">
 			<guard token="who:KilledByNpc" />
 			<guard token="race:KillerRace:ELYOS" />
 			<action kind="spawn" a1="701775" a2="1" a3="0" place="for_the_fight_absolute" x="2703.0" y="2652.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31021" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31021" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="8" comment="on_killed_by_user 0">
 			<guard token="who:KilledByPlayer" />
 			<guard token="race:KillerRace:ASMODIANS" />
 			<action kind="spawn" a1="701781" a2="1" a3="0" place="for_the_fight_absolute" x="2703.0" y="2652.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31021" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31021" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="7" comment="on_killed_by_user 1">
 			<guard token="who:KilledByPlayer" />
 			<guard token="race:KillerRace:ELYOS" />
 			<action kind="spawn" a1="701775" a2="1" a3="0" place="for_the_fight_absolute" x="2703.0" y="2652.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31021" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31021" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="701794">  <!-- LDF5b_6021_Explosion_Box_12 -->
@@ -12463,25 +12463,25 @@
 			<guard token="who:KilledByNpc" />
 			<guard token="race:KillerRace:ASMODIANS" />
 			<action kind="spawn" a1="701782" a2="1" a3="0" place="for_the_fight_absolute" x="2613.0" y="2734.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31022" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31022" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="7" comment="on_killed_by_npc 1">
 			<guard token="who:KilledByNpc" />
 			<guard token="race:KillerRace:ELYOS" />
 			<action kind="spawn" a1="701776" a2="1" a3="0" place="for_the_fight_absolute" x="2613.0" y="2734.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31022" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31022" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="8" comment="on_killed_by_user 0">
 			<guard token="who:KilledByPlayer" />
 			<guard token="race:KillerRace:ASMODIANS" />
 			<action kind="spawn" a1="701782" a2="1" a3="0" place="for_the_fight_absolute" x="2613.0" y="2734.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31022" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31022" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 		<branch priority="7" comment="on_killed_by_user 1">
 			<guard token="who:KilledByPlayer" />
 			<guard token="race:KillerRace:ELYOS" />
 			<action kind="spawn" a1="701776" a2="1" a3="0" place="for_the_fight_absolute" x="2613.0" y="2734.0" z="255.0" group="0" />
-			<action kind="broadcast" a1="31022" a2="50" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="31022" a2="50" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="702311">  <!-- Gab1_TurretSwitch_01 -->
@@ -12739,13 +12739,13 @@
 	<npc id="730612">  <!-- IDTiamat_Wave1 -->
 		<branch priority="4" comment="on_die 0">
 			<action kind="var" a1="1" a2="0" a3="0" place="IDTIAMAT_WAVE1" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="2000" a2="90" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="2000" a2="90" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="799674">  <!-- IDYun_Merops4 -->
 		<branch priority="99" comment="on_die 0">
 			<action kind="say" a1="1500437" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="34" a2="30" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="34" a2="30" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="spawn" a1="282578" a2="1" a3="5" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="1" />
 		</branch>
 	</npc>
@@ -12801,7 +12801,7 @@
 	<npc id="831572">  <!-- IDDF2Flying_event01_B_RatmanWarriorM_55_Ae -->
 		<branch priority="7" comment="on_die 0">
 			<action kind="spawn" a1="831581" a2="1" a3="0" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="1" />
-			<action kind="broadcast" a1="1997" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="1997" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="832273">  <!-- Gab1_TurretSwitch_01 -->
@@ -18734,7 +18734,7 @@
 		<branch priority="98" comment="on_killed_by_npc 0">
 			<guard token="who:KilledByNpc" />
 			<guard token="set_flag_var:5" />
-			<action kind="broadcast" a1="22716" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="22716" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="spawn" a1="702769" a2="1" a3="0" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="var" a1="3" a2="0" a3="0" place="TWIN_P" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
@@ -18743,7 +18743,7 @@
 		<branch priority="99" comment="on_killed_by_user 0">
 			<guard token="who:KilledByPlayer" />
 			<guard token="set_flag_var:5" />
-			<action kind="broadcast" a1="22716" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="22716" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="spawn" a1="702769" a2="1" a3="0" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="var" a1="3" a2="0" a3="0" place="TWIN_P" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
@@ -18754,7 +18754,7 @@
 		<branch priority="99" comment="on_killed_by_npc 0">
 			<guard token="who:KilledByNpc" />
 			<guard token="set_flag_var:5" />
-			<action kind="broadcast" a1="22717" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="22717" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="spawn" a1="702769" a2="1" a3="0" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="var" a1="3" a2="0" a3="0" place="TWIN_M" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
@@ -18763,7 +18763,7 @@
 		<branch priority="100" comment="on_killed_by_user 0">
 			<guard token="who:KilledByPlayer" />
 			<guard token="set_flag_var:5" />
-			<action kind="broadcast" a1="22717" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="22717" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="spawn" a1="702769" a2="1" a3="0" place="for_the_fight_self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="var" a1="3" a2="0" a3="0" place="TWIN_M" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
@@ -18967,7 +18967,7 @@
 	<npc id="855900">  <!-- IDYun_Nmd3_FallOff -->
 		<branch priority="5" comment="on_die 0">
 			<action kind="var" a1="1" a2="0" a3="0" place="DISPEL_ARIANA" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="500" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="500" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="855904">  <!-- IDYun_TheThingFromAnotherWorld_02 -->
@@ -18996,14 +18996,14 @@
 	</npc>
 	<npc id="855994">  <!-- BIDF5_U01_Runaway_Wi -->
 		<branch priority="1000" comment="on_die 0">
-			<action kind="broadcast" a1="10900" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="10900" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="var" a1="0" a2="1" a3="0" place="under_01_out" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="856002">  <!-- BIDF5_U01_Runaway_As -->
 		<branch priority="1000" comment="on_die 0">
 			<action kind="var" a1="0" a2="1" a3="0" place="under_01_out" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="10900" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="10900" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="856003">  <!-- BIDF5_U01_Boss_Wi_Nor -->
@@ -19013,19 +19013,19 @@
 	</npc>
 	<npc id="856004">  <!-- BIDF5_U01_Boss_Wi -->
 		<branch priority="1000" comment="on_die 0">
-			<action kind="broadcast" a1="10900" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="10900" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="var" a1="0" a2="1" a3="0" place="under_01_out" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="856005">  <!-- BIDF5_U01_Boss_Wi -->
 		<branch priority="1000" comment="on_die 0">
-			<action kind="broadcast" a1="10900" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="10900" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="var" a1="0" a2="1" a3="0" place="under_01_out" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
 	<npc id="856006">  <!-- BIDF5_U01_Monster_01 -->
 		<branch priority="1000" comment="on_die 0">
-			<action kind="broadcast" a1="10900" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="10900" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="var" a1="0" a2="1" a3="0" place="under_01_out" x="0.0" y="0.0" z="0.0" group="0" />
 		</branch>
 	</npc>
@@ -19074,7 +19074,7 @@
 	<npc id="856029">  <!-- IDTiamat_Hard_Tiamat_Dragon_Dying -->
 		<branch priority="49" comment="on_die 0">
 			<action kind="var" a1="0" a2="1" a3="0" place="TIAMAT_TREASUREBOX" x="0.0" y="0.0" z="0.0" group="0" />
-			<action kind="broadcast" a1="201" a2="100" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />
+			<action kind="broadcast_at" a1="201" a2="100" a3="0" place="Self" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="var" a1="4" a2="0" a3="0" place="KAHRUN_SPAWN" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="var" a1="2" a2="0" a3="0" place="RELIC_SPAWN" x="0.0" y="0.0" z="0.0" group="0" />
 			<action kind="despawn" a1="1" a2="0" a3="0" place="" x="0.0" y="0.0" z="0.0" group="0" />

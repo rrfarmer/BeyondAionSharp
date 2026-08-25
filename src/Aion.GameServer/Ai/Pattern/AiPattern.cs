@@ -1464,6 +1464,35 @@ public static class Do
         => ai => ai.BroadcastAboutSelf(messageType, range);
 
     /// <summary>
+    /// The rest of retail's <c>param_obj</c> subjects.
+    /// </summary>
+    /// <remarks>
+    /// <b>All 6,822 <c>broadcast_message</c> uses name a creature, and the table named none of them.</b>
+    /// The extractor read the message number and the range and dropped the <c>param_obj</c>, so every
+    /// broadcast reached its listeners with a null parameter — while 1,008 action rows and 239 guard
+    /// rows on the listening side read exactly that parameter. <c>HateMessageParam</c> on an unnamed
+    /// message does nothing at all.
+    /// </remarks>
+    public static PatternAction BroadcastAboutTarget(int messageType, float range)
+        => ai => ai.BroadcastAboutTarget(messageType, range);
+
+    /// <inheritdoc cref="BroadcastAboutTarget"/>
+    public static PatternAction BroadcastAboutEventTarget(int messageType, float range)
+        => ai => ai.BroadcastAboutEventTarget(messageType, range);
+
+    /// <inheritdoc cref="BroadcastAboutTarget"/>
+    public static PatternAction BroadcastAboutSeen(int messageType, float range)
+        => ai => ai.BroadcastAboutSeen(messageType, range);
+
+    /// <inheritdoc cref="BroadcastAboutTarget"/>
+    public static PatternAction BroadcastAboutTalker(int messageType, float range)
+        => ai => ai.BroadcastAboutTalker(messageType, range);
+
+    /// <inheritdoc cref="BroadcastAboutTarget"/>
+    public static PatternAction BroadcastAboutFledFrom(int messageType, float range)
+        => ai => ai.BroadcastAboutFledFrom(messageType, range);
+
+    /// <summary>
     /// <c>use_skill(OBJI_SELF, SKILLI_INDEX_0)</c> where the NPC's list holds exactly one skill.
     /// </summary>
     /// <remarks>Does nothing if it holds any other number — see <see cref="PatternAi.CastOnlySkillOnSelf"/>.</remarks>

@@ -1095,7 +1095,9 @@ public sealed class BattleCycleAiTests
 				// killer. That is this pin doing its job: those branches were being refused whole for
 				// their cast, so their guards were never read either, and the widening shows up here
 				// as a number rather than as silence.
-				["who:TargetIsPlayer"] = 155,
+				// Counted per row, not per branch: a branch that gains an action repeats its guards in
+				// this tally. 155 -> 164 when the ranked switch started emitting its hate alongside.
+				["who:TargetIsPlayer"] = 164,
 				["who:AttackedByPlayer"] = 84,
 				["who:SpelledByPlayer"] = 77,
 				["who:TargetIsNpc"] = 60,

@@ -41088,3 +41088,103 @@ passed unchecked otherwise. 121 names, all answered.
 
 **4,604 guard rows and 1,185 action rows now name a friend-aware role**, and four pins cover behaviour
 that had none.
+
+## Every broadcast named a creature, and the table named none of them
+
+The rescue sweep listed `broadcast_message param_obj` as "not read at all" and the number looked small
+--- twenty uses under the rescue handlers. Following it up found the largest single disconnect in the
+port.
+
+**All 6,822 of retail's `broadcast_message` uses carry a `param_obj`.** Not most: all of them. The
+extractor read the message number and the range and dropped it, so all **12,362 broadcast rows** in the
+table reached their listeners with a null parameter.
+
+| what retail names | uses |
+|---|---:|
+| `OBJI_SELF` | 5,013 |
+| `OBJI_CUR_TARGET` | 1,057 |
+| `OBJI_EVENT_TARGET` | 500 |
+| `OBJI_ATTACKER` | 84 |
+| `OBJI_CASTER` | 78 |
+| `OBJI_SEEN` | 55 |
+| `OBJI_KILLER` | 23 |
+| `OBJI_TALKER` / `OBJI_FLEE_FROM` | 6 each |
+
+**The name is the point of the message.** On the listening side, 1,008 action rows and 239 guard rows
+read exactly that parameter --- `HateMessageParam`, `MessageParamIsEnemy`, `MessageParamWithin`,
+`TargetMessageParam`. Every one was a no-op. Silently: an unnamed message is still a message, so the
+shout went out, the listeners heard it, and nothing came of it.
+
+`Do.Broadcast` even takes an `aboutTarget` flag --- the loader passed the default, which is `false`.
+
+Five subjects had no helper (`Target`, `EventTarget`, `Seen`, `Talker`, `FledFrom`); the rest already
+existed. The rescue remap applies here like everywhere else.
+
+### The one thing worth being uneasy about, measured
+
+5,013 broadcasts name `OBJI_SELF`, and a listener answering with `HateMessageParam` would put hate on a
+*friendly* broadcaster. Joined by message number, that is 787 broadcasts across 88 numbers.
+
+**That join hugely overstates it** --- message numbers are reused across unrelated encounters (1, 20,
+1001) and a broadcast has a range, so a broadcaster in one instance and a listener in another sharing a
+number never meet. And the shape is retail's own and already documented in this port:
+`HateMessageSender` carries the note that it is *"how one NPC asks another to shoot it"*, with the Sauro
+flame cannon as the worked example. A self-naming broadcast answered with hate is the same mechanic
+through the parameter rather than the sender.
+
+So it is ported rather than second-guessed, and written down here so that if guards ever appear to
+turn on each other, this is the first place to look.
+
+**3,968 patterns and 30,227 npcs, unchanged --- this adds nothing new to the table and instead makes
+12,362 rows that were already there do what they say.**
+
+### And the gate caught the table I forgot
+
+`regen_check.py` reported one drift: `death_spawns.tsv`, 117 rows added and 117 removed. Not a
+regression --- `extract_death_spawns.py` imports `read_handler` from the battle extractor, so its
+broadcasts gained their `param_obj` too, and the committed table had not been regenerated. Exactly what
+that gate is for, and a reminder that the extractors share more than their names suggest: a change to
+one reader reaches four tables.
+
+## Checking every element for the shape the broadcast bug had
+
+The broadcast bug was *the reader looks at some of an element's fields and drops the rest*, and nothing
+said so. That is checkable: list what retail writes inside each element, list what the reader searches
+for, and report the difference.
+
+It found the one that mattered immediately. **`switch_target_by_attacker_indicator` drops its
+`points_to_add` exactly as `switch_target` did** --- and it is the bigger of the two: 2,372 retail uses
+against 1,321, and **7,169 rows in the table against 1,803**. `SwitchTarget` calls `SetTarget` and
+nothing else, so a taunt onto the second or third most hated turned the npc's head while the hate list
+still ranked somebody else first, and the next aggro decision put it back. **Retail's peel mechanics
+could not hold.**
+
+Emitted as a second row rather than a combined action, because both halves already exist and compose
+exactly: `SwitchTarget` sets the owner's target and `HateTarget` reads `CurrentTarget`, which is now
+that creature. Actions **329,058 -> 336,217**.
+
+### What else the check turned up, and what it was worth
+
+Most of the rest were the check being crude rather than the reader being wrong:
+
+- `add_battle_timer`, `is_battle_timer_indicator`, `use_skill`, `attack_most_hating` --- read through
+  helpers (`timer_slot`, `SKILLI_INDEX_n`) rather than a literal tag search.
+- `spawn_on_target despawn_at_attack_state` --- read; the clause split fooled the checker.
+- **`broadcast_message param1` and `param2`** --- 6,822 each, and **every one is `0`**. They carry
+  nothing.
+
+Genuinely unread, and left that way with reasons:
+
+| element | field | uses | why |
+|---|---|---:|---|
+| `switch_target` / its ranked sibling | `percent_to_add` | 3,693 | the element does not say what the percentage is *of* |
+| `switch_target_by_attacker_indicator` | `restricted_range` | 2,372 | narrows the candidates; what it adds over `valid_distance` is unstated, and this port already refuses it on the spawn form for that reason |
+| `display_system_message` | `area_name`, `string_param1..3` | 3,065 | message substitution this port's system-message path does not take |
+| `flee_from` | `push_state` | 353 | unstated |
+| `spawn_on_multi_target` | `num_to_spawn` | 324 | worth a look |
+
+### The census pin, again
+
+`who:TargetIsPlayer` went 155 -> 164 with no guard changing, which is worth knowing about that pin: it
+counts guard tokens **per row**, so a branch that gains an action repeats its guards in the tally. The
+number moved because those branches got their hate row, not because anything was read differently.

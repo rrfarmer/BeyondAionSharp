@@ -813,6 +813,26 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     public void BroadcastAboutSelf(int messageType, float range)
         => BroadcastAbout(messageType, range, GetOwner(), includeOwnSpawns: false);
 
+    /// <summary><c>broadcast_message param_obj=OBJI_CUR_TARGET</c> — 1,057 uses.</summary>
+    public void BroadcastAboutTarget(int messageType, float range)
+        => BroadcastAbout(messageType, range, CurrentTarget, includeOwnSpawns: false);
+
+    /// <summary><c>broadcast_message param_obj=OBJI_EVENT_TARGET</c> — 500 uses.</summary>
+    public void BroadcastAboutEventTarget(int messageType, float range)
+        => BroadcastAbout(messageType, range, EventTarget, includeOwnSpawns: false);
+
+    /// <summary><c>broadcast_message param_obj=OBJI_SEEN</c>.</summary>
+    public void BroadcastAboutSeen(int messageType, float range)
+        => BroadcastAbout(messageType, range, SeenCreature, includeOwnSpawns: false);
+
+    /// <summary><c>broadcast_message param_obj=OBJI_TALKER</c>.</summary>
+    public void BroadcastAboutTalker(int messageType, float range)
+        => BroadcastAbout(messageType, range, Talker, includeOwnSpawns: false);
+
+    /// <summary><c>broadcast_message param_obj=OBJI_FLEE_FROM</c>.</summary>
+    public void BroadcastAboutFledFrom(int messageType, float range)
+        => BroadcastAbout(messageType, range, FledFrom, includeOwnSpawns: false);
+
     private void BroadcastAbout(int messageType, float range, VisibleObject? about, bool includeOwnSpawns)
         => NpcMessageBus.Broadcast(GetOwner(), messageType, about, range,
             includeOwnSpawns || spawnedThisBranch.Count == 0 ? null : spawnedThisBranch);

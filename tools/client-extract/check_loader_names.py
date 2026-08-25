@@ -30,6 +30,7 @@ MAPS = {
         "USER_ROLES", "NPC_ROLES", "SWITCH_ROLES", "HATE_ROLES", "FLEE_ROLES",
         # Keyed by (handler, role) rather than by role, which the value scan does not care about.
         "FRIEND_HATE_ROLES", "FRIEND_SKILL_ROLES", "FRIEND_GUARD_ROLES", "FRIEND_NEAR_ROLES",
+        "BROADCAST_ROLES", "FRIEND_BROADCAST_ROLES",
     ],
 }
 

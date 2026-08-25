@@ -100,9 +100,9 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 217119	Cromede_Named_ScaredQ	on_die	ANY	0	7		2	spawn	282115	1	60	for_the_fight_absolute	512.55	574.35	217.6	0
 217119	Cromede_Named_ScaredQ	on_die	ANY	0	7		3	spawn	282115	1	60	for_the_fight_absolute	568.19	833.13	226.33	0
 217186	IDF4Re_Drana_golem	on_die	ANY	0	7		0	spawn	282379	1	5	for_the_fight_self	0.0	0.0	0.0	1
-217186	IDF4Re_Drana_golem	on_die	ANY	0	7		1	broadcast	10	30	0		0.0	0.0	0.0	0
+217186	IDF4Re_Drana_golem	on_die	ANY	0	7		1	broadcast_at	10	30	0	Self	0.0	0.0	0.0	0
 217196	IDF4Re_Drana_golem	on_die	ANY	0	7		0	spawn	282379	1	5	for_the_fight_self	0.0	0.0	0.0	1
-217196	IDF4Re_Drana_golem	on_die	ANY	0	7		1	broadcast	10	30	0		0.0	0.0	0.0	0
+217196	IDF4Re_Drana_golem	on_die	ANY	0	7		1	broadcast_at	10	30	0	Self	0.0	0.0	0.0	0
 217204	IDF4Re_Drana_Named_C	on_die	ANY	0	7		0	say	1500199	0	0		0.0	0.0	0.0	0
 217204	IDF4Re_Drana_Named_C	on_die	ANY	0	7		1	spawn	282435	1	10	for_the_fight_absolute	1311.0	1174.0	192.0	2
 217204	IDF4Re_Drana_Named_C	on_die	ANY	0	7		2	var	1	0	0	IDF4Re_Dra_03_Boss_Kill	0.0	0.0	0.0	0
@@ -295,7 +295,7 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 217640	Raksha_EvileyeLight	on_die	ANY	0	7	set_flag_var:0	0	sysmsg	1401160	0	0		0.0	0.0	0.0	0
 217640	Raksha_EvileyeLight	on_die	ANY	0	7	set_flag_var:0	1	var	0	1	0	idraksha_evileyenamedspawn	0.0	0.0	0.0	0
 217648	IDF4Re_Drana_golem	on_die	ANY	0	7		0	spawn	282379	1	5	for_the_fight_self	0.0	0.0	0.0	1
-217648	IDF4Re_Drana_golem	on_die	ANY	0	7		1	broadcast	10	30	0		0.0	0.0	0.0	0
+217648	IDF4Re_Drana_golem	on_die	ANY	0	7		1	broadcast_at	10	30	0	Self	0.0	0.0	0.0	0
 217649	IDF4Re_Drana_Named_H	on_die	ANY	0	7		0	spawn	282379	1	5	for_the_fight_absolute	1037.0	986.0	328.0	1
 217651	IDArena_S5_MonsterDrop_7	on_die	ANY	0	7		0	var	0	1	0	Condition_S4	0.0	0.0	0.0	0
 217652	IDArena_S5_MonsterDrop_8	on_die	ANY	0	7		0	var	0	1	0	Condition_S4	0.0	0.0	0.0	0
@@ -323,9 +323,9 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 217797	IDArena_Solo_S3_Tiara	on_die	ANY	0	7		0	var	0	1	0	Condition_S2A	0.0	0.0	0.0	0
 217798	IDArena_Solo_S3_Kara	on_die	ANY	0	7		0	var	0	1	0	Condition_S2A	0.0	0.0	0.0	0
 217799	IDArena_Solo_S3_Victoriana	on_die	ANY	0	7		0	var	0	1	0	Condition_S2A	0.0	0.0	0.0	0
-217800	IDArena_Solo_S3_Sprigg	on_die	ANY	0	7		0	broadcast	1001	100	0		0.0	0.0	0.0	0
+217800	IDArena_Solo_S3_Sprigg	on_die	ANY	0	7		0	broadcast_at	1001	100	0	Self	0.0	0.0	0.0	0
 217800	IDArena_Solo_S3_Sprigg	on_die	ANY	0	7		1	var	0	1	0	Condition_S2B	0.0	0.0	0.0	0
-217801	IDArena_Solo_S3_Cherubim	on_die	ANY	0	7		0	broadcast	1002	100	0		0.0	0.0	0.0	0
+217801	IDArena_Solo_S3_Cherubim	on_die	ANY	0	7		0	broadcast_at	1002	100	0	Self	0.0	0.0	0.0	0
 217801	IDArena_Solo_S3_Cherubim	on_die	ANY	0	7		1	var	0	1	0	Condition_S2B	0.0	0.0	0.0	0
 217803	IDArena_Solo_S4B_Dukaki	on_die	ANY	0	7		0	var	0	1	0	Dukaki_Count	0.0	0.0	0.0	0
 217807	IDArena_Solo_S5_Fi	on_die	ANY	0	7		0	say	342404	0	0		0.0	0.0	0.0	0
@@ -422,7 +422,7 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 218927	LDF4b_Cavalry_Pagati_Fighter_58	on_die	ANY	0	9		0	spawn	282798	1	10	self	0.0	0.0	0.0	0
 218930	LDF4b_Cavalry_Pagati_Fighter_58	on_die	ANY	0	9		0	spawn	282798	1	10	self	0.0	0.0	0.0	0
 219165	LDF4a_WindPath_Control_Monster	on_die	ANY	0	7		0	spawn	207087	1	0	for_the_fight_self	0.0	0.0	0.0	0
-219165	LDF4a_WindPath_Control_Monster	on_die	ANY	0	7		1	broadcast	7299	200	0		0.0	0.0	0.0	0
+219165	LDF4a_WindPath_Control_Monster	on_die	ANY	0	7		1	broadcast_at	7299	200	0	Self	0.0	0.0	0.0	0
 219199	TDown_DrakanSc_Noble_60_Ae_Link	on_die	ANY	0	5		0	spawn	282975	1	10	for_the_fight_self	0.0	0.0	0.0	1
 219199	TDown_DrakanSc_Noble_60_Ae_Link	on_die	ANY	0	5		1	despawn	1	0	0		0.0	0.0	0.0	0
 219200	TDown_DrakanWi_Noble_60_Ae_Link	on_die	ANY	0	7		0	spawn	282975	1	10	for_the_fight_self	0.0	0.0	0.0	1
@@ -506,7 +506,7 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 230082	IDLDF5Re_Solo_Vritra43IU_MutantDR_DrakanFi_Ae	on_die	ANY	0	7		0	var	1	0	0	IDF5_EscapePortal	0.0	0.0	0.0	0
 230083	IDLDF5Re_Solo_Vritra43IU_MutantDR_DrakanFi_Ae	on_die	ANY	0	7		0	var	1	0	0	IDF5_EscapePortal	0.0	0.0	0.0	0
 230108	BIDF5_R2_Sync2_A1	on_killed_by_user	KilledByPlayer	0	11		0	var	1	0	0	IDF5_R2_Sync2_Sum	0.0	0.0	0.0	0
-230108	BIDF5_R2_Sync2_A1	on_killed_by_user	KilledByPlayer	0	11		1	broadcast	22108	50	0		0.0	0.0	0.0	0
+230108	BIDF5_R2_Sync2_A1	on_killed_by_user	KilledByPlayer	0	11		1	broadcast_at	22108	50	0	Self	0.0	0.0	0.0	0
 230108	BIDF5_R2_Sync2_A1	on_killed_by_user	KilledByPlayer	0	11		2	despawn	1	0	0		0.0	0.0	0.0	0
 230422	IDF5_Under_01_Boss	on_die	ANY	0	97	set_world_flag_var:5	0	spawn	702659	1	0	for_the_fight_absolute	335.3	489.5	607.5	0
 230422	IDF5_Under_01_Boss	on_die	ANY	0	97	set_world_flag_var:5	1	var	1	0	0	IDLDF5_Under_01_Entrance_Out	0.0	0.0	0.0	0
@@ -530,38 +530,38 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 230780	IDF5_TD_Wave_Pod_07	on_killed_by_user	KilledByPlayer	0	3		0	var	2	0	0	Wave_Z1_S5_01	0.0	0.0	0.0	0
 230854	IDVritra_Base_Boss5	on_killed_by_user	KilledByPlayer	0	32		0	despawn	1	0	0		0.0	0.0	0.0	0
 230854	IDVritra_Base_Boss5	on_killed_by_user	KilledByPlayer	0	32		1	spawn	801967	1	0	for_the_fight_absolute	125.0	889.0	414.0	0
-230854	IDVritra_Base_Boss5	on_killed_by_user	KilledByPlayer	0	32		2	broadcast	22258	50	0		0.0	0.0	0.0	0
+230854	IDVritra_Base_Boss5	on_killed_by_user	KilledByPlayer	0	32		2	broadcast_at	22258	50	0	Self	0.0	0.0	0.0	0
 230855	IDVritra_Base_Boss4	on_killed_by_user	KilledByPlayer	0	16		0	var	0	-1	0	BOSS2_SUM_01	0.0	0.0	0.0	0
 230855	IDVritra_Base_Boss4	on_killed_by_user	KilledByPlayer	0	16		1	var	0	-1	0	BOSS2_SUM_02	0.0	0.0	0.0	0
 230855	IDVritra_Base_Boss4	on_killed_by_user	KilledByPlayer	0	16		2	var	0	-1	0	BOSS2_SUM_03	0.0	0.0	0.0	0
 230855	IDVritra_Base_Boss4	on_killed_by_user	KilledByPlayer	0	16		3	spawn	801967	1	0	for_the_fight_absolute	321.0	886.0	414.0	0
-230855	IDVritra_Base_Boss4	on_killed_by_user	KilledByPlayer	0	16		4	broadcast	22258	50	0		0.0	0.0	0.0	0
+230855	IDVritra_Base_Boss4	on_killed_by_user	KilledByPlayer	0	16		4	broadcast_at	22258	50	0	Self	0.0	0.0	0.0	0
 230856	IDVritra_Base_Boss3	on_killed_by_user	KilledByPlayer	0	32		0	spawn	801967	1	0	for_the_fight_absolute	519.0	889.0	414.0	0
-230856	IDVritra_Base_Boss3	on_killed_by_user	KilledByPlayer	0	32		1	broadcast	22258	50	0		0.0	0.0	0.0	0
+230856	IDVritra_Base_Boss3	on_killed_by_user	KilledByPlayer	0	32		1	broadcast_at	22258	50	0	Self	0.0	0.0	0.0	0
 231075	IDRuneWP_A1_VriIU_Wi_SN_65_Ah	on_die	ANY	0	100		0	var	0	1	0	cProtection01	0.0	0.0	0.0	0
-231075	IDRuneWP_A1_VriIU_Wi_SN_65_Ah	on_die	ANY	0	100		1	broadcast	21131	50	0		0.0	0.0	0.0	0
+231075	IDRuneWP_A1_VriIU_Wi_SN_65_Ah	on_die	ANY	0	100		1	broadcast_at	21131	50	0	Self	0.0	0.0	0.0	0
 231076	IDRuneWP_A1_VriCU_Fi_65_Ae	on_die	ANY	0	100		0	var	0	1	0	cProtection01	0.0	0.0	0.0	0
-231076	IDRuneWP_A1_VriCU_Fi_65_Ae	on_die	ANY	0	100		1	broadcast	21132	50	0		0.0	0.0	0.0	0
+231076	IDRuneWP_A1_VriCU_Fi_65_Ae	on_die	ANY	0	100		1	broadcast_at	21132	50	0	Self	0.0	0.0	0.0	0
 231077	IDRuneWP_A1_VriCU_Pr_65_Ae	on_die	ANY	0	100		0	var	0	1	0	cProtection01	0.0	0.0	0.0	0
-231077	IDRuneWP_A1_VriCU_Pr_65_Ae	on_die	ANY	0	100		1	broadcast	21133	50	0		0.0	0.0	0.0	0
+231077	IDRuneWP_A1_VriCU_Pr_65_Ae	on_die	ANY	0	100		1	broadcast_at	21133	50	0	Self	0.0	0.0	0.0	0
 231079	IDRuneWP_A2_VriIU_As_65_Ae	on_die	ANY	0	100		0	var	0	1	0	cProtection02	0.0	0.0	0.0	0
-231079	IDRuneWP_A2_VriIU_As_65_Ae	on_die	ANY	0	100		1	broadcast	21141	50	0		0.0	0.0	0.0	0
+231079	IDRuneWP_A2_VriIU_As_65_Ae	on_die	ANY	0	100		1	broadcast_at	21141	50	0	Self	0.0	0.0	0.0	0
 231080	IDRuneWP_A2_VriCU_Ra_65_Ae	on_die	ANY	0	100		0	var	0	1	0	cProtection02	0.0	0.0	0.0	0
-231080	IDRuneWP_A2_VriCU_Ra_65_Ae	on_die	ANY	0	100		1	broadcast	21142	50	0		0.0	0.0	0.0	0
+231080	IDRuneWP_A2_VriCU_Ra_65_Ae	on_die	ANY	0	100		1	broadcast_at	21142	50	0	Self	0.0	0.0	0.0	0
 231081	IDRuneWP_A2_VriCU_Pr_65_Ae	on_die	ANY	0	100		0	var	0	1	0	cProtection02	0.0	0.0	0.0	0
-231081	IDRuneWP_A2_VriCU_Pr_65_Ae	on_die	ANY	0	100		1	broadcast	21143	50	0		0.0	0.0	0.0	0
+231081	IDRuneWP_A2_VriCU_Pr_65_Ae	on_die	ANY	0	100		1	broadcast_at	21143	50	0	Self	0.0	0.0	0.0	0
 231083	IDRuneWP_A3_VriIU_Wi_65_Ae	on_die	ANY	0	100		0	var	0	1	0	cProtection03	0.0	0.0	0.0	0
-231083	IDRuneWP_A3_VriIU_Wi_65_Ae	on_die	ANY	0	100		1	broadcast	21151	50	0		0.0	0.0	0.0	0
+231083	IDRuneWP_A3_VriIU_Wi_65_Ae	on_die	ANY	0	100		1	broadcast_at	21151	50	0	Self	0.0	0.0	0.0	0
 231084	IDRuneWP_A3_VriCU_Fi_65_Ae	on_die	ANY	0	100		0	var	0	1	0	cProtection03	0.0	0.0	0.0	0
-231084	IDRuneWP_A3_VriCU_Fi_65_Ae	on_die	ANY	0	100		1	broadcast	21152	50	0		0.0	0.0	0.0	0
+231084	IDRuneWP_A3_VriCU_Fi_65_Ae	on_die	ANY	0	100		1	broadcast_at	21152	50	0	Self	0.0	0.0	0.0	0
 231085	IDRuneWP_A3_VriCU_Pr_65_Ae	on_die	ANY	0	100		0	var	0	1	0	cProtection03	0.0	0.0	0.0	0
-231085	IDRuneWP_A3_VriCU_Pr_65_Ae	on_die	ANY	0	100		1	broadcast	21153	50	0		0.0	0.0	0.0	0
+231085	IDRuneWP_A3_VriCU_Pr_65_Ae	on_die	ANY	0	100		1	broadcast_at	21153	50	0	Self	0.0	0.0	0.0	0
 231087	IDRuneWP_A4_VriIU_As_65_Ae	on_die	ANY	0	100		0	var	0	1	0	cProtection04	0.0	0.0	0.0	0
-231087	IDRuneWP_A4_VriIU_As_65_Ae	on_die	ANY	0	100		1	broadcast	21161	50	0		0.0	0.0	0.0	0
+231087	IDRuneWP_A4_VriIU_As_65_Ae	on_die	ANY	0	100		1	broadcast_at	21161	50	0	Self	0.0	0.0	0.0	0
 231088	IDRuneWP_A4_VriCU_Fi_65_Ae	on_die	ANY	0	100		0	var	0	1	0	cProtection04	0.0	0.0	0.0	0
-231088	IDRuneWP_A4_VriCU_Fi_65_Ae	on_die	ANY	0	100		1	broadcast	21162	50	0		0.0	0.0	0.0	0
+231088	IDRuneWP_A4_VriCU_Fi_65_Ae	on_die	ANY	0	100		1	broadcast_at	21162	50	0	Self	0.0	0.0	0.0	0
 231089	IDRuneWP_A4_VriCU_Ra_65_Ae	on_die	ANY	0	100		0	var	0	1	0	cProtection04	0.0	0.0	0.0	0
-231089	IDRuneWP_A4_VriCU_Ra_65_Ae	on_die	ANY	0	100		1	broadcast	21163	50	0		0.0	0.0	0.0	0
+231089	IDRuneWP_A4_VriCU_Ra_65_Ae	on_die	ANY	0	100		1	broadcast_at	21163	50	0	Self	0.0	0.0	0.0	0
 231598	LF2_1_KillerCtrl	on_die	ANY	0	7		0	var	-1	0	0	LF2_1_Killer	0.0	0.0	0.0	0
 231599	LF2_2_KillerCtrl	on_die	ANY	0	7		0	var	-1	0	0	LF2_2_Killer	0.0	0.0	0.0	0
 231600	DF2_1_KillerCtrl	on_die	ANY	0	7		0	var	-1	0	0	DF2_1_Killer	0.0	0.0	0.0	0
@@ -641,7 +641,7 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 233253	IDLDF5Re_Solo_Vritra43IU_MutantDR_DrakanFi_Ae	on_die	ANY	0	7		0	var	1	0	0	IDF5_EscapePortal	0.0	0.0	0.0	0
 233254	IDLDF5Re_Solo_Vritra43IU_MutantDR_DrakanFi_Ae	on_die	ANY	0	7		0	var	1	0	0	IDF5_EscapePortal	0.0	0.0	0.0	0
 233269	BIDF5_R2_Sync2_A1	on_killed_by_user	KilledByPlayer	0	11		0	var	1	0	0	IDF5_R2_Sync2_Sum	0.0	0.0	0.0	0
-233269	BIDF5_R2_Sync2_A1	on_killed_by_user	KilledByPlayer	0	11		1	broadcast	22108	50	0		0.0	0.0	0.0	0
+233269	BIDF5_R2_Sync2_A1	on_killed_by_user	KilledByPlayer	0	11		1	broadcast_at	22108	50	0	Self	0.0	0.0	0.0	0
 233269	BIDF5_R2_Sync2_A1	on_killed_by_user	KilledByPlayer	0	11		2	despawn	1	0	0		0.0	0.0	0.0	0
 233324	IDKamar_DrakanOfficer_Nmd_C1_65_Ah	on_killed_by_user	KilledByPlayer	0	7		0	say	1501020	0	0		0.0	0.0	0.0	0
 233324	IDKamar_DrakanOfficer_Nmd_C1_65_Ah	on_killed_by_user	KilledByPlayer	0	7		1	var	-1	0	0	C1	0.0	0.0	0.0	0
@@ -810,11 +810,11 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 234218	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
 234218	LDF4_Advance_Killer_Da	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	855373	1	0	for_the_fight_self	0.0	0.0	0.0	0
 234542	IDLDF4_Re_01_PhyBoss	on_killed_by_npc	KilledByNpc	0	9		0	var	0	1	0	Boss_Die	0.0	0.0	0.0	0
-234542	IDLDF4_Re_01_PhyBoss	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	0	broadcast	1002	50	0		0.0	0.0	0.0	0
-234542	IDLDF4_Re_01_PhyBoss	on_killed_by_npc	KilledByNpc	2	6	race:KillerRace:ASMODIANS	0	broadcast	1002	50	0		0.0	0.0	0.0	0
+234542	IDLDF4_Re_01_PhyBoss	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	0	broadcast_at	1002	50	0	Self	0.0	0.0	0.0	0
+234542	IDLDF4_Re_01_PhyBoss	on_killed_by_npc	KilledByNpc	2	6	race:KillerRace:ASMODIANS	0	broadcast_at	1002	50	0	Self	0.0	0.0	0.0	0
 234542	IDLDF4_Re_01_PhyBoss	on_killed_by_user	KilledByPlayer	0	9		0	var	0	1	0	Boss_Die	0.0	0.0	0.0	0
-234542	IDLDF4_Re_01_PhyBoss	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	0	broadcast	1002	50	0		0.0	0.0	0.0	0
-234542	IDLDF4_Re_01_PhyBoss	on_killed_by_user	KilledByPlayer	2	6	race:KillerRace:ASMODIANS	0	broadcast	1002	50	0		0.0	0.0	0.0	0
+234542	IDLDF4_Re_01_PhyBoss	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	0	broadcast_at	1002	50	0	Self	0.0	0.0	0.0	0
+234542	IDLDF4_Re_01_PhyBoss	on_killed_by_user	KilledByPlayer	2	6	race:KillerRace:ASMODIANS	0	broadcast_at	1002	50	0	Self	0.0	0.0	0.0	0
 234646	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
 234646	LDF4_Advance_Killer_Dr	on_killed_by_npc	KilledByNpc	1	6	race:KillerRace:ASMODIANS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
 234646	LDF4_Advance_Killer_Dr	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	855374	1	0	for_the_fight_self	0.0	0.0	0.0	0
@@ -1318,9 +1318,9 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 236306	IDRaksha_Re_Boss_KJS	on_killed_by_npc	KilledByNpc	0	7	set_flag_var:18	0	var	1	0	0	idraksha_clear	0.0	0.0	0.0	0
 236306	IDRaksha_Re_Boss_KJS	on_killed_by_user	KilledByPlayer	0	7	set_flag_var:18	0	var	1	0	0	idraksha_clear	0.0	0.0	0.0	0
 236526	IDYun_Nmd3_FallOff	on_die	ANY	0	5		0	var	1	0	0	DISPEL_ARIANA	0.0	0.0	0.0	0
-236526	IDYun_Nmd3_FallOff	on_die	ANY	0	5		1	broadcast	500	100	0		0.0	0.0	0.0	0
+236526	IDYun_Nmd3_FallOff	on_die	ANY	0	5		1	broadcast_at	500	100	0	Self	0.0	0.0	0.0	0
 236527	IDYun_Nmd3_FallOff	on_die	ANY	0	5		0	var	1	0	0	DISPEL_ARIANA	0.0	0.0	0.0	0
-236527	IDYun_Nmd3_FallOff	on_die	ANY	0	5		1	broadcast	500	100	0		0.0	0.0	0.0	0
+236527	IDYun_Nmd3_FallOff	on_die	ANY	0	5		1	broadcast_at	500	100	0	Self	0.0	0.0	0.0	0
 236707	IDYun_Temp_31	on_die	ANY	0	1		0	spawn	282551	1	10	for_the_fight_self	0.0	0.0	0.0	1
 251045	FD2_FrA_S	on_killed_by_user	KilledByPlayer	0	17		0	spawn	290116	1	20	for_the_fight_self	0.0	0.0	0.0	1
 257225	BGuard_Teleporter	on_killed_by_npc	KilledByNpc	0	7		0	spawn	296339	1	12	for_the_fight_self	0.0	0.0	0.0	0
@@ -1345,59 +1345,59 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 258272	BGuard_Teleporter	on_killed_by_user	KilledByPlayer	0	7		0	spawn	296339	1	12	for_the_fight_self	0.0	0.0	0.0	0
 259600	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		0	spawn	701237	1	300	for_the_fight_absolute	2804.0	2715.0	360.5	1
 259600	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		1	despawn	1	0	0		0.0	0.0	0.0	0
-259600	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast	9999	100	0		0.0	0.0	0.0	0
+259600	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast_at	9999	100	0	Self	0.0	0.0	0.0	0
 259600	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		3	say	1500498	0	0		0.0	0.0	0.0	0
 259601	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		0	spawn	701237	1	300	for_the_fight_absolute	2804.0	2715.0	360.5	1
 259601	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		1	despawn	1	0	0		0.0	0.0	0.0	0
-259601	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast	9999	100	0		0.0	0.0	0.0	0
+259601	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast_at	9999	100	0	Self	0.0	0.0	0.0	0
 259601	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		3	say	1500498	0	0		0.0	0.0	0.0	0
 259602	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		0	spawn	701237	1	300	for_the_fight_absolute	2804.0	2715.0	360.5	1
 259602	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		1	despawn	1	0	0		0.0	0.0	0.0	0
-259602	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast	9999	100	0		0.0	0.0	0.0	0
+259602	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast_at	9999	100	0	Self	0.0	0.0	0.0	0
 259602	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		3	say	1500498	0	0		0.0	0.0	0.0	0
 259603	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		0	spawn	701237	1	300	for_the_fight_absolute	2804.0	2715.0	360.5	1
 259603	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		1	despawn	1	0	0		0.0	0.0	0.0	0
-259603	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast	9999	100	0		0.0	0.0	0.0	0
+259603	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast_at	9999	100	0	Self	0.0	0.0	0.0	0
 259603	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		3	say	1500498	0	0		0.0	0.0	0.0	0
 259604	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		0	spawn	701237	1	300	for_the_fight_absolute	2804.0	2715.0	360.5	1
 259604	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		1	despawn	1	0	0		0.0	0.0	0.0	0
-259604	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast	9999	100	0		0.0	0.0	0.0	0
+259604	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast_at	9999	100	0	Self	0.0	0.0	0.0	0
 259604	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		3	say	1500498	0	0		0.0	0.0	0.0	0
 259605	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		0	spawn	701237	1	300	for_the_fight_absolute	2804.0	2715.0	360.5	1
 259605	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		1	despawn	1	0	0		0.0	0.0	0.0	0
-259605	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast	9999	100	0		0.0	0.0	0.0	0
+259605	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast_at	9999	100	0	Self	0.0	0.0	0.0	0
 259605	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		3	say	1500498	0	0		0.0	0.0	0.0	0
 259606	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		0	spawn	701237	1	300	for_the_fight_absolute	2804.0	2715.0	360.5	1
 259606	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		1	despawn	1	0	0		0.0	0.0	0.0	0
-259606	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast	9999	100	0		0.0	0.0	0.0	0
+259606	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast_at	9999	100	0	Self	0.0	0.0	0.0	0
 259606	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		3	say	1500498	0	0		0.0	0.0	0.0	0
 259607	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		0	spawn	701237	1	300	for_the_fight_absolute	2804.0	2715.0	360.5	1
 259607	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		1	despawn	1	0	0		0.0	0.0	0.0	0
-259607	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast	9999	100	0		0.0	0.0	0.0	0
+259607	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast_at	9999	100	0	Self	0.0	0.0	0.0	0
 259607	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		3	say	1500498	0	0		0.0	0.0	0.0	0
 259608	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		0	spawn	701237	1	300	for_the_fight_absolute	2804.0	2715.0	360.5	1
 259608	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		1	despawn	1	0	0		0.0	0.0	0.0	0
-259608	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast	9999	100	0		0.0	0.0	0.0	0
+259608	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast_at	9999	100	0	Self	0.0	0.0	0.0	0
 259608	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		3	say	1500498	0	0		0.0	0.0	0.0	0
 259609	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		0	spawn	701237	1	300	for_the_fight_absolute	2804.0	2715.0	360.5	1
 259609	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		1	despawn	1	0	0		0.0	0.0	0.0	0
-259609	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast	9999	100	0		0.0	0.0	0.0	0
+259609	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast_at	9999	100	0	Self	0.0	0.0	0.0	0
 259609	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		3	say	1500498	0	0		0.0	0.0	0.0	0
 259610	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		0	spawn	701237	1	300	for_the_fight_absolute	2804.0	2715.0	360.5	1
 259610	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		1	despawn	1	0	0		0.0	0.0	0.0	0
-259610	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast	9999	100	0		0.0	0.0	0.0	0
+259610	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast_at	9999	100	0	Self	0.0	0.0	0.0	0
 259610	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		3	say	1500498	0	0		0.0	0.0	0.0	0
 259611	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		0	spawn	701237	1	300	for_the_fight_absolute	2804.0	2715.0	360.5	1
 259611	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		1	despawn	1	0	0		0.0	0.0	0.0	0
-259611	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast	9999	100	0		0.0	0.0	0.0	0
+259611	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast_at	9999	100	0	Self	0.0	0.0	0.0	0
 259611	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		3	say	1500498	0	0		0.0	0.0	0.0	0
 259612	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		0	spawn	701237	1	300	for_the_fight_absolute	2804.0	2715.0	360.5	1
 259612	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		1	despawn	1	0	0		0.0	0.0	0.0	0
-259612	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast	9999	100	0		0.0	0.0	0.0	0
+259612	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast_at	9999	100	0	Self	0.0	0.0	0.0	0
 259612	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		3	say	1500498	0	0		0.0	0.0	0.0	0
 259613	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		0	spawn	701237	1	300	for_the_fight_absolute	2804.0	2715.0	360.5	1
 259613	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		1	despawn	1	0	0		0.0	0.0	0.0	0
-259613	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast	9999	100	0		0.0	0.0	0.0	0
+259613	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		2	broadcast_at	9999	100	0	Self	0.0	0.0	0.0	0
 259613	LDF4b_Tiamat_Lapidification	on_die	ANY	0	16		3	say	1500498	0	0		0.0	0.0	0.0	0
 260221	BGuard_Teleporter	on_killed_by_npc	KilledByNpc	0	7		0	spawn	296339	1	12	for_the_fight_self	0.0	0.0	0.0	0
 260221	BGuard_Teleporter	on_killed_by_user	KilledByPlayer	0	7		0	spawn	296339	1	12	for_the_fight_self	0.0	0.0	0.0	0
@@ -3001,7 +3001,7 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 280792	NLehpar_AeB1	on_killed_by_user	KilledByPlayer	0	4		1	spawn	280793	1	360	for_the_fight_self	0.0	0.0	0.0	1
 280812	ND2_EeE2	on_killed_by_user	KilledByPlayer	0	6		0	spawn	280813	2	30	for_the_fight_self	0.0	0.0	0.0	1
 280929	ND2_WeE	on_die	ANY	0	7		0	spawn	280930	1	3600	self	0.0	0.0	0.0	1
-280931	ND2_FhW	on_die	ANY	0	7		0	broadcast	6601	100	0		0.0	0.0	0.0	0
+280931	ND2_FhW	on_die	ANY	0	7		0	broadcast_at	6601	100	0	Self	0.0	0.0	0.0	0
 280931	ND2_FhW	on_die	ANY	0	7		1	spawn	281044	1	12	for_the_fight_absolute	600.0	745.0	200.0	2
 280935	ND2_AhC	on_die	ANY	0	7		0	say	341531	0	0		0.0	0.0	0.0	0
 280935	ND2_AhC	on_die	ANY	0	7		1	spawn	280936	1	0	for_the_fight_self	0.0	0.0	0.0	0
@@ -3044,7 +3044,7 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 281137	Shulack_KralA	on_killed_by_user	KilledByPlayer	0	7		0	spawn	281291	1	6	for_the_fight_self	0.0	0.0	0.0	1
 281195	ND2_H50_3	on_die	ANY	0	4		0	spawn	215453	1	300	absolute	310.0	983.0	111.0	3
 281195	ND2_H50_3	on_die	ANY	0	4		1	spawn	215451	1	300	absolute	312.0	986.0	111.0	4
-281195	ND2_H50_3	on_die	ANY	0	4		2	broadcast	3409	10	0		0.0	0.0	0.0	0
+281195	ND2_H50_3	on_die	ANY	0	4		2	broadcast_at	3409	10	0	Target	0.0	0.0	0.0	0
 281216	IDSlk_MateSum	on_killed_by_npc	KilledByNpc	0	7		0	spawn	281241	1	6	for_the_fight_self	0.0	0.0	0.0	1
 281216	IDSlk_MateSum	on_killed_by_user	KilledByPlayer	0	7		0	spawn	281241	1	6	for_the_fight_self	0.0	0.0	0.0	1
 281225	BGuard_ChiefD_Minor	on_die	ANY	0	7		0	spawn	296339	2	18	for_the_fight_absolute	496.0	847.0	200.0	5
@@ -3061,7 +3061,7 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 281266	Dragon_G2	on_killed_by_user	KilledByPlayer	0	23		3	spawn	702658	1	0	for_the_fight_self	0.0	0.0	0.0	0
 281297	ND2_H50_3	on_die	ANY	0	4		0	spawn	215453	1	300	absolute	310.0	983.0	111.0	3
 281297	ND2_H50_3	on_die	ANY	0	4		1	spawn	215451	1	300	absolute	312.0	986.0	111.0	4
-281297	ND2_H50_3	on_die	ANY	0	4		2	broadcast	3409	10	0		0.0	0.0	0.0	0
+281297	ND2_H50_3	on_die	ANY	0	4		2	broadcast_at	3409	10	0	Target	0.0	0.0	0.0	0
 281383	IDTP_Fanatic_Boss_EL	on_die	ANY	0	15		0	var	0	1	0	FanaticElNBoss	0.0	0.0	0.0	0
 281383	IDTP_Fanatic_Boss_EL	on_die	ANY	0	15		1	despawn	3	0	0		0.0	0.0	0.0	0
 281383	IDTP_Fanatic_Boss_EL	on_die	ANY	0	15		2	sysmsg	1400442	0	0		0.0	0.0	0.0	0
@@ -3253,7 +3253,7 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 283818	IDLDF5Re_Solo_Vritra43IU_MutantDR_DrakanFi_Ae	on_die	ANY	0	7		0	var	1	0	0	IDF5_EscapePortal	0.0	0.0	0.0	0
 283819	IDLDF5Re_Solo_Vritra43IU_MutantDR_DrakanFi_Ae	on_die	ANY	0	7		0	var	1	0	0	IDF5_EscapePortal	0.0	0.0	0.0	0
 284016	BIDF5_R2_Sync2_A1	on_killed_by_user	KilledByPlayer	0	11		0	var	1	0	0	IDF5_R2_Sync2_Sum	0.0	0.0	0.0	0
-284016	BIDF5_R2_Sync2_A1	on_killed_by_user	KilledByPlayer	0	11		1	broadcast	22108	50	0		0.0	0.0	0.0	0
+284016	BIDF5_R2_Sync2_A1	on_killed_by_user	KilledByPlayer	0	11		1	broadcast_at	22108	50	0	Self	0.0	0.0	0.0	0
 284016	BIDF5_R2_Sync2_A1	on_killed_by_user	KilledByPlayer	0	11		2	despawn	1	0	0		0.0	0.0	0.0	0
 284070	IDF5_TD_Wave_Pod_01	on_killed_by_user	KilledByPlayer	0	3		0	var	2	0	0	Wave_Z1_S3_01	0.0	0.0	0.0	0
 284071	IDF5_TD_Wave_Pod_07	on_killed_by_user	KilledByPlayer	0	3		0	var	2	0	0	Wave_Z1_S5_01	0.0	0.0	0.0	0
@@ -3320,7 +3320,7 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 284365	IDF5_Under_01_Boss	on_die	ANY	0	97	set_world_flag_var:5	2	var	2	0	0	cBox	0.0	0.0	0.0	0
 284365	IDF5_Under_01_Boss	on_die	ANY	0	97	set_world_flag_var:5	3	var	3	0	0	cWeapon	0.0	0.0	0.0	0
 284430	IDVritra_Base_Boss1	on_killed_by_user	KilledByPlayer	0	58		0	say	1500778	0	0		0.0	0.0	0.0	0
-284430	IDVritra_Base_Boss1	on_killed_by_user	KilledByPlayer	0	58		1	broadcast	22258	50	0		0.0	0.0	0.0	0
+284430	IDVritra_Base_Boss1	on_killed_by_user	KilledByPlayer	0	58		1	broadcast_at	22258	50	0	Self	0.0	0.0	0.0	0
 284430	IDVritra_Base_Boss1	on_killed_by_user	KilledByPlayer	0	58		2	spawn	801967	1	0	for_the_fight_absolute	916.0	889.0	414.0	0
 284430	IDVritra_Base_Boss1	on_killed_by_user	KilledByPlayer	0	58		3	spawn	702659	1	0	for_the_fight_self	0.0	0.0	0.0	0
 284430	IDVritra_Base_Boss1	on_killed_by_user	KilledByPlayer	0	58		4	despawn	1	0	0		0.0	0.0	0.0	0
@@ -3328,37 +3328,37 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 284431	IDVritra_Base_Boss2	on_killed_by_user	KilledByPlayer	0	43		0	despawn	1	0	0		0.0	0.0	0.0	0
 284431	IDVritra_Base_Boss2	on_killed_by_user	KilledByPlayer	0	43		1	spawn	801967	1	0	for_the_fight_absolute	719.0	889.0	414.0	0
 284431	IDVritra_Base_Boss2	on_killed_by_user	KilledByPlayer	0	43		2	spawn	702659	1	0	for_the_fight_self	0.0	0.0	0.0	0
-284431	IDVritra_Base_Boss2	on_killed_by_user	KilledByPlayer	0	43		3	broadcast	22258	50	0		0.0	0.0	0.0	0
+284431	IDVritra_Base_Boss2	on_killed_by_user	KilledByPlayer	0	43		3	broadcast_at	22258	50	0	Self	0.0	0.0	0.0	0
 284432	IDVritra_Base_Boss3	on_killed_by_user	KilledByPlayer	0	32		0	spawn	801967	1	0	for_the_fight_absolute	519.0	889.0	414.0	0
-284432	IDVritra_Base_Boss3	on_killed_by_user	KilledByPlayer	0	32		1	broadcast	22258	50	0		0.0	0.0	0.0	0
+284432	IDVritra_Base_Boss3	on_killed_by_user	KilledByPlayer	0	32		1	broadcast_at	22258	50	0	Self	0.0	0.0	0.0	0
 284433	IDVritra_Base_Boss4	on_killed_by_user	KilledByPlayer	0	16		0	var	0	-1	0	BOSS2_SUM_01	0.0	0.0	0.0	0
 284433	IDVritra_Base_Boss4	on_killed_by_user	KilledByPlayer	0	16		1	var	0	-1	0	BOSS2_SUM_02	0.0	0.0	0.0	0
 284433	IDVritra_Base_Boss4	on_killed_by_user	KilledByPlayer	0	16		2	var	0	-1	0	BOSS2_SUM_03	0.0	0.0	0.0	0
 284433	IDVritra_Base_Boss4	on_killed_by_user	KilledByPlayer	0	16		3	spawn	801967	1	0	for_the_fight_absolute	321.0	886.0	414.0	0
-284433	IDVritra_Base_Boss4	on_killed_by_user	KilledByPlayer	0	16		4	broadcast	22258	50	0		0.0	0.0	0.0	0
+284433	IDVritra_Base_Boss4	on_killed_by_user	KilledByPlayer	0	16		4	broadcast_at	22258	50	0	Self	0.0	0.0	0.0	0
 284434	IDVritra_Base_Boss5	on_killed_by_user	KilledByPlayer	0	32		0	despawn	1	0	0		0.0	0.0	0.0	0
 284434	IDVritra_Base_Boss5	on_killed_by_user	KilledByPlayer	0	32		1	spawn	801967	1	0	for_the_fight_absolute	125.0	889.0	414.0	0
-284434	IDVritra_Base_Boss5	on_killed_by_user	KilledByPlayer	0	32		2	broadcast	22258	50	0		0.0	0.0	0.0	0
+284434	IDVritra_Base_Boss5	on_killed_by_user	KilledByPlayer	0	32		2	broadcast_at	22258	50	0	Self	0.0	0.0	0.0	0
 284500	IDRuneWp_AncientArm_N_65_Al	on_die	ANY	0	900		0	var	2	0	0	cSetCharge	0.0	0.0	0.0	0
 284500	IDRuneWp_AncientArm_N_65_Al	on_die	ANY	0	900		1	var	2	0	0	cSetFastCharge	0.0	0.0	0.0	0
-284500	IDRuneWp_AncientArm_N_65_Al	on_die	ANY	0	900		2	broadcast	21101	50	0		0.0	0.0	0.0	0
-284500	IDRuneWp_AncientArm_N_65_Al	on_die	ANY	0	900		3	broadcast	21102	50	0		0.0	0.0	0.0	0
+284500	IDRuneWp_AncientArm_N_65_Al	on_die	ANY	0	900		2	broadcast_at	21101	50	0	Self	0.0	0.0	0.0	0
+284500	IDRuneWp_AncientArm_N_65_Al	on_die	ANY	0	900		3	broadcast_at	21102	50	0	Self	0.0	0.0	0.0	0
 284500	IDRuneWp_AncientArm_N_65_Al	on_die	ANY	0	900		4	var	1	0	0	cSetIdPortal	0.0	0.0	0.0	0
 284501	IDRuneWP_A1_Protection_65_n	on_die	ANY	0	98	set_flag_var:0	0	spawn	855000	1	30	for_the_fight_absolute	124.73	137.75	114.0	0
 284501	IDRuneWP_A1_Protection_65_n	on_killed_by_user	KilledByPlayer	0	100	race:KillerRace:ELYOS|set_flag_var:0	0	spawn	855000	1	30	for_the_fight_absolute	124.73	137.75	114.0	4
 284501	IDRuneWP_A1_Protection_65_n	on_killed_by_user	KilledByPlayer	1	90	race:KillerRace:ASMODIANS|set_flag_var:0	0	spawn	855000	1	30	for_the_fight_absolute	124.73	137.75	114.0	4
 284502	IDRuneWP_A1_VriIU_Wi_SN_65_Ah	on_die	ANY	0	100		0	var	0	1	0	cProtection01	0.0	0.0	0.0	0
-284502	IDRuneWP_A1_VriIU_Wi_SN_65_Ah	on_die	ANY	0	100		1	broadcast	21131	50	0		0.0	0.0	0.0	0
+284502	IDRuneWP_A1_VriIU_Wi_SN_65_Ah	on_die	ANY	0	100		1	broadcast_at	21131	50	0	Self	0.0	0.0	0.0	0
 284503	IDRuneWP_A3_VriIU_Wi_65_Ae	on_die	ANY	0	100		0	var	0	1	0	cProtection03	0.0	0.0	0.0	0
-284503	IDRuneWP_A3_VriIU_Wi_65_Ae	on_die	ANY	0	100		1	broadcast	21151	50	0		0.0	0.0	0.0	0
+284503	IDRuneWP_A3_VriIU_Wi_65_Ae	on_die	ANY	0	100		1	broadcast_at	21151	50	0	Self	0.0	0.0	0.0	0
 284504	IDRuneWP_A2_VriIU_As_65_Ae	on_die	ANY	0	100		0	var	0	1	0	cProtection02	0.0	0.0	0.0	0
-284504	IDRuneWP_A2_VriIU_As_65_Ae	on_die	ANY	0	100		1	broadcast	21141	50	0		0.0	0.0	0.0	0
+284504	IDRuneWP_A2_VriIU_As_65_Ae	on_die	ANY	0	100		1	broadcast_at	21141	50	0	Self	0.0	0.0	0.0	0
 284505	IDRuneWP_A1_VriCU_Fi_65_Ae	on_die	ANY	0	100		0	var	0	1	0	cProtection01	0.0	0.0	0.0	0
-284505	IDRuneWP_A1_VriCU_Fi_65_Ae	on_die	ANY	0	100		1	broadcast	21132	50	0		0.0	0.0	0.0	0
+284505	IDRuneWP_A1_VriCU_Fi_65_Ae	on_die	ANY	0	100		1	broadcast_at	21132	50	0	Self	0.0	0.0	0.0	0
 284506	IDRuneWP_A2_VriCU_Ra_65_Ae	on_die	ANY	0	100		0	var	0	1	0	cProtection02	0.0	0.0	0.0	0
-284506	IDRuneWP_A2_VriCU_Ra_65_Ae	on_die	ANY	0	100		1	broadcast	21142	50	0		0.0	0.0	0.0	0
+284506	IDRuneWP_A2_VriCU_Ra_65_Ae	on_die	ANY	0	100		1	broadcast_at	21142	50	0	Self	0.0	0.0	0.0	0
 284507	IDRuneWP_A1_VriCU_Pr_65_Ae	on_die	ANY	0	100		0	var	0	1	0	cProtection01	0.0	0.0	0.0	0
-284507	IDRuneWP_A1_VriCU_Pr_65_Ae	on_die	ANY	0	100		1	broadcast	21133	50	0		0.0	0.0	0.0	0
+284507	IDRuneWP_A1_VriCU_Pr_65_Ae	on_die	ANY	0	100		1	broadcast_at	21133	50	0	Self	0.0	0.0	0.0	0
 284510	IDRuneWP_Main_Charger_65_e	on_die	ANY	0	7		0	spawn	855001	1	40	absolute	107.04	137.37	133.0	2
 284605	IDF5_U2_VriIU_Wi_party_N_65_Ah	on_die	ANY	0	100		0	var	0	1	0	cSetPortal	0.0	0.0	0.0	0
 284608	IDF5_U2_VriRP_Ri_party_N_65_Ae2	on_die	ANY	0	100		0	spawn	702659	1	0	for_the_fight_self	0.0	0.0	0.0	0
@@ -3485,7 +3485,7 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 284822	IDF5_TD_War_Vri_Officer_10	on_killed_by_user	KilledByPlayer	0	10	race:KillerRace:ELYOS	0	var	2	0	0	v10	0.0	0.0	0.0	0
 284822	IDF5_TD_War_Vri_Officer_10	on_killed_by_user	KilledByPlayer	1	9	race:KillerRace:ASMODIANS	0	var	3	0	0	v10	0.0	0.0	0.0	0
 284858	BIDF5_U3_Boss	on_killed_by_user	KilledByPlayer	0	52		0	var	10	0	0	BOSS	0.0	0.0	0.0	0
-284858	BIDF5_U3_Boss	on_killed_by_user	KilledByPlayer	0	52		1	broadcast	22542	50	0		0.0	0.0	0.0	0
+284858	BIDF5_U3_Boss	on_killed_by_user	KilledByPlayer	0	52		1	broadcast_at	22542	50	0	Self	0.0	0.0	0.0	0
 284858	BIDF5_U3_Boss	on_killed_by_user	KilledByPlayer	0	52		2	spawn	702659	1	0	for_the_fight_self	0.0	0.0	0.0	0
 284858	BIDF5_U3_Boss	on_killed_by_user	KilledByPlayer	0	52		3	despawn	1	0	0		0.0	0.0	0.0	0
 284858	BIDF5_U3_Boss	on_killed_by_user	KilledByPlayer	0	52		4	despawn	2	0	0		0.0	0.0	0.0	0
@@ -3493,11 +3493,11 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 284919	ND2_AhC_1	on_die	ANY	0	7		0	say	341531	0	0		0.0	0.0	0.0	0
 284919	ND2_AhC_1	on_die	ANY	0	7		1	spawn	214599	1	0	self	0.0	0.0	0.0	0
 284975	IDLDF4_Re_01_PhyBoss	on_killed_by_npc	KilledByNpc	0	9		0	var	0	1	0	Boss_Die	0.0	0.0	0.0	0
-284975	IDLDF4_Re_01_PhyBoss	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	0	broadcast	1002	50	0		0.0	0.0	0.0	0
-284975	IDLDF4_Re_01_PhyBoss	on_killed_by_npc	KilledByNpc	2	6	race:KillerRace:ASMODIANS	0	broadcast	1002	50	0		0.0	0.0	0.0	0
+284975	IDLDF4_Re_01_PhyBoss	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	0	broadcast_at	1002	50	0	Self	0.0	0.0	0.0	0
+284975	IDLDF4_Re_01_PhyBoss	on_killed_by_npc	KilledByNpc	2	6	race:KillerRace:ASMODIANS	0	broadcast_at	1002	50	0	Self	0.0	0.0	0.0	0
 284975	IDLDF4_Re_01_PhyBoss	on_killed_by_user	KilledByPlayer	0	9		0	var	0	1	0	Boss_Die	0.0	0.0	0.0	0
-284975	IDLDF4_Re_01_PhyBoss	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	0	broadcast	1002	50	0		0.0	0.0	0.0	0
-284975	IDLDF4_Re_01_PhyBoss	on_killed_by_user	KilledByPlayer	2	6	race:KillerRace:ASMODIANS	0	broadcast	1002	50	0		0.0	0.0	0.0	0
+284975	IDLDF4_Re_01_PhyBoss	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	0	broadcast_at	1002	50	0	Self	0.0	0.0	0.0	0
+284975	IDLDF4_Re_01_PhyBoss	on_killed_by_user	KilledByPlayer	2	6	race:KillerRace:ASMODIANS	0	broadcast_at	1002	50	0	Self	0.0	0.0	0.0	0
 286787	Bionic_EhA	on_die	ANY	0	21		0	despawn	1	0	0		0.0	0.0	0.0	0
 286787	Bionic_EhA	on_die	ANY	0	21		1	despawn	2	0	0		0.0	0.0	0.0	0
 286787	Bionic_EhA	on_die	ANY	0	21		2	spawn	281230	1	0	for_the_fight_absolute	227.0	420.0	107.0	3
@@ -3525,12 +3525,12 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 287014	Test_Basic_Monster_AI_JKA_2	on_die	ANY	0	7		0	spawn	211737	1	0	for_the_fight_self	0.0	0.0	0.0	1
 287015	Test_Basic_Monster_AI_KDG_2	on_die	ANY	0	25		0	spawn	218724	1	0	for_the_fight_self	0.0	0.0	0.0	1
 287025	Test_Basic_Monster_AI_JKA_4	on_die	ANY	0	10		0	spawn	287027	1	0	for_the_fight_self	0.0	0.0	0.0	2
-287025	Test_Basic_Monster_AI_JKA_4	on_die	ANY	0	10		1	broadcast	1005	100	0		0.0	0.0	0.0	0
+287025	Test_Basic_Monster_AI_JKA_4	on_die	ANY	0	10		1	broadcast_at	1005	100	0	Self	0.0	0.0	0.0	0
 287090	Test_Basic_Monster_AI_KMD_2	on_die	ANY	0	7		0	spawn	287086	1	0	for_the_fight_self	0.0	0.0	0.0	1
 287181	Test_Basic_Monster_AI_GW_4	on_die	ANY	0	7	set_flag_var:2	0	var	0	-1	0	trap_test	0.0	0.0	0.0	0
 287189	Test_Basic_Monster_AI_GHB_2	on_die	ANY	0	7		0	spawn	280699	1	0	for_the_fight_self	0.0	0.0	0.0	0
 287192	Test_Basic_Monster_AI_CYS_2	on_die	ANY	0	7	who:TargetIsPlayer	0	spawn	287193	1	0	for_the_fight_self	0.0	0.0	0.0	0
-287204	Test_GHB_Nepilim_65_N	on_die	ANY	0	7		0	broadcast	8888	1000	0		0.0	0.0	0.0	0
+287204	Test_GHB_Nepilim_65_N	on_die	ANY	0	7		0	broadcast_at	8888	1000	0	Self	0.0	0.0	0.0	0
 287204	Test_GHB_Nepilim_65_N	on_killed_by_user	KilledByPlayer	0	7		0	spawn	287209	1	0	for_the_fight_self	0.0	0.0	0.0	1
 287209	Test_GHB_EdCube_65_N	on_die	ANY	0	7		0	spawn	287210	1	0	for_the_fight_self	0.0	0.0	0.0	1
 287214	Test_GHB_ONControl_NPC	on_die	ANY	0	7		0	spawn	287204	1	0	for_the_fight_absolute	249.0	244.0	20.0	1
@@ -3599,32 +3599,32 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 296390	DGuard_FhA_Officer	on_killed_by_user	KilledByPlayer	0	10		1	spawn	294563	1	360	for_the_fight_self	0.0	0.0	0.0	0
 296437	DrGuard_FhB_F20	on_killed_by_npc	KilledByNpc	0	100		0	spawn	296443	1	48	for_the_fight_self	0.0	0.0	0.0	1
 296437	DrGuard_FhB_F20	on_killed_by_user	KilledByPlayer	0	100		0	spawn	296443	1	48	for_the_fight_self	0.0	0.0	0.0	1
-296511	BGuard_TowerChiefF4A	on_killed_by_user	KilledByPlayer	0	10		0	broadcast	10032	50	0		0.0	0.0	0.0	0
+296511	BGuard_TowerChiefF4A	on_killed_by_user	KilledByPlayer	0	10		0	broadcast_at	10032	50	0	Self	0.0	0.0	0.0	0
 296511	BGuard_TowerChiefF4A	on_killed_by_user	KilledByPlayer	0	10		1	spawn	296512	1	18	for_the_fight_self	0.0	0.0	0.0	1
 296511	BGuard_TowerChiefF4A	on_killed_by_user	KilledByPlayer	0	10		2	spawn	296512	1	18	for_the_fight_self	0.0	0.0	0.0	1
 296511	BGuard_TowerChiefF4A	on_killed_by_user	KilledByPlayer	0	10		3	spawn	296512	1	18	for_the_fight_self	0.0	0.0	0.0	1
 296511	BGuard_TowerChiefF4A	on_killed_by_user	KilledByPlayer	0	10		4	spawn	296512	1	18	for_the_fight_self	0.0	0.0	0.0	1
-296513	BGuard_TowerChiefF4B	on_killed_by_user	KilledByPlayer	0	10		0	broadcast	10034	50	0		0.0	0.0	0.0	0
+296513	BGuard_TowerChiefF4B	on_killed_by_user	KilledByPlayer	0	10		0	broadcast_at	10034	50	0	Self	0.0	0.0	0.0	0
 296513	BGuard_TowerChiefF4B	on_killed_by_user	KilledByPlayer	0	10		1	spawn	296514	1	18	for_the_fight_self	0.0	0.0	0.0	1
 296513	BGuard_TowerChiefF4B	on_killed_by_user	KilledByPlayer	0	10		2	spawn	296514	1	18	for_the_fight_self	0.0	0.0	0.0	1
 296513	BGuard_TowerChiefF4B	on_killed_by_user	KilledByPlayer	0	10		3	spawn	296514	1	18	for_the_fight_self	0.0	0.0	0.0	1
 296513	BGuard_TowerChiefF4B	on_killed_by_user	KilledByPlayer	0	10		4	spawn	296514	1	18	for_the_fight_self	0.0	0.0	0.0	1
-296516	BGuard_TowerChiefF4A	on_killed_by_user	KilledByPlayer	0	10		0	broadcast	10032	50	0		0.0	0.0	0.0	0
+296516	BGuard_TowerChiefF4A	on_killed_by_user	KilledByPlayer	0	10		0	broadcast_at	10032	50	0	Self	0.0	0.0	0.0	0
 296516	BGuard_TowerChiefF4A	on_killed_by_user	KilledByPlayer	0	10		1	spawn	296512	1	18	for_the_fight_self	0.0	0.0	0.0	1
 296516	BGuard_TowerChiefF4A	on_killed_by_user	KilledByPlayer	0	10		2	spawn	296512	1	18	for_the_fight_self	0.0	0.0	0.0	1
 296516	BGuard_TowerChiefF4A	on_killed_by_user	KilledByPlayer	0	10		3	spawn	296512	1	18	for_the_fight_self	0.0	0.0	0.0	1
 296516	BGuard_TowerChiefF4A	on_killed_by_user	KilledByPlayer	0	10		4	spawn	296512	1	18	for_the_fight_self	0.0	0.0	0.0	1
-296518	BGuard_TowerChiefF4B	on_killed_by_user	KilledByPlayer	0	10		0	broadcast	10034	50	0		0.0	0.0	0.0	0
+296518	BGuard_TowerChiefF4B	on_killed_by_user	KilledByPlayer	0	10		0	broadcast_at	10034	50	0	Self	0.0	0.0	0.0	0
 296518	BGuard_TowerChiefF4B	on_killed_by_user	KilledByPlayer	0	10		1	spawn	296514	1	18	for_the_fight_self	0.0	0.0	0.0	1
 296518	BGuard_TowerChiefF4B	on_killed_by_user	KilledByPlayer	0	10		2	spawn	296514	1	18	for_the_fight_self	0.0	0.0	0.0	1
 296518	BGuard_TowerChiefF4B	on_killed_by_user	KilledByPlayer	0	10		3	spawn	296514	1	18	for_the_fight_self	0.0	0.0	0.0	1
 296518	BGuard_TowerChiefF4B	on_killed_by_user	KilledByPlayer	0	10		4	spawn	296514	1	18	for_the_fight_self	0.0	0.0	0.0	1
-296521	BGuard_TowerChiefF4A	on_killed_by_user	KilledByPlayer	0	10		0	broadcast	10032	50	0		0.0	0.0	0.0	0
+296521	BGuard_TowerChiefF4A	on_killed_by_user	KilledByPlayer	0	10		0	broadcast_at	10032	50	0	Self	0.0	0.0	0.0	0
 296521	BGuard_TowerChiefF4A	on_killed_by_user	KilledByPlayer	0	10		1	spawn	296512	1	18	for_the_fight_self	0.0	0.0	0.0	1
 296521	BGuard_TowerChiefF4A	on_killed_by_user	KilledByPlayer	0	10		2	spawn	296512	1	18	for_the_fight_self	0.0	0.0	0.0	1
 296521	BGuard_TowerChiefF4A	on_killed_by_user	KilledByPlayer	0	10		3	spawn	296512	1	18	for_the_fight_self	0.0	0.0	0.0	1
 296521	BGuard_TowerChiefF4A	on_killed_by_user	KilledByPlayer	0	10		4	spawn	296512	1	18	for_the_fight_self	0.0	0.0	0.0	1
-296523	BGuard_TowerChiefF4B	on_killed_by_user	KilledByPlayer	0	10		0	broadcast	10034	50	0		0.0	0.0	0.0	0
+296523	BGuard_TowerChiefF4B	on_killed_by_user	KilledByPlayer	0	10		0	broadcast_at	10034	50	0	Self	0.0	0.0	0.0	0
 296523	BGuard_TowerChiefF4B	on_killed_by_user	KilledByPlayer	0	10		1	spawn	296514	1	18	for_the_fight_self	0.0	0.0	0.0	1
 296523	BGuard_TowerChiefF4B	on_killed_by_user	KilledByPlayer	0	10		2	spawn	296514	1	18	for_the_fight_self	0.0	0.0	0.0	1
 296523	BGuard_TowerChiefF4B	on_killed_by_user	KilledByPlayer	0	10		3	spawn	296514	1	18	for_the_fight_self	0.0	0.0	0.0	1
@@ -3721,65 +3721,65 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 701588	IDAbRe_Summon_Boss	on_die	ANY	2	1	set_world_flag_var:2	2	despawn	1	0	0		0.0	0.0	0.0	0
 701588	IDAbRe_Summon_Boss	on_die	ANY	2	1	set_world_flag_var:2	3	sysmsg	1400691	0	0		0.0	0.0	0.0	0
 701712	LDF5b_6021_Explosion_Box_04	on_die	ANY	0	7		0	spawn	701777	1	0	for_the_fight_absolute	2718.0	2588.0	255.0	0
-701712	LDF5b_6021_Explosion_Box_04	on_die	ANY	0	7		1	broadcast	31014	50	0		0.0	0.0	0.0	0
+701712	LDF5b_6021_Explosion_Box_04	on_die	ANY	0	7		1	broadcast_at	31014	50	0	Self	0.0	0.0	0.0	0
 701717	LDF5b_6021_Explosion_Box_09	on_die	ANY	0	7		0	spawn	701778	1	0	for_the_fight_absolute	2601.0	2798.0	255.0	0
-701717	LDF5b_6021_Explosion_Box_09	on_die	ANY	0	7		1	broadcast	31019	50	0		0.0	0.0	0.0	0
+701717	LDF5b_6021_Explosion_Box_09	on_die	ANY	0	7		1	broadcast_at	31019	50	0	Self	0.0	0.0	0.0	0
 701719	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	0	spawn	701781	1	0	for_the_fight_absolute	2703.0	2652.0	255.0	0
-701719	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	1	broadcast	31021	50	0		0.0	0.0	0.0	0
+701719	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	1	broadcast_at	31021	50	0	Self	0.0	0.0	0.0	0
 701719	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	0	spawn	701775	1	0	for_the_fight_absolute	2703.0	2652.0	255.0	0
-701719	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	1	broadcast	31021	50	0		0.0	0.0	0.0	0
+701719	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	1	broadcast_at	31021	50	0	Self	0.0	0.0	0.0	0
 701719	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	0	spawn	701781	1	0	for_the_fight_absolute	2703.0	2652.0	255.0	0
-701719	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	1	broadcast	31021	50	0		0.0	0.0	0.0	0
+701719	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	1	broadcast_at	31021	50	0	Self	0.0	0.0	0.0	0
 701719	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	0	spawn	701775	1	0	for_the_fight_absolute	2703.0	2652.0	255.0	0
-701719	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	1	broadcast	31021	50	0		0.0	0.0	0.0	0
+701719	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	1	broadcast_at	31021	50	0	Self	0.0	0.0	0.0	0
 701720	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	0	spawn	701782	1	0	for_the_fight_absolute	2613.0	2734.0	255.0	0
-701720	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	1	broadcast	31022	50	0		0.0	0.0	0.0	0
+701720	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	1	broadcast_at	31022	50	0	Self	0.0	0.0	0.0	0
 701720	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	0	spawn	701776	1	0	for_the_fight_absolute	2613.0	2734.0	255.0	0
-701720	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	1	broadcast	31022	50	0		0.0	0.0	0.0	0
+701720	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	1	broadcast_at	31022	50	0	Self	0.0	0.0	0.0	0
 701720	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	0	spawn	701782	1	0	for_the_fight_absolute	2613.0	2734.0	255.0	0
-701720	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	1	broadcast	31022	50	0		0.0	0.0	0.0	0
+701720	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	1	broadcast_at	31022	50	0	Self	0.0	0.0	0.0	0
 701720	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	0	spawn	701776	1	0	for_the_fight_absolute	2613.0	2734.0	255.0	0
-701720	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	1	broadcast	31022	50	0		0.0	0.0	0.0	0
+701720	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	1	broadcast_at	31022	50	0	Self	0.0	0.0	0.0	0
 701787	LDF5b_6021_Explosion_Box_04	on_die	ANY	0	7		0	spawn	701777	1	0	for_the_fight_absolute	2718.0	2588.0	255.0	0
-701787	LDF5b_6021_Explosion_Box_04	on_die	ANY	0	7		1	broadcast	31014	50	0		0.0	0.0	0.0	0
+701787	LDF5b_6021_Explosion_Box_04	on_die	ANY	0	7		1	broadcast_at	31014	50	0	Self	0.0	0.0	0.0	0
 701788	LDF5b_6021_Explosion_Box_09	on_die	ANY	0	7		0	spawn	701778	1	0	for_the_fight_absolute	2601.0	2798.0	255.0	0
-701788	LDF5b_6021_Explosion_Box_09	on_die	ANY	0	7		1	broadcast	31019	50	0		0.0	0.0	0.0	0
+701788	LDF5b_6021_Explosion_Box_09	on_die	ANY	0	7		1	broadcast_at	31019	50	0	Self	0.0	0.0	0.0	0
 701789	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	0	spawn	701781	1	0	for_the_fight_absolute	2703.0	2652.0	255.0	0
-701789	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	1	broadcast	31021	50	0		0.0	0.0	0.0	0
+701789	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	1	broadcast_at	31021	50	0	Self	0.0	0.0	0.0	0
 701789	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	0	spawn	701775	1	0	for_the_fight_absolute	2703.0	2652.0	255.0	0
-701789	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	1	broadcast	31021	50	0		0.0	0.0	0.0	0
+701789	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	1	broadcast_at	31021	50	0	Self	0.0	0.0	0.0	0
 701789	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	0	spawn	701781	1	0	for_the_fight_absolute	2703.0	2652.0	255.0	0
-701789	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	1	broadcast	31021	50	0		0.0	0.0	0.0	0
+701789	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	1	broadcast_at	31021	50	0	Self	0.0	0.0	0.0	0
 701789	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	0	spawn	701775	1	0	for_the_fight_absolute	2703.0	2652.0	255.0	0
-701789	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	1	broadcast	31021	50	0		0.0	0.0	0.0	0
+701789	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	1	broadcast_at	31021	50	0	Self	0.0	0.0	0.0	0
 701790	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	0	spawn	701782	1	0	for_the_fight_absolute	2613.0	2734.0	255.0	0
-701790	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	1	broadcast	31022	50	0		0.0	0.0	0.0	0
+701790	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	1	broadcast_at	31022	50	0	Self	0.0	0.0	0.0	0
 701790	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	0	spawn	701776	1	0	for_the_fight_absolute	2613.0	2734.0	255.0	0
-701790	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	1	broadcast	31022	50	0		0.0	0.0	0.0	0
+701790	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	1	broadcast_at	31022	50	0	Self	0.0	0.0	0.0	0
 701790	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	0	spawn	701782	1	0	for_the_fight_absolute	2613.0	2734.0	255.0	0
-701790	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	1	broadcast	31022	50	0		0.0	0.0	0.0	0
+701790	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	1	broadcast_at	31022	50	0	Self	0.0	0.0	0.0	0
 701790	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	0	spawn	701776	1	0	for_the_fight_absolute	2613.0	2734.0	255.0	0
-701790	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	1	broadcast	31022	50	0		0.0	0.0	0.0	0
+701790	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	1	broadcast_at	31022	50	0	Self	0.0	0.0	0.0	0
 701791	LDF5b_6021_Explosion_Box_04	on_die	ANY	0	7		0	spawn	701777	1	0	for_the_fight_absolute	2718.0	2588.0	255.0	0
-701791	LDF5b_6021_Explosion_Box_04	on_die	ANY	0	7		1	broadcast	31014	50	0		0.0	0.0	0.0	0
+701791	LDF5b_6021_Explosion_Box_04	on_die	ANY	0	7		1	broadcast_at	31014	50	0	Self	0.0	0.0	0.0	0
 701792	LDF5b_6021_Explosion_Box_09	on_die	ANY	0	7		0	spawn	701778	1	0	for_the_fight_absolute	2601.0	2798.0	255.0	0
-701792	LDF5b_6021_Explosion_Box_09	on_die	ANY	0	7		1	broadcast	31019	50	0		0.0	0.0	0.0	0
+701792	LDF5b_6021_Explosion_Box_09	on_die	ANY	0	7		1	broadcast_at	31019	50	0	Self	0.0	0.0	0.0	0
 701793	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	0	spawn	701781	1	0	for_the_fight_absolute	2703.0	2652.0	255.0	0
-701793	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	1	broadcast	31021	50	0		0.0	0.0	0.0	0
+701793	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	1	broadcast_at	31021	50	0	Self	0.0	0.0	0.0	0
 701793	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	0	spawn	701775	1	0	for_the_fight_absolute	2703.0	2652.0	255.0	0
-701793	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	1	broadcast	31021	50	0		0.0	0.0	0.0	0
+701793	LDF5b_6021_Explosion_Box_11	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	1	broadcast_at	31021	50	0	Self	0.0	0.0	0.0	0
 701793	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	0	spawn	701781	1	0	for_the_fight_absolute	2703.0	2652.0	255.0	0
-701793	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	1	broadcast	31021	50	0		0.0	0.0	0.0	0
+701793	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	1	broadcast_at	31021	50	0	Self	0.0	0.0	0.0	0
 701793	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	0	spawn	701775	1	0	for_the_fight_absolute	2703.0	2652.0	255.0	0
-701793	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	1	broadcast	31021	50	0		0.0	0.0	0.0	0
+701793	LDF5b_6021_Explosion_Box_11	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	1	broadcast_at	31021	50	0	Self	0.0	0.0	0.0	0
 701794	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	0	spawn	701782	1	0	for_the_fight_absolute	2613.0	2734.0	255.0	0
-701794	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	1	broadcast	31022	50	0		0.0	0.0	0.0	0
+701794	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	0	8	race:KillerRace:ASMODIANS	1	broadcast_at	31022	50	0	Self	0.0	0.0	0.0	0
 701794	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	0	spawn	701776	1	0	for_the_fight_absolute	2613.0	2734.0	255.0	0
-701794	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	1	broadcast	31022	50	0		0.0	0.0	0.0	0
+701794	LDF5b_6021_Explosion_Box_12	on_killed_by_npc	KilledByNpc	1	7	race:KillerRace:ELYOS	1	broadcast_at	31022	50	0	Self	0.0	0.0	0.0	0
 701794	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	0	spawn	701782	1	0	for_the_fight_absolute	2613.0	2734.0	255.0	0
-701794	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	1	broadcast	31022	50	0		0.0	0.0	0.0	0
+701794	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	0	8	race:KillerRace:ASMODIANS	1	broadcast_at	31022	50	0	Self	0.0	0.0	0.0	0
 701794	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	0	spawn	701776	1	0	for_the_fight_absolute	2613.0	2734.0	255.0	0
-701794	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	1	broadcast	31022	50	0		0.0	0.0	0.0	0
+701794	LDF5b_6021_Explosion_Box_12	on_killed_by_user	KilledByPlayer	1	7	race:KillerRace:ELYOS	1	broadcast_at	31022	50	0	Self	0.0	0.0	0.0	0
 702311	Gab1_TurretSwitch_01	on_killed_by_npc	KilledByNpc	0	7		0	var	23	0	0	Tur13	0.0	0.0	0.0	0
 702311	Gab1_TurretSwitch_01	on_killed_by_user	KilledByPlayer	0	7		0	var	23	0	0	Tur13	0.0	0.0	0.0	0
 702346	Gab1_TurretSwitch_02	on_killed_by_npc	KilledByNpc	0	7		0	var	23	0	0	Tur14	0.0	0.0	0.0	0
@@ -3831,9 +3831,9 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 702656	IDStation_B_ZONE_FOBJ_01	on_killed_by_user	KilledByPlayer	0	7	race:KillerRace:ELYOS	0	spawn	702657	1	20	for_the_fight_self	0.0	0.0	0.0	0
 702656	IDStation_B_ZONE_FOBJ_01	on_killed_by_user	KilledByPlayer	1	6	race:KillerRace:ASMODIANS	0	spawn	702657	1	20	for_the_fight_self	0.0	0.0	0.0	0
 730612	IDTiamat_Wave1	on_die	ANY	0	4		0	var	1	0	0	IDTIAMAT_WAVE1	0.0	0.0	0.0	0
-730612	IDTiamat_Wave1	on_die	ANY	0	4		1	broadcast	2000	90	0		0.0	0.0	0.0	0
+730612	IDTiamat_Wave1	on_die	ANY	0	4		1	broadcast_at	2000	90	0	Self	0.0	0.0	0.0	0
 799674	IDYun_Merops4	on_die	ANY	0	99		0	say	1500437	0	0		0.0	0.0	0.0	0
-799674	IDYun_Merops4	on_die	ANY	0	99		1	broadcast	34	30	0		0.0	0.0	0.0	0
+799674	IDYun_Merops4	on_die	ANY	0	99		1	broadcast_at	34	30	0	Self	0.0	0.0	0.0	0
 799674	IDYun_Merops4	on_die	ANY	0	99		2	spawn	282578	1	5	for_the_fight_self	0.0	0.0	0.0	1
 799887	IDAbRe_Core_Rufukin	on_die	ANY	0	1		0	var	1	0	0	D2	0.0	0.0	0.0	0
 800876	BGuard_Teleporter	on_killed_by_npc	KilledByNpc	0	7		0	spawn	296339	1	12	for_the_fight_self	0.0	0.0	0.0	0
@@ -3849,7 +3849,7 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 802004	Dread03_Closedoor02	on_die	ANY	0	1		0	var	1	0	0	DSWITCH_2_DESTROYED	0.0	0.0	0.0	0
 802004	Dread03_Closedoor02	on_die	ANY	0	1		1	sysmsg	1400227	0	0		0.0	0.0	0.0	0
 831572	IDDF2Flying_event01_B_RatmanWarriorM_55_Ae	on_die	ANY	0	7		0	spawn	831581	1	0	for_the_fight_self	0.0	0.0	0.0	1
-831572	IDDF2Flying_event01_B_RatmanWarriorM_55_Ae	on_die	ANY	0	7		1	broadcast	1997	100	0		0.0	0.0	0.0	0
+831572	IDDF2Flying_event01_B_RatmanWarriorM_55_Ae	on_die	ANY	0	7		1	broadcast_at	1997	100	0	Self	0.0	0.0	0.0	0
 832273	Gab1_TurretSwitch_01	on_killed_by_npc	KilledByNpc	0	7		0	var	23	0	0	Tur13	0.0	0.0	0.0	0
 832273	Gab1_TurretSwitch_01	on_killed_by_user	KilledByPlayer	0	7		0	var	23	0	0	Tur13	0.0	0.0	0.0	0
 832274	Gab1_TurretSwitch_02	on_killed_by_npc	KilledByNpc	0	7		0	var	23	0	0	Tur14	0.0	0.0	0.0	0
@@ -5024,22 +5024,22 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 855509	IDSeal_Twin_M	on_killed_by_user	KilledByPlayer	0	100	set_flag_var:5	2	despawn	1	0	0		0.0	0.0	0.0	0
 855509	IDSeal_Twin_M	on_killed_by_user	KilledByPlayer	0	100	set_flag_var:5	3	despawn	2	0	0		0.0	0.0	0.0	0
 855509	IDSeal_Twin_M	on_killed_by_user	KilledByPlayer	0	100	set_flag_var:5	4	say	1501216	0	0		0.0	0.0	0.0	0
-855512	IDSeal_Twin_P_Failed	on_killed_by_npc	KilledByNpc	0	98	set_flag_var:5	0	broadcast	22716	100	0		0.0	0.0	0.0	0
+855512	IDSeal_Twin_P_Failed	on_killed_by_npc	KilledByNpc	0	98	set_flag_var:5	0	broadcast_at	22716	100	0	Self	0.0	0.0	0.0	0
 855512	IDSeal_Twin_P_Failed	on_killed_by_npc	KilledByNpc	0	98	set_flag_var:5	1	spawn	702769	1	0	for_the_fight_self	0.0	0.0	0.0	0
 855512	IDSeal_Twin_P_Failed	on_killed_by_npc	KilledByNpc	0	98	set_flag_var:5	2	var	3	0	0	TWIN_P	0.0	0.0	0.0	0
 855512	IDSeal_Twin_P_Failed	on_killed_by_npc	KilledByNpc	0	98	set_flag_var:5	3	despawn	1	0	0		0.0	0.0	0.0	0
 855512	IDSeal_Twin_P_Failed	on_killed_by_npc	KilledByNpc	0	98	set_flag_var:5	4	despawn	2	0	0		0.0	0.0	0.0	0
-855512	IDSeal_Twin_P_Failed	on_killed_by_user	KilledByPlayer	0	99	set_flag_var:5	0	broadcast	22716	100	0		0.0	0.0	0.0	0
+855512	IDSeal_Twin_P_Failed	on_killed_by_user	KilledByPlayer	0	99	set_flag_var:5	0	broadcast_at	22716	100	0	Self	0.0	0.0	0.0	0
 855512	IDSeal_Twin_P_Failed	on_killed_by_user	KilledByPlayer	0	99	set_flag_var:5	1	spawn	702769	1	0	for_the_fight_self	0.0	0.0	0.0	0
 855512	IDSeal_Twin_P_Failed	on_killed_by_user	KilledByPlayer	0	99	set_flag_var:5	2	var	3	0	0	TWIN_P	0.0	0.0	0.0	0
 855512	IDSeal_Twin_P_Failed	on_killed_by_user	KilledByPlayer	0	99	set_flag_var:5	3	despawn	1	0	0		0.0	0.0	0.0	0
 855512	IDSeal_Twin_P_Failed	on_killed_by_user	KilledByPlayer	0	99	set_flag_var:5	4	despawn	2	0	0		0.0	0.0	0.0	0
-855513	IDSeal_Twin_M_Failed	on_killed_by_npc	KilledByNpc	0	99	set_flag_var:5	0	broadcast	22717	100	0		0.0	0.0	0.0	0
+855513	IDSeal_Twin_M_Failed	on_killed_by_npc	KilledByNpc	0	99	set_flag_var:5	0	broadcast_at	22717	100	0	Self	0.0	0.0	0.0	0
 855513	IDSeal_Twin_M_Failed	on_killed_by_npc	KilledByNpc	0	99	set_flag_var:5	1	spawn	702769	1	0	for_the_fight_self	0.0	0.0	0.0	0
 855513	IDSeal_Twin_M_Failed	on_killed_by_npc	KilledByNpc	0	99	set_flag_var:5	2	var	3	0	0	TWIN_M	0.0	0.0	0.0	0
 855513	IDSeal_Twin_M_Failed	on_killed_by_npc	KilledByNpc	0	99	set_flag_var:5	3	despawn	1	0	0		0.0	0.0	0.0	0
 855513	IDSeal_Twin_M_Failed	on_killed_by_npc	KilledByNpc	0	99	set_flag_var:5	4	despawn	2	0	0		0.0	0.0	0.0	0
-855513	IDSeal_Twin_M_Failed	on_killed_by_user	KilledByPlayer	0	100	set_flag_var:5	0	broadcast	22717	100	0		0.0	0.0	0.0	0
+855513	IDSeal_Twin_M_Failed	on_killed_by_user	KilledByPlayer	0	100	set_flag_var:5	0	broadcast_at	22717	100	0	Self	0.0	0.0	0.0	0
 855513	IDSeal_Twin_M_Failed	on_killed_by_user	KilledByPlayer	0	100	set_flag_var:5	1	spawn	702769	1	0	for_the_fight_self	0.0	0.0	0.0	0
 855513	IDSeal_Twin_M_Failed	on_killed_by_user	KilledByPlayer	0	100	set_flag_var:5	2	var	3	0	0	TWIN_M	0.0	0.0	0.0	0
 855513	IDSeal_Twin_M_Failed	on_killed_by_user	KilledByPlayer	0	100	set_flag_var:5	3	despawn	1	0	0		0.0	0.0	0.0	0
@@ -5089,21 +5089,21 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 855899	IDYun_Nmd3	on_die	ANY	0	13		1	spawn	217310	1	0	for_the_fight_self	0.0	0.0	0.0	2
 855899	IDYun_Nmd3	on_die	ANY	0	13		2	despawn	1	0	0		0.0	0.0	0.0	0
 855900	IDYun_Nmd3_FallOff	on_die	ANY	0	5		0	var	1	0	0	DISPEL_ARIANA	0.0	0.0	0.0	0
-855900	IDYun_Nmd3_FallOff	on_die	ANY	0	5		1	broadcast	500	100	0		0.0	0.0	0.0	0
+855900	IDYun_Nmd3_FallOff	on_die	ANY	0	5		1	broadcast_at	500	100	0	Self	0.0	0.0	0.0	0
 855904	IDYun_TheThingFromAnotherWorld_02	on_killed_by_user	KilledByPlayer	0	5	race:KillerRace:ELYOS	0	spawn	855953	1	30	for_the_fight_self	0.0	0.0	0.0	0
 855904	IDYun_TheThingFromAnotherWorld_02	on_killed_by_user	KilledByPlayer	1	4	race:KillerRace:ASMODIANS	0	spawn	855953	1	30	for_the_fight_self	0.0	0.0	0.0	0
 855970	IDStation_info_06	on_killed_by_user	KilledByPlayer	0	9	race:KillerRace:ELYOS	0	spawn	855618	1	10	for_the_fight_self	0.0	0.0	0.0	0
 855970	IDStation_info_06	on_killed_by_user	KilledByPlayer	1	8	race:KillerRace:ASMODIANS	0	spawn	855618	1	10	for_the_fight_self	0.0	0.0	0.0	0
-855994	BIDF5_U01_Runaway_Wi	on_die	ANY	0	1000		0	broadcast	10900	100	0		0.0	0.0	0.0	0
+855994	BIDF5_U01_Runaway_Wi	on_die	ANY	0	1000		0	broadcast_at	10900	100	0	Self	0.0	0.0	0.0	0
 855994	BIDF5_U01_Runaway_Wi	on_die	ANY	0	1000		1	var	0	1	0	under_01_out	0.0	0.0	0.0	0
 856002	BIDF5_U01_Runaway_As	on_die	ANY	0	1000		0	var	0	1	0	under_01_out	0.0	0.0	0.0	0
-856002	BIDF5_U01_Runaway_As	on_die	ANY	0	1000		1	broadcast	10900	100	0		0.0	0.0	0.0	0
+856002	BIDF5_U01_Runaway_As	on_die	ANY	0	1000		1	broadcast_at	10900	100	0	Self	0.0	0.0	0.0	0
 856003	BIDF5_U01_Boss_Wi_Nor	on_die	ANY	0	1000		0	var	2	0	0	under_01_out	0.0	0.0	0.0	0
-856004	BIDF5_U01_Boss_Wi	on_die	ANY	0	1000		0	broadcast	10900	100	0		0.0	0.0	0.0	0
+856004	BIDF5_U01_Boss_Wi	on_die	ANY	0	1000		0	broadcast_at	10900	100	0	Self	0.0	0.0	0.0	0
 856004	BIDF5_U01_Boss_Wi	on_die	ANY	0	1000		1	var	0	1	0	under_01_out	0.0	0.0	0.0	0
-856005	BIDF5_U01_Boss_Wi	on_die	ANY	0	1000		0	broadcast	10900	100	0		0.0	0.0	0.0	0
+856005	BIDF5_U01_Boss_Wi	on_die	ANY	0	1000		0	broadcast_at	10900	100	0	Self	0.0	0.0	0.0	0
 856005	BIDF5_U01_Boss_Wi	on_die	ANY	0	1000		1	var	0	1	0	under_01_out	0.0	0.0	0.0	0
-856006	BIDF5_U01_Monster_01	on_die	ANY	0	1000		0	broadcast	10900	100	0		0.0	0.0	0.0	0
+856006	BIDF5_U01_Monster_01	on_die	ANY	0	1000		0	broadcast_at	10900	100	0	Self	0.0	0.0	0.0	0
 856006	BIDF5_U01_Monster_01	on_die	ANY	0	1000		1	var	0	1	0	under_01_out	0.0	0.0	0.0	0
 856019	IDYun_TheThingFromAnotherWorld_01	on_killed_by_user	KilledByPlayer	0	5	race:KillerRace:ELYOS	0	spawn	855953	1	30	for_the_fight_self	0.0	0.0	0.0	0
 856019	IDYun_TheThingFromAnotherWorld_01	on_killed_by_user	KilledByPlayer	1	4	race:KillerRace:ASMODIANS	0	spawn	855953	1	30	for_the_fight_self	0.0	0.0	0.0	0
@@ -5126,7 +5126,7 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 856028	IDTiamat_Hard_Tiamat_Dragon	on_die	ANY	0	14		7	var	2	0	0	TELEPORT_FUTUREIN4	0.0	0.0	0.0	0
 856028	IDTiamat_Hard_Tiamat_Dragon	on_die	ANY	0	14		8	despawn	1	0	0		0.0	0.0	0.0	0
 856029	IDTiamat_Hard_Tiamat_Dragon_Dying	on_die	ANY	0	49		0	var	0	1	0	TIAMAT_TREASUREBOX	0.0	0.0	0.0	0
-856029	IDTiamat_Hard_Tiamat_Dragon_Dying	on_die	ANY	0	49		1	broadcast	201	100	0		0.0	0.0	0.0	0
+856029	IDTiamat_Hard_Tiamat_Dragon_Dying	on_die	ANY	0	49		1	broadcast_at	201	100	0	Self	0.0	0.0	0.0	0
 856029	IDTiamat_Hard_Tiamat_Dragon_Dying	on_die	ANY	0	49		2	var	4	0	0	KAHRUN_SPAWN	0.0	0.0	0.0	0
 856029	IDTiamat_Hard_Tiamat_Dragon_Dying	on_die	ANY	0	49		3	var	2	0	0	RELIC_SPAWN	0.0	0.0	0.0	0
 856029	IDTiamat_Hard_Tiamat_Dragon_Dying	on_die	ANY	0	49		4	despawn	1	0	0		0.0	0.0	0.0	0

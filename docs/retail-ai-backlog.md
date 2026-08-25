@@ -178,11 +178,21 @@ here so the next pass does not spend a day on the guard and find nothing moves.
 
 ## D. Encounters and hygiene
 
-- **`percent_to_add` on `switch_target`** — every one of the 1,321 uses carries one, and it is
-  deliberately unmodelled: the element does not say what the percentage is *of*, and a guess puts a
-  silent wrong number into a hate list. Answering it needs an observation, not a decision.
+- **`percent_to_add` on both switch elements** — all 3,693 uses carry one, and it is deliberately
+  unmodelled: the element does not say what the percentage is *of*, and a guess puts a silent wrong
+  number into a hate list. Answering it needs an observation, not a decision.
+- **Fields retail writes that no reader looks at**, found by comparing the dump against the extractor's
+  own searches: `restricted_range` on the ranked switch (2,372), `area_name` and `string_param1..3` on
+  `display_system_message` (3,065), `push_state` on `flee_from` (353), `num_to_spawn` on
+  `spawn_on_multi_target` (324). The last is the one most likely to be a real loss. The check that
+  found them is worth re-running after any reader change.
 - **`HateEventTarget` is the only member of its family that does not also set the target.** Harmless
   today; worth knowing before someone routes a new subject through it.
+- **Self-naming broadcasts answered with hate.** 5,013 broadcasts name `OBJI_SELF`, and joined by
+  message number 787 of them are answered somewhere by hate on the parameter — which would put hate on
+  a friendly broadcaster. The join overstates it badly (numbers are reused, broadcasts have a range)
+  and the shape is retail's own "ask an ally to shoot me", so it is ported as written. **If guards are
+  ever seen turning on each other, start here.**
 
 - **Kaidan's low-health rung** — needs the skill index list resolved for thirteen shaman npcs first;
   they may not agree the way the wave attackers' index 0 did (22 of 22).

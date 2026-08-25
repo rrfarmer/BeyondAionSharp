@@ -370,6 +370,10 @@ public static class PatternTableLoader
             case "var": return Do.SetSpawnVariable(row.Place, Int(row.A1, kind), Int(row.A2, kind));
             case "broadcast": return Do.Broadcast(Int(row.A1, kind), Float(row.A2, kind));
 
+            // Retail's `param_obj`, which every one of its 6,822 broadcasts carries.
+            case "broadcast_at":
+                return BroadcastAt(row.Place, Int(row.A1, kind), Float(row.A2, kind), kind);
+
             case "spawn_on_ranked":
                 return Do.SpawnOnAttacker(Ranked(row.Place, kind), Int(row.A1, kind), Group(row.Group, kind),
                     Float(row.X, kind), (int)Float(row.Z, kind), Int(row.A2, kind), Float(row.Y, kind));
@@ -479,6 +483,23 @@ public static class PatternTableLoader
         "FleeFromMessageSender" => Do.FleeFromMessageSender(seconds),
         _ => throw Unknown("flee_" + name),
     };
+
+    private static PatternAction BroadcastAt(string place, int messageType, float range, string kind)
+        => place switch
+        {
+            "Self" => Do.BroadcastAboutSelf(messageType, range),
+            "Target" => Do.BroadcastAboutTarget(messageType, range),
+            "EventTarget" => Do.BroadcastAboutEventTarget(messageType, range),
+            "Attacker" => Do.BroadcastAboutAttacker(messageType, range),
+            "Caster" => Do.BroadcastAboutCaster(messageType, range),
+            "Killer" => Do.BroadcastAboutKiller(messageType, range),
+            "Seen" => Do.BroadcastAboutSeen(messageType, range),
+            "Talker" => Do.BroadcastAboutTalker(messageType, range),
+            "FledFrom" => Do.BroadcastAboutFledFrom(messageType, range),
+            "FriendsAttacker" => Do.BroadcastAboutFriendsAttacker(messageType, range),
+            "FriendsKiller" => Do.BroadcastAboutFriendsKiller(messageType, range),
+            _ => throw Unknown(kind + " about " + place),
+        };
 
     private static PatternAction SkillAt(string place, int skillId, string kind) => place switch
     {
