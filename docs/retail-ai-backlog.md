@@ -109,10 +109,15 @@ a refusal means missing runtime.
 
 Each of these blocks the entire pattern, so the npc runs nothing from it.
 
-`random_move` 29 · `switch_target_by_class_indicator` 9 · `control_door` 9 · `nothing arms the first
-timer` 9 · `spawn_on_target` told to attack with no hate points 8 · `switch_target` at
-`OBJI_CUR_TARGET` 7 · `is_in_abnormal_state` of `STUN_LIKE_GROUP` 4 · `despawn_by_nameid` 4 · a tail of
-ones and twos.
+`switch_target_by_class_indicator` 9 · `control_door` 9 · `nothing arms the first timer` 9 ·
+`spawn_on_target` told to attack with no hate points 8 · `is_in_abnormal_state` of `STUN_LIKE_GROUP` 4 ·
+`despawn_by_nameid` 4 · a tail of ones and twos.
+
+**`random_move` is out of this list and into section E**, measured. 4.8 has random walking, but retail
+gives a duration with no range while 4.8 takes the range from the *spawn row*. Of the 135 npcs spawned
+here that would run it, **112 have `random_walk="0"` on every spawn row** — this port's data says they
+do not wander — and all **23** that do have a range use `random_move` inside a combat handler, where
+`StartRandomWalking` would take them out of the fighting state. Neither half composes.
 
 `control_door` still needs one in-game observation to settle which `method` value opens versus closes;
 everything else is ordinary work.
@@ -181,6 +186,20 @@ here so the next pass does not spend a day on the guard and find nothing moves.
 - **18 `--implemented` audit candidates** — `python tools/client-extract/audit_stale_claims.py
   --implemented`. Most are accurate past-tense history; the yield is in repeated claims.
 
+## D-ter. `switch_target` drops its hate — 1,321 uses
+
+Found while taking `switch_target` at `OBJI_CUR_TARGET`. **Every one of retail's 1,321 `switch_target`
+uses carries `points_to_add`**, often five million, and this port's `switch_to:TargetX` helpers do
+nothing but `SetTarget()`. So the npc turns to face the new creature while the hate list still names
+somebody else, and the next aggro decision can undo it.
+
+Both halves are already in the engine and next to each other — `Do.TargetAttacker()` and
+`Do.HateAttacker(points)` — so this is composition, not new machinery. Roughly 1,250 uses across seven
+subjects are affected; measure the npcs before starting, the way the tally note above says.
+
+`percent_to_add` is a separate question and should stay unmodelled: the element does not say what the
+percentage is *of*, and a guess puts a silent wrong number into a hate list.
+
 ## D-bis. The skill-index rule, and what it costs
 
 **An npc whose skill list cannot answer a pattern's indices is dropped from the pattern**, and if none
@@ -215,6 +234,10 @@ it.
   client first, which is a data project rather than a vocabulary item.
 - **The Abyss turret switches** (172 npcs spawned here) — see section C-bis; they need the alias
   mechanism above plus a player transform tribe this port has no source for.
+- **`random_move`** (135 npcs spawned here) — retail gives a duration and no range; 4.8 takes the range
+  from the spawn row, and 112 of the 135 have `random_walk="0"` on every row. The 23 that do have a
+  range use it only in combat handlers, where `StartRandomWalking` would take the npc out of the fight.
+  See the log entry *`random_move`, and why it is not a port*.
 
 The rest are the tables' own limits:
 

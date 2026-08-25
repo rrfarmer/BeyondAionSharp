@@ -40902,3 +40902,85 @@ patterns ask just as readily.
 The constraint is now stated in `CLAUDE.md` beside the sanctioned retail-AI exception, because that
 exception is about **behaviour, not content**, and the two are easy to conflate. It is also the first
 section of the backlog, with the numbers above, so the next person reads it before picking work.
+
+## `random_move`, and why it is not a port
+
+Biggest item left in section B: 29 patterns, 79 npcs by the tally, 133 patterns and 391 npcs by
+binding. 4.8 *does* have random walking --- `WalkManager.StartRandomWalking` --- so this looked like
+ordinary work. It is not, and both halves fail for the same underlying reason: retail's action and
+4.8's mechanism are not the same shape.
+
+**Retail gives a duration and no range.** `<random_move><time_to_move>3000</time_to_move></random_move>`
+is the whole of it. 4.8 drives wandering from the *spawn row*: `IsRandomWalker()` is
+`GetSpawn().GetRandomWalkRange() > 0`, so the range is a property of where an npc was placed, not of
+what its AI decided.
+
+Measured against the npcs that would run it:
+
+| | |
+|---|---|
+| npcs bound to a `random_move` pattern | 391 |
+| ...spawned in this port | **135** |
+| ...with a spawn row carrying a range | **23** |
+| ...whose every spawn row says `random_walk="0"` | **112** |
+
+So for 112 of the 135, this port's own data says *this npc does not wander*, and making it wander for
+retail's duration would mean **inventing a range**.
+
+**And the remaining 23 are worse, not better.** Every one of them uses `random_move` inside a combat
+handler --- `on_attacked` and `on_spelled`, the flinch --- and not one uses it outside combat.
+`StartRandomWalking` calls `SetStateIfNot(AIState.WALKING)`, which takes the npc out of the fighting
+state. Composing the two would stop the fight to take a walk. Getting that right means designing a
+short reposition that returns to combat, which is designing rather than porting.
+
+Recorded rather than built. **A first measurement is not a verdict:** the parser behind the table above
+was wrong on its first run --- it looked for `<spawn_spot>` where this port writes `<spot>` --- and
+reported that *none* of the 391 npcs was spawned here, which would have been a much tidier and
+entirely false conclusion. Checked against a real spawn file before being believed.
+
+## `switch_target` at the current target, and the larger thing behind it
+
+The extractor refused `switch_target target=OBJI_CUR_TARGET` with a stated reason:
+
+> switching to the creature already targeted is a no-op, and a rung that cannot be told from doing
+> nothing is not a port of the step retail takes
+
+**That reasoning was wrong, and reading one instance shows why.** The element is not only a switch. It
+carries `percent_to_add` and `points_to_add`, and **all 1,321 uses in the dump carry some**. Aimed at
+the creature already targeted there is no switch left, so the hate *is* the whole action --- one guard
+adds `percent=100, points=500000`, which is a boss cementing itself onto whoever it is fighting so
+nothing can peel it.
+
+`HATE_ROLES` already maps `OBJI_CUR_TARGET` to `HateTarget`, and `PatternTableLoader` already answers
+it. So the fix reuses both: 7 patterns and **32 npcs** stop being refused whole.
+
+### The larger thing: every `switch_target` drops its hate
+
+The other seven subjects are read as `switch_to:TargetX`, and those helpers do exactly one thing:
+
+    public void TargetAttacker()
+        => ... GetOwner().SetTarget(who);
+
+**No aggro change at all.** So the npc turns to face the new creature while the hate list still says
+somebody else is the threat, and the next aggro-driven decision can undo it. Retail asks for both, in
+every single use:
+
+| subject | uses | | common values |
+|---|---:|---|---|
+| `OBJI_MESSAGE_PARAM` | 397 | | `percent=100 points=5000000` — 407 uses |
+| `OBJI_ATTACKER` | 266 | | `percent=0 points=100` — 220 |
+| `OBJI_SEEN` | 245 | | `percent=0 points=5000000` — 178 |
+| `OBJI_CASTER` | 240 | | `percent=10 points=100` — 171 |
+| `OBJI_CUR_TARGET` | 70 | | *taken now* |
+| `OBJI_MESSAGE_SENDER` | 63 | | |
+| `OBJI_KILLER` | 29 | | |
+| `OBJI_EVENT_TARGET` | 11 | | |
+
+Both halves already exist in the engine --- `Do.TargetAttacker()` and `Do.HateAttacker(points)` are
+neighbours --- so this is composition rather than new machinery. It is **not** done here, because it
+changes what a switch does for every npc that runs one, and that deserves its own measured pass rather
+than riding along with a 32-npc fix.
+
+**`percent_to_add` stays unmodelled either way.** The element does not say what the percentage is *of*
+--- the target's own hate, the top of the list, something else --- and a guess there puts a silent
+wrong number into a hate list, which is the quietest kind of wrong there is.

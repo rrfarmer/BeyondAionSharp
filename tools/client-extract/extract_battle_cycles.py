@@ -917,13 +917,32 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
         elif kind == "switch_target":
             # Every subject retail names. `SwitchTarget` takes an `AggroTarget` -- a rank in the hate
             # list -- and cannot name a creature by its part in the event, so each role has its own
-            # one-line helper instead. `OBJI_CUR_TARGET` is refused: switching to the creature already
-            # targeted is a no-op, and a rung that cannot be told from doing nothing is not a port of
-            # the step retail takes.
+            # one-line helper instead.
+            #
+            # **`OBJI_CUR_TARGET` used to be refused here as "a no-op", and that was wrong.** The
+            # element is not only a switch: it carries `points_to_add`, and all 1,321 uses in the dump
+            # carry some. Aimed at the creature already targeted there is no switch left, so the hate
+            # *is* the action -- one use adds five hundred thousand points, which is a boss cementing
+            # itself onto whoever it is fighting. `HATE_ROLES` already names the same subject and the
+            # loader already answers it, so this reuses both.
+            #
+            # `percent_to_add` is not modelled, here or anywhere else in this port's `switch_target`
+            # handling. The element does not say what the percentage is *of*, and guessing would put a
+            # silent wrong number into a hate list. See docs/retail-ai-backlog.md.
             who = re.search(r"<target>(\w+)</target>", body)
-            if not who or who.group(1) not in SWITCH_ROLES:
-                raise Unsayable(f"{kind} at {who.group(1) if who else '?'}")
-            out.append((SWITCH_ROLES[who.group(1)], 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
+            if not who:
+                raise Unsayable("switch_target with no subject")
+            if who.group(1) == "OBJI_CUR_TARGET":
+                points = re.search(r"<points_to_add>(-?\d+)</points_to_add>", body)
+                if not points or int(points.group(1)) <= 0:
+                    # Nothing left to do: no switch, and no hate either.
+                    raise Unsayable("switch_target at the current target with no hate to add")
+                out.append(("hate_at:" + HATE_ROLES[who.group(1)], int(points.group(1)),
+                            0, 0, "", 0.0, 0.0, 0.0, 0))
+            elif who.group(1) in SWITCH_ROLES:
+                out.append((SWITCH_ROLES[who.group(1)], 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
+            else:
+                raise Unsayable(f"{kind} at {who.group(1)}")
         elif kind == "attack_most_hating":
             out.append(("attack", 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
         elif kind == "spawn_on_target_by_attacker_indicator":
