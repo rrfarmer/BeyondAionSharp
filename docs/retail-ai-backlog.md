@@ -222,8 +222,12 @@ argument for reading a handler's contents before its count.
 - **Kaidan's low-health rung** — needs the skill index list resolved for thirteen shaman npcs first;
   they may not agree the way the wave attackers' index 0 did (22 of 22).
 - **The other 65 `on_see_user_move` patterns** — 105 npcs gained the handler; one encounter is pinned.
-- **The guards' two broadcasts** (22696 on waking, 22658 on the second clock) — no listener found in
-  this tree, so a pin would assert into silence. Check the listener side before assuming they are idle.
+- **`nothing arms the first timer`** (9 patterns, 21 npcs) — the last refusal above twenty npcs with no
+  explanation. Retail arms many rotations of this shape only from `on_battle_timer` itself, which
+  raises a question nobody here has answered: **does retail's VM start timer 0 on its own?** If it
+  does, the extractor's requirement that some handler must arm the first one is wrong. Answering it
+  means instrumenting the extractor to name the nine and reading each; the live cost is 21 npcs, so it
+  has not been worth that yet — but do it before touching the arming rule for any other reason.
 - **18 `--implemented` audit candidates** — `python tools/client-extract/audit_stale_claims.py
   --implemented`. Most are accurate past-tense history; the yield is in repeated claims.
 
@@ -280,6 +284,9 @@ The rest are the tables' own limits:
 - **`is_race` about `OBJI_SELF`** (10 patterns) — an npc's own race is a constant, so the branch is
   always or never taken, and the table shares one branch list between npcs of different races. Deciding
   it at extract time would mean giving each race its own copy of every shared list.
+- **The guards' two broadcasts** (22696, 22658) — both *are* answered in retail: 22658 has 4 listener
+  patterns against 9 senders, 22696 has 5 against 2. **Not one npc on either side of either message is
+  spawned in this port.** Nothing is placed, rather than nothing is written.
 - **16 walker routes** named by retail spawns and absent from every world file and the client pak.
 - **75 skill categories** retail names for skills 4.8 has no template for. Dropped by the extractor,
   which prints the count.

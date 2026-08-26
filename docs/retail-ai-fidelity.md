@@ -41326,3 +41326,37 @@ parameters this port does not take either.
 Same shape as `is_npc_state NPC_STATE_WAKE_UP`, whose 335 uses are all `do_nothing` suppression, and the
 same verdict. **The recommendation was wrong and is corrected in place** --- which is the argument for
 reading a handler's contents before its count, made against my own guess this time.
+
+## Two backlog questions settled with numbers
+
+### The guards' two broadcasts are a boundary, not a missing listener
+
+Carried as: *"22696 on waking, 22658 on the second clock — no listener found in this tree, so a pin
+would assert into silence. Check the listener side before assuming they are idle."*
+
+Checked. **Both have listeners in retail** --- 22658 has 4 listener patterns against 9 senders, 22696
+has 5 against 2 --- so the calls are answered, and the port is not missing an implementation. What it is
+missing is the npcs: **not one npc on either side of either message is spawned in this port.** Senders
+and listeners alike, zero.
+
+So a pin really would assert into silence, but for a reason worth stating differently: nothing is
+placed, not nothing is written. Same family as Taloc's ambush and the Dramata controllers. Moved to
+section E.
+
+### `nothing arms the first timer` — 9 patterns, 21 npcs, and a hypothesis
+
+The last refusal above twenty npcs that had no explanation. A pattern with a rotation and no handler
+that arms a timer: the rungs exist and nothing starts them.
+
+Looking at what retail does with rotations of that shape --- and this probe was **crude and overcounted
+badly**, 251 patterns against the extractor's 9, because it did not apply the "bound to an npc free to
+run it" filter --- the pattern that shows up is that **retail arms many of these only from
+`on_battle_timer` itself.** The rotation re-arms its own clock and nothing outside it ever does.
+
+Which raises a question this port has never answered: **does retail's VM start timer 0 on its own?** If
+it does, the extractor's requirement that some handler must arm the first timer is wrong, and these
+rungs should run. If it does not, retail has 251 inert rotations, which is not credible.
+
+Left as a question rather than a change, because the live cost is 21 npcs and answering it properly
+means instrumenting the extractor to name the nine, then reading each. Worth doing before anyone
+touches the arming rule for another reason.
