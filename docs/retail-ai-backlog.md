@@ -222,12 +222,17 @@ argument for reading a handler's contents before its count.
 - **Kaidan's low-health rung** — needs the skill index list resolved for thirteen shaman npcs first;
   they may not agree the way the wave attackers' index 0 did (22 of 22).
 - **The other 65 `on_see_user_move` patterns** — 105 npcs gained the handler; one encounter is pinned.
-- **`nothing arms the first timer`** (9 patterns, 21 npcs) — the last refusal above twenty npcs with no
-  explanation. Retail arms many rotations of this shape only from `on_battle_timer` itself, which
-  raises a question nobody here has answered: **does retail's VM start timer 0 on its own?** If it
-  does, the extractor's requirement that some handler must arm the first one is wrong. Answering it
-  means instrumenting the extractor to name the nine and reading each; the live cost is 21 npcs, so it
-  has not been worth that yet — but do it before touching the arming rule for any other reason.
+- **`nothing arms the first timer` — answered, no change made.** Retail's VM does **not** start timer 0
+  on its own: five of the nine patterns contain no `add_battle_timer` anywhere, three more arm only
+  from `on_battle_timer` itself, half wait on index 1 rather than 0, and 7,434 patterns arm explicitly
+  from `on_enter_attack_state` with a stated delay. Retail ships these unable to start. The live cost
+  is **two npcs** (214598, 214700), both on patterns with no arm in retail either.
+  **One real flaw remains, deliberately unfixed:** the rule counts only non-ending, non-*signal*
+  handlers as a way in, while its stated reason ("the npc is gone before it fires") covers only the
+  endings. `Cromede_Named_Angry` arms from `on_arrived_at_waypoint` and is refused for it. Correcting
+  it is worth exactly that one pattern, which has no npcs spawned here, and needs a judgement about
+  `on_despawn` first — arming a timer as you despawn *is* the "npc is gone" case. Two attempts at the
+  change were wrong; see the log entry before trying a third.
 - **18 `--implemented` audit candidates** — `python tools/client-extract/audit_stale_claims.py
   --implemented`. Most are accurate past-tense history; the yield is in repeated claims.
 

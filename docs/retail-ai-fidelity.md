@@ -41404,3 +41404,62 @@ losing everything is losing the npc.
 **33 npcs got their fight back and 12 patterns came off the refused list**, at the cost of 38 handler
 drops that are now visible in the tally instead of being hidden inside an npc that vanished. Three
 count pins moved and every substantive assertion inside them passed at the new size.
+
+## Does retail's VM start timer 0 on its own? No — answered, and no change made
+
+`nothing arms the first timer` was the last refusal above twenty npcs with no explanation: a pattern
+with a rotation and no handler that arms a timer. The question it raised was whether retail's VM starts
+timer 0 by itself, in which case the extractor's requirement is wrong and those rungs should run.
+
+**It does not.** The nine patterns were named by instrumenting the refusal, and reading them settles it:
+
+| pattern | `add_battle_timer` anywhere in it | rotation waits on |
+|---|---:|---|
+| `DrGuard_FhA_CDrop` / `CDropA` / `WarpA` | **0** | index 1 |
+| `ND2_AhC_1`, `ND2_ReA_1` | **0** | index 0 |
+| `IDArena_S10_Monster_5` | 6, all inside `on_battle_timer` | index 0, 2, 3, 4 |
+| `IDArena_S5_Monster_9`, `..._MonsterDrop_9` | 1, inside `on_battle_timer` | index 1 |
+| `Cromede_Named_Angry` | 9, of which 2 in `on_arrived_at_waypoint` | index 0, 1 |
+
+**Five of the nine contain no `add_battle_timer` at all**, anywhere in the pattern. Three more arm only
+from `on_battle_timer` itself, so the cycle sustains itself and nothing ever enters it. Retail ships
+these unable to start.
+
+Three things say the VM does not auto-start:
+
+1. Half of these rotations wait on **index 1**, not index 0. An auto-start of timer 0 would not reach
+   them.
+2. **7,434 patterns arm from `on_enter_attack_state` explicitly.** If the VM started a timer by itself
+   there would be nothing for those to do, and no delay for it to use --- retail's arms all carry one.
+3. The five with no arm anywhere are the ordinary shape of leftover content, not of a mechanism.
+
+**The live cost is two npcs**: 214598 (`ND2_AhC_1`) and 214700 (`ND2_ReA_1`), and both belong to
+patterns with no arm in retail either. Nothing in play is being lost. The tally's "21 npcs" counts
+owners regardless of whether this port places them.
+
+### The one real flaw in the rule, found and deliberately not fixed
+
+`Cromede_Named_Angry` arms its rotation from `on_arrived_at_waypoint`, and the extractor refuses it
+because only a non-ending, non-*signal* handler counts as a way in. **The reason written beside that
+rule is about dying** --- "the npc is gone before it fires" --- which is true of `on_die` and
+`on_leave_attack_state` and of nothing else. An npc that has arrived at a waypoint is not gone. The
+rule is broader than its own justification.
+
+It was changed, and **the change was wrong twice**:
+
+- The first attempt asked whether a *non-ending handler was present in* `armed`. Signals are in `armed`
+  unconditionally --- they ride along for their spawns whether they arm anything or not --- so the test
+  answered nothing and took **all nine** patterns, including the five retail leaves inert. Caught
+  because +9 was not the +1 predicted.
+- The second asked the right question --- a non-ending handler that *actually arms* --- and took
+  exactly the one pattern. But `on_despawn` is a signal too, and arming a timer as you despawn is
+  precisely the "npc is gone" case the original reasoning covers. So the corrected rule was still too
+  broad, just less obviously.
+
+And `EveryRotationHasSomethingThatStartsIt` failed, which is the pin doing its job: it lists the seven
+handlers a rotation may be started from, and the change added an eighth without saying so.
+
+**Backed out.** The one beneficiary is not spawned in this port, the rule's right boundary needs a
+judgement about `on_despawn` that nothing here settles, and a pin disagrees. Recorded rather than
+changed: the rule is broader than its stated reason, correcting it is worth exactly one pattern with no
+npcs placed here, and `on_despawn` has to be decided first.
