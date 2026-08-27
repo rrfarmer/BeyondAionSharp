@@ -359,7 +359,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(109050, casts);
+		Assert.Equal(109131, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -803,7 +803,7 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(3229, spawns);
+		Assert.Equal(3245, spawns);
 	}
 	/// <summary><b>Getting home runs the handler retail hangs there, and starting to go home does not.</b></summary>
 	/// <remarks>
@@ -1098,8 +1098,8 @@ public sealed class BattleCycleAiTests
 				// Counted per row, not per branch: a branch that gains an action repeats its guards in
 				// this tally. 155 -> 164 when the ranked switch started emitting its hate alongside.
 				["who:TargetIsPlayer"] = 164,
-				["who:AttackedByPlayer"] = 84,
-				["who:SpelledByPlayer"] = 77,
+				["who:AttackedByPlayer"] = 86,
+				["who:SpelledByPlayer"] = 79,
 				["who:TargetIsNpc"] = 60,
 				["who:SeenIsPlayer"] = 73,
 				["who:EventTargetIsNpc"] = 41,

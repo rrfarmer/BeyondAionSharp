@@ -41360,3 +41360,47 @@ rungs should run. If it does not, retail has 251 inert rotations, which is not c
 Left as a question rather than a change, because the live cost is 21 npcs and answering it properly
 means instrumenting the extractor to name the nine, then reading each. Worth doing before anyone
 touches the arming rule for another reason.
+
+## Drop the handler, not the npc
+
+The skill-index rule was too broad in one way, and it had bitten once. An npc whose list cannot answer
+an index the pattern uses was dropped from **the whole pattern**, rotation included --- and the indices
+it counted were pooled across every handler, including the best-effort ones the extractor is otherwise
+happy to drop.
+
+**That is right for the rotation and wrong for the rest.** A rung that cannot cast promotes the next
+one, because branch lists are first-match-wins, so a rotation with a hole in it is a different rotation
+and the npc really should lose it. But an index named only by `on_talked_by_user` costing an npc its
+entire fight is a loss out of all proportion to the miss, and the extractor already knows which
+handlers are which: the best-effort ones are exactly the ones it drops when they cannot be *read*, and
+an index nobody can answer is the same kind of loss as a word nobody can say.
+
+`Krall_WnH` is what made it visible: reading its `on_spelled` for the first time raised the index bar
+past what its one npc could answer, and the pattern went from taken to refused. **Teaching the extractor
+a new condition should not be able to cost a pattern.**
+
+### The rule now
+
+Mandatory: the rotation's own indices, and `on_enter_attack_state`'s while there is a rotation to get
+into --- the two the extractor already treats as `CORE`. An npc that cannot answer those is dropped as
+before. Everything else costs the *handler* that names it, for the npc that cannot answer, and is
+counted in the dropped-handler tally rather than passed over.
+
+One edge needed closing. With no rotation nothing is mandatory, so an owner could reach the end having
+lost every handler it had and contribute no rows at all. That npc is dropped the old way, because
+losing everything is losing the npc.
+
+### What it was worth
+
+| | before | after |
+|---|---:|---:|
+| patterns | 3,968 | **3,980** |
+| npcs | 30,227 | **30,262** |
+| actions | 336,217 | **336,523** |
+| npcs dropped from a pattern outright | 203 | **170** |
+| patterns refused for indices | 36 | **25** |
+| handlers dropped (the smaller loss, in its place) | 554 | 592 |
+
+**33 npcs got their fight back and 12 patterns came off the refused list**, at the cost of 38 handler
+drops that are now visible in the tally instead of being hidden inside an npc that vanished. Three
+count pins moved and every substantive assertion inside them passed at the new size.

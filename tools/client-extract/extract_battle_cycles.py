@@ -1513,20 +1513,42 @@ def main() -> int:
                     refused_npcs["no rotation and nothing sayable outside waking"].update(owners)
                     continue
 
-            # A skill index is only meaningful against one npc's list, so an owner whose list cannot
-            # answer every index the pattern uses is dropped -- not the whole pattern.
-            wanted = {action[1] for branches in [cycle, *armed.values()]
-                      for _, _, _, actions in branches
-                      for action in actions if action[0] in ("skill", "skill_at", "skill_in_reach")}
-            # A guard naming a skill index counts too. Without this an owner missing the skill keeps
-            # the branch and answers the guard false forever, which reads as a mechanic that never
-            # fires rather than as an npc that should not have had the branch.
-            wanted |= {int(token.split(":")[1])
-                       for branches in [cycle, *armed.values()]
-                       for _, _, guards, _ in branches
-                       for token in guards if token.startswith("skillready:")}
-            if wanted:
-                able = [n for n in owners if all(i in skills.get(n, {}) for i in wanted)]
+            # A skill index is only meaningful against one npc's list, so an owner whose list
+            # cannot answer it loses something -- but **what it loses is the handler that names the
+            # index, not the whole pattern.**
+            #
+            # It used to lose the pattern. Every index across every handler was pooled, and an owner
+            # missing one of them was dropped entirely, rotation included. That is right for the
+            # rotation's own indices: a rung that cannot cast promotes the next one, because branch
+            # lists are first-match-wins, so a rotation with a hole in it is a different rotation.
+            # It is wrong for the rest, and the extractor already knows which are which -- the
+            # best-effort handlers are exactly the ones it drops when they cannot be *read*, and an
+            # index nobody can answer is the same kind of loss as a word nobody can say.
+            #
+            # `Krall_WnH` is the shape, and it cost a pattern: reading its `on_spelled` for the first
+            # time raised the index bar past what its one npc could answer, and the pattern went from
+            # taken to refused. Teaching the extractor a new condition should not be able to do that.
+            def indices_of(branches):
+                found = {action[1] for _, _, _, actions in branches
+                         for action in actions
+                         if action[0] in ("skill", "skill_at", "skill_in_reach")}
+                # A guard naming a skill index counts too. Without this an owner missing the skill
+                # keeps the branch and answers the guard false forever, which reads as a mechanic that
+                # never fires rather than as an npc that should not have had the branch.
+                found |= {int(token.split(":")[1])
+                          for _, _, guards, _ in branches
+                          for token in guards if token.startswith("skillready:")}
+                return found
+
+            # The rotation's indices, and `on_enter_attack_state`'s while there is a rotation to get
+            # into -- the two the extractor already treats as CORE. Everything else is best-effort.
+            mandatory = indices_of(cycle)
+            if cycle and "on_enter_attack_state" in armed:
+                mandatory |= indices_of(armed["on_enter_attack_state"])
+            optional = {h: indices_of(rungs) - mandatory for h, rungs in armed.items()}
+
+            if mandatory:
+                able = [n for n in owners if all(i in skills.get(n, {}) for i in mandatory)]
                 refused_owners += len(owners) - len(able)
                 owners = able
             if not owners:
@@ -1534,9 +1556,36 @@ def main() -> int:
                 refused_npcs["no npc here whose skill list answers the indices"].update(owners)
                 continue
 
+            # Which handlers each surviving owner cannot answer. Counted rather than silent: this is
+            # a loss, just a smaller one than losing the npc.
+            unanswerable = {}
+            keeping = []
+            for npc in owners:
+                short = {h for h, need in optional.items()
+                         if need and not all(i in skills.get(npc, {}) for i in need)}
+                # With no rotation there is nothing mandatory, so an owner can reach here having lost
+                # every handler it had. That npc contributes no rows and is a drop, not a keep --
+                # counted the old way, because losing everything is losing the npc.
+                if not cycle and short and len(short) == len(armed):
+                    refused_owners += 1
+                    continue
+                if short:
+                    unanswerable[npc] = short
+                    for handler in short:
+                        dropped[f"{handler}: an index this npc's skill list does not have"] += 1
+                        dropped_npcs[f"{handler}: an index this npc's skill list does not have"].add(npc)
+                keeping.append(npc)
+            owners = keeping
+            if not owners:
+                refused["no npc here whose skill list answers the indices"] += 1
+                continue
+
             patterns += 1
             for npc in owners:
+                short = unanswerable.get(npc, ())
                 for handler, branches in [("cycle", cycle), *armed.items()]:
+                    if handler in short:
+                        continue
                     for index, priority, guards, actions in branches:
                         guards = [f"skillready:{skills[npc][int(g.split(':')[1])]}"
                                   if g.startswith("skillready:") else g

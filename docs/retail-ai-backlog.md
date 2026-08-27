@@ -47,7 +47,7 @@ extractors' own tallies.
 
 | table | patterns | npcs |
 |---|---|---|
-| battle cycles | 3,968 | 30,227 |
+| battle cycles | 3,980 | 30,262 |
 | wake / idle | 1,572 | 3,949 |
 | death spawns | 678 | 1,927 |
 | guard answers | 4,242 answers | 3,696 |
@@ -231,20 +231,19 @@ argument for reading a handler's contents before its count.
 - **18 `--implemented` audit candidates** — `python tools/client-extract/audit_stale_claims.py
   --implemented`. Most are accurate past-tense history; the yield is in repeated claims.
 
-## D-bis. The skill-index rule, and what it costs
+## D-bis. The skill-index rule — done
 
-**An npc whose skill list cannot answer a pattern's indices is dropped from the pattern**, and if none
-is left the pattern is refused. 203 npcs and 36 patterns sit behind that today.
+**Was:** an npc whose skill list could not answer a pattern's indices was dropped from the whole
+pattern, rotation included, and the indices were pooled across every handler including the best-effort
+ones.
 
-The rule is too broad in one way, and it has now bitten once. The indices it counts include those in
-**best-effort handlers** — the ones the extractor is otherwise happy to drop. So teaching the extractor
-a new condition can *cost* a pattern: `Krall_WnH` was taken while its `on_spelled` was dropped whole,
-and reading that handler raised the index bar past what its one npc could answer. (That npc is not
-spawned here, so nothing in play changed.)
+**Now:** only the rotation's own indices are mandatory, plus `on_enter_attack_state`'s while there is a
+rotation to get into — the two the extractor already treats as `CORE`. An index named only by a
+best-effort handler costs that handler for that npc and is counted in the dropped tally.
 
-The narrower rule is to drop the *handler* rather than the *npc* when the unanswerable index appears
-only in a best-effort handler. Worth doing, and worth measuring first: 203 npcs are behind the current
-rule and some of them will be there for indices the rotation genuinely needs.
+**33 npcs got their fight back and 12 patterns came off the refused list** (203 → 170 npcs dropped
+outright, 36 → 25 patterns refused), at the cost of 38 handler drops that are now visible instead of
+hidden inside an npc that vanished. See the log entry *Drop the handler, not the npc*.
 
 ## E. Boundaries, not backlog
 
