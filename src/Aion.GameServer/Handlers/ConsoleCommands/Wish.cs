@@ -69,10 +69,11 @@ public class Wish : ConsoleCommand
         }
         else
         { // add item
-            if (!(admin.GetTarget() is Player player))
+            Player target = admin;
+
+            if (admin.GetTarget() is Player targetPlayer)
             {
-                PacketSendUtility.SendPacket(admin, SM_SYSTEM_MESSAGE.STR_INVALID_TARGET());
-                return;
+                target = targetPlayer;
             }
 
             string itemName = paramsArr[0];
@@ -96,7 +97,7 @@ public class Wish : ConsoleCommand
             if (itemTemplate != null)
             {
                 itemId = itemTemplate.GetTemplateId();
-                if (!AdminService.GetInstance().CanOperate(admin, player, itemId, "command ///wish"))
+                if (!AdminService.GetInstance().CanOperate(admin, target, itemId, "command ///wish"))
                     return;
 
                 long addedCount;
@@ -123,11 +124,11 @@ public class Wish : ConsoleCommand
                     {
                         newItem.SetTempering(enchant);
                     }
-                    addedCount = addCount - ItemService.AddItem(player, newItem);
+                    addedCount = addCount - ItemService.AddItem(target, newItem);
                 }
                 else
                 {
-                    addedCount = addCount - ItemService.AddItem(player, itemId, addCount, true);
+                    addedCount = addCount - ItemService.AddItem(target, itemId, addCount, true);
                 }
 
                 if (addedCount <= 0)
@@ -136,10 +137,10 @@ public class Wish : ConsoleCommand
                 }
                 else
                 {
-                    if (!admin.Equals(player))
+                    if (!admin.Equals(target))
                     {
-                        SendInfo(admin, "You gave " + addedCount + " " + ChatUtil.Item(itemId) + " to " + player.GetName() + ".");
-                        SendInfo(player, "You received " + addedCount + " " + ChatUtil.Item(itemId) + " from " + admin.GetName() + ".");
+                        SendInfo(admin, "You gave " + addedCount + " " + ChatUtil.Item(itemId) + " to " + target.GetName() + ".");
+                        SendInfo(target, "You received " + addedCount + " " + ChatUtil.Item(itemId) + " from " + admin.GetName() + ".");
                     }
                 }
             }

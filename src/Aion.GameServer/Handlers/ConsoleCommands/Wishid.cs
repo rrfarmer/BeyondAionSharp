@@ -24,17 +24,10 @@ public class Wishid : ConsoleCommand
             return;
         }
 
-        VisibleObject target = admin.GetTarget();
-        if (target == null)
+        Player target = admin;
+        if (admin.GetTarget() is Player player)
         {
-            PacketSendUtility.SendMessage(admin, "No target selected.");
-            return;
-        }
-
-        if (target is not Player player)
-        {
-            PacketSendUtility.SendMessage(admin, "This command can only be used on a player!");
-            return;
+            target = player;
         }
 
         // Java parity: Long.parseLong(params[0]) / Integer.parseInt(params[1]) throw NumberFormatException -> info(admin, null).
@@ -50,17 +43,17 @@ public class Wishid : ConsoleCommand
             return;
         }
 
-        if (!AdminService.GetInstance().CanOperate(admin, player, itemId, "command ///wishid"))
+        if (!AdminService.GetInstance().CanOperate(admin, target, itemId, "command ///wishid"))
             return;
 
-        long count = ItemService.AddItem(player, itemId, itemCount, true);
+        long count = ItemService.AddItem(target, itemId, itemCount, true);
 
         if (count == 0)
         {
-            if (admin != player)
+            if (admin != target)
             {
-                PacketSendUtility.SendMessage(admin, "You successfully gave " + itemCount + " x [item:" + itemId + "] to " + player.GetName() + ".");
-                PacketSendUtility.SendMessage(player, "You successfully received " + itemCount + " x [item:" + itemId + "] from " + admin.GetName() + ".");
+                PacketSendUtility.SendMessage(admin, "You successfully gave " + itemCount + " x [item:" + itemId + "] to " + target.GetName() + ".");
+                PacketSendUtility.SendMessage(target, "You successfully received " + itemCount + " x [item:" + itemId + "] from " + admin.GetName() + ".");
             }
             else
             {
