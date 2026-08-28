@@ -419,7 +419,7 @@ public class PlayerController : CreatureController<Player>
             PacketSendUtility.SendPacket(GetOwner(), SM_ATTACK_RESPONSE.STOP_WITHOUT_MESSAGE(gameStats.GetAttackCounter()));
             return;
         }
-        lastAttackMillis = milis;
+        EnterCombat(true);
 
         base.AttackTarget(target, time, true);
     }
@@ -445,7 +445,7 @@ public class PlayerController : CreatureController<Player>
             Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnAttack(new Aion.GameServer.QuestEngine.Model.QuestEnv(attacker, GetOwner(), 0));
         }
 
-        lastAttackedMillis = CurrentTimeMillis();
+        EnterCombat(false);
     }
 
     public void UseSkill(SkillTemplate template, int targetType, float x, float y, float z, int clientHitTime, int skillLevel)
@@ -773,5 +773,17 @@ public class PlayerController : CreatureController<Player>
     public long GetLastCombatTime()
     {
         return Math.Max(lastAttackedMillis, lastAttackMillis);
+    }
+
+    /// <summary>
+    /// Refreshes the combat timer, see <see cref="IsInCombat"/>.
+    /// </summary>
+    /// <param name="attacking">True, if the player attacked someone, false if he was attacked</param>
+    public void EnterCombat(bool attacking)
+    {
+        if (attacking)
+            lastAttackMillis = CurrentTimeMillis();
+        else
+            lastAttackedMillis = CurrentTimeMillis();
     }
 }

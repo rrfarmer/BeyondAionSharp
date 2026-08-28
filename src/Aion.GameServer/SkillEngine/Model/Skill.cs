@@ -692,6 +692,9 @@ public class Skill
         if (!blockedPenaltySkill)
             StartPenaltySkill();
 
+        if (IsHostile() && effector is Player hostileCaster)
+            hostileCaster.GetController().EnterCombat(true);
+
         bool isItemSkill = skillMethod == SkillMethod.ITEM;
         bool sentCastSpellResultPacket = false;
         // the client must learn the hit time before any HP change reaches it, or it updates the status bar before displaying the hit
@@ -779,7 +782,25 @@ public class Skill
         foreach (Effect effect in effects)
             effect.ApplyEffect();
 
+        if (IsHostile())
+        {
+            foreach (Effect effect in effects)
+            {
+                if (effect.GetEffected() is Player effectedPlayer)
+                    effectedPlayer.GetController().EnterCombat(false);
+            }
+        }
+
         AddResistedEffectHateAndNotifyFriends(effects);
+    }
+
+    /// <summary>
+    /// True, if this skill is meant to be used against enemies (which is what puts caster and targets into combat).
+    /// </summary>
+    private bool IsHostile()
+    {
+        SkillSubType subType = skillTemplate.GetSubType();
+        return subType == SkillSubType.ATTACK || subType == SkillSubType.DEBUFF;
     }
 
     private bool SendCastSpellEnd(int dashStatus, List<Effect> effects)
