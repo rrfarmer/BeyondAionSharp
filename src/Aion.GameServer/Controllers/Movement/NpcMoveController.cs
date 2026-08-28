@@ -69,21 +69,23 @@ public class NpcMoveController : CreatureMoveController<Npc>
         }
     }
 
-    public void MoveToPoint(float x, float y, float z)
+    public bool MoveToPoint(float x, float y, float z)
     {
-        if (Started.CompareAndSet(false, true))
+        bool startedMoving = Started.CompareAndSet(false, true);
+        if (!startedMoving && destination != Destination.POINT)
+            return false;
+        if (Owner.GetAi().IsLogging())
         {
-            if (Owner.GetAi().IsLogging())
-            {
-                AILogger.Moveinfo(Owner, "MC: moveToPoint started");
-            }
-            destination = Destination.POINT;
-            pointX = x;
-            pointY = y;
-            pointZ = z;
-            UpdateLastMove();
-            Owner.GetController().OnStartMove();
+            AILogger.Moveinfo(Owner, "MC: moveToPoint (startedMoving=" + startedMoving + ")");
         }
+        destination = Destination.POINT;
+        pointX = x;
+        pointY = y;
+        pointZ = z;
+        UpdateLastMove();
+        if (startedMoving)
+            Owner.GetController().OnStartMove();
+        return true;
     }
 
     public void ForcedMoveToPoint(float x, float y, float z)

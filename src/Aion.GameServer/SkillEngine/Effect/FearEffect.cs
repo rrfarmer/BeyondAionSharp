@@ -126,17 +126,20 @@ public class FearEffect : EffectTemplate
             this.effected = effected;
         }
 
+        // The flee point is farther than the target travels per tick (1 sec):
+        // the target never reaches it between ticks and keeps running smoothly — same as retail behavior.
+        private const float FLEE_SECONDS = 2.5f;
+
         public void Run()
         {
             if (effected.GetEffectController().IsUnderFear() && PositionUtil.IsInRange(effected, effector, 40))
             {
                 float angle = PositionUtil.CalculateAngleFrom(effector, effected);
-                float maxDistance = effected.GetGameStats().GetMovementSpeedFloat();
+                float maxDistance = effected.GetGameStats().GetMovementSpeedFloat() * FLEE_SECONDS;
                 Vector3f closestCollision = GeoService.GetInstance().FindMovementCollision(effected, angle, maxDistance);
-                if (effected is Npc)
+                if (effected is Npc npc)
                 {
-                    ((Npc)effected).GetMoveController().ResetMove();
-                    ((Npc)effected).GetMoveController().MoveToPoint(closestCollision.GetX(), closestCollision.GetY(), closestCollision.GetZ());
+                    npc.GetMoveController().MoveToPoint(closestCollision.GetX(), closestCollision.GetY(), closestCollision.GetZ());
                 }
                 else
                 {
