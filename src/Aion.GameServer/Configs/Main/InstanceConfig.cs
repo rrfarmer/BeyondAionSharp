@@ -33,11 +33,24 @@ public static class InstanceConfig
     [Property(key: "gameserver.instance.scaling.enable", defaultValue: "false")]
     public static bool INSTANCE_SCALING_ENABLE = false;
 
+    [Property(key: "gameserver.instance.scaling.max_level_diff", defaultValue: "5")]
+    public static int INSTANCE_SCALING_MAX_LEVEL_DIFF = 5;
+
+    [Property(key: "gameserver.instance.scaling.npc_min_rating", defaultValue: "ELITE")]
+    public static Aion.GameServer.Model.Templates.Npc.NpcRating INSTANCE_SCALING_NPC_MIN_RATING =
+        Aion.GameServer.Model.Templates.Npc.NpcRating.ELITE;
+
+    [Property(key: "gameserver.instance.scaling.hp_scale_factor", defaultValue: "0.75")]
+    public static float INSTANCE_SCALING_HP_SCALE_FACTOR = 0.75f;
+
     [Property(key: "gameserver.instance.scaling.hp_floor", defaultValue: "0.5")]
     public static float INSTANCE_SCALING_HP_FLOOR = 0.5f;
 
-    [Property(key: "gameserver.instance.scaling.dmg_floor", defaultValue: "0.5")]
-    public static float INSTANCE_SCALING_DMG_FLOOR = 0.5f;
+    [Property(key: "gameserver.instance.scaling.dmg_scale_factor", defaultValue: "0.5")]
+    public static float INSTANCE_SCALING_DMG_SCALE_FACTOR = 0.5f;
+
+    [Property(key: "gameserver.instance.scaling.dmg_floor", defaultValue: "0.75")]
+    public static float INSTANCE_SCALING_DMG_FLOOR = 0.75f;
 
     [Property(key: "gameserver.instance.scaling.excluded_maps", defaultValue: "")]
     public static ISet<int> INSTANCE_SCALING_EXCLUDED_MAPS = new HashSet<int>();

@@ -70,6 +70,8 @@ public sealed class InstanceScaler : IStatOwner
 
     private static bool ShouldScale(Npc npc, WorldMapInstance instance)
     {
+        if (npc.GetRating() < InstanceConfig.INSTANCE_SCALING_NPC_MIN_RATING)
+            return false;
         if (npc.IsDead())
             return false;
         Aion.GameServer.Model.GameObjects.Players.Player? player = instance.GetPlayersInside().FirstOrDefault(p => !p.IsStaff());
@@ -83,11 +85,15 @@ public sealed class InstanceScaler : IStatOwner
             npc.GetGameStats().AddEffect(Instance, scaling.StatFunctions);
     }
 
-    public static float CalculateMultiplier(WorldMapInstance instance, float floor, int playerCount) =>
-        CalculateMultiplier(instance.GetMaxPlayers(), floor, playerCount);
+    public static float CalculateMultiplier(WorldMapInstance instance, float floor, float scaleFactor, int playerCount) =>
+        CalculateMultiplier(instance.GetMaxPlayers(), floor, scaleFactor, playerCount);
 
-    internal static float CalculateMultiplier(int maxPlayers, float floor, int playerCount) =>
-        Math.Max(floor, (float)Math.Min(playerCount, maxPlayers) / maxPlayers);
+    internal static float CalculateMultiplier(int maxPlayers, float floor, float scaleFactor, int playerCount)
+    {
+        float multiplier = (float)Math.Min(playerCount, maxPlayers) / maxPlayers;
+        multiplier = 1 - (1 - multiplier) * scaleFactor;
+        return Math.Max(floor, multiplier);
+    }
 
     internal sealed class Scaling
     {
@@ -97,8 +103,32 @@ public sealed class InstanceScaler : IStatOwner
 
         internal bool Update(WorldMapInstance instance)
         {
-            int currentPlayerCount = instance.GetPlayersInside().Count(p => !p.IsStaff());
+            List<Aion.GameServer.Model.GameObjects.Players.Player> players =
+                instance.GetPlayersInside().Where(p => !p.IsStaff()).ToList();
+            int currentPlayerCount = players.Count;
+            if (currentPlayerCount < instance.GetMaxPlayers() && IsLowLevelInstanceWithHighLevelPlayers(instance, players))
+                currentPlayerCount = instance.GetMaxPlayers(); // disable scaling
             return Update(currentPlayerCount, instance.GetMaxPlayers());
+        }
+
+        private static bool IsLowLevelInstanceWithHighLevelPlayers(
+            WorldMapInstance instance, List<Aion.GameServer.Model.GameObjects.Players.Player> players)
+        {
+            if (players.Count == 0)
+                return false;
+            int maxAllowedLevel = GetInstanceEnterMinLevel(instance, players) + InstanceConfig.INSTANCE_SCALING_MAX_LEVEL_DIFF;
+            return players.Max(p => p.GetLevel()) > maxAllowedLevel;
+        }
+
+        private static int GetInstanceEnterMinLevel(
+            WorldMapInstance instance, List<Aion.GameServer.Model.GameObjects.Players.Player> players)
+        {
+            Aion.GameServer.Model.Templates.InstanceCooltime ct =
+                Aion.GameServer.Dataholders.DataManager.INSTANCE_COOLTIME_DATA.GetInstanceCooltimeByWorldId(instance.GetMapId());
+            return players
+                .Select(p => p.GetRace() == Aion.GameServer.Model.Race.ASMODIANS ? ct.GetEnterMinLevelDark() : ct.GetEnterMinLevelLight())
+                .DefaultIfEmpty(1)
+                .Min();
         }
 
         internal bool Update(int currentPlayerCount, int maxPlayers)
@@ -113,8 +143,10 @@ public sealed class InstanceScaler : IStatOwner
         internal static IReadOnlyList<InstanceScalerStatFunction> CreateStatFunctions(int maxPlayers, int playerCount)
         {
             var statFunctions = new List<InstanceScalerStatFunction>();
-            float hpMultiplier = CalculateMultiplier(maxPlayers, InstanceConfig.INSTANCE_SCALING_HP_FLOOR, playerCount);
-            float damageMultiplier = CalculateMultiplier(maxPlayers, InstanceConfig.INSTANCE_SCALING_DMG_FLOOR, playerCount);
+            float hpMultiplier = CalculateMultiplier(
+                maxPlayers, InstanceConfig.INSTANCE_SCALING_HP_FLOOR, InstanceConfig.INSTANCE_SCALING_HP_SCALE_FACTOR, playerCount);
+            float damageMultiplier = CalculateMultiplier(
+                maxPlayers, InstanceConfig.INSTANCE_SCALING_DMG_FLOOR, InstanceConfig.INSTANCE_SCALING_DMG_SCALE_FACTOR, playerCount);
             if (hpMultiplier != 1)
                 statFunctions.Add(new InstanceScalerStatFunction(StatEnum.MAXHP, hpMultiplier));
             if (damageMultiplier != 1)
