@@ -41,14 +41,20 @@ public class TamperingAction : AbstractItemAction
                 return ValueTask.CompletedTask;
             }
 
-            if (!player.GetInventory().DecreaseByObjectId(parntObjectId, 1))
+            int maxTemp = targetItem.GetItemTemplate().GetMaxTampering();
+            if (targetItem.GetTempering() >= maxTemp)
             {
                 Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parntObjectId, parentItemId, 0, 2, 0));
                 return ValueTask.CompletedTask;
             }
 
-            int maxTemp = targetItem.GetItemTemplate().GetMaxTampering();
-            if (targetItem.GetTempering() < maxTemp)
+            if (!player.GetInventory().DecreaseByObjectId(parntObjectId, 1))
+            {
+                Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parntObjectId, parentItemId, 0, 2, 0));
+                return ValueTask.CompletedTask;
+            }
+            player.StartCooldown(parentItem);
+
             {
                 float temperingChance = CalculateChance(player, targetItem);
                 if (Aion.GameServer.Commons.Utils.Rnd.Chance() < temperingChance)
@@ -155,10 +161,8 @@ public class TamperingAction : AbstractItemAction
 
         public override void Abort()
         {
-            player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
-            player.RemoveItemCoolDown(parentItem.GetItemTemplate().GetUseLimits().GetDelayId());
+            player.GetController().CancelUseItem();
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_ITEM_AUTHORIZE_CANCEL(targetItem.GetL10n()));
-            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parntObjectId, parentItemId, 0, 3, 0), true);
             player.GetObserveController().RemoveObserver(this);
         }
     }

@@ -89,7 +89,6 @@ public class SkillUseAction : AbstractItemAction
         Aion.GameServer.SkillEngine.Model.Skill skill = Aion.GameServer.SkillEngine.SkillEngine.GetInstance().GetSkill(player, skillid, level, player.GetTarget(), parentItem.GetItemTemplate());
         if (skill != null)
         {
-            player.GetController().CancelUseItem();
             skill.SetItemObjectId(parentItem.GetObjectId());
             skill.UseSkill();
         }

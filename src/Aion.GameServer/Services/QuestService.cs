@@ -1064,7 +1064,8 @@ public sealed class QuestService
             {
                 if (qi != null)
                 {
-                    long count = player.GetInventory().GetItemCountByItemId(qi.GetItemId());
+                    // Only remove the amount the quest actually needs, not the player's whole stack of that item
+                    long count = System.Math.Min(qi.GetCount(), player.GetInventory().GetItemCountByItemId(qi.GetItemId()));
                     if (count > 0)
                         player.GetInventory().DecreaseByItemId(qi.GetItemId(), count, qs.GetStatus());
                 }

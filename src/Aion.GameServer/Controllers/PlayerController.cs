@@ -463,6 +463,11 @@ public class PlayerController : CreatureController<Player>
 
         if (skill != null)
         {
+            // item casts get interrupted by skill usage (skill casts don't, see PlayerRestrictions#canUseSkill). this must
+            // happen before checking the restrictions, since Creature#canAttack returns false as long as we are casting
+            if (player.IsCasting() && player.GetCastingSkill().GetItemTemplate() != null)
+                CancelCurrentSkill(null);
+
             if (!Aion.GameServer.Restrictions.PlayerRestrictions.CanUseSkill(player, skill))
                 return;
 
@@ -531,7 +536,6 @@ public class PlayerController : CreatureController<Player>
         else if (castingSkill.GetSkillMethod() == Skill.SkillMethod.ITEM)
         {
             PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_ITEM_CANCELED());
-            player.RemoveItemCoolDown(castingSkill.GetItemTemplate().GetUseLimits().GetDelayId());
             PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), castingSkill.GetFirstTarget().GetObjectId(),
                 castingSkill.GetItemObjectId(), castingSkill.GetItemTemplate().GetTemplateId(), 0, 3, 0), true);
         }
@@ -544,12 +548,16 @@ public class PlayerController : CreatureController<Player>
 
     public override void CancelUseItem()
     {
+        CancelUseItem(true);
+    }
+
+    public void CancelUseItem(bool sendCancelAnimation)
+    {
         Player player = GetOwner();
         Item usingItem = player.GetUsingItem();
         player.SetUsingItem(null);
-        if (HasTask(Aion.GameServer.Model.TaskId.ITEM_USE))
+        if (CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE) != null && sendCancelAnimation)
         {
-            CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
             PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), usingItem == null ? 0 : usingItem.GetObjectId(),
                 usingItem == null ? 0 : usingItem.GetItemTemplate().GetTemplateId(), 0, 3, 0), true);
         }

@@ -21519,6 +21519,12 @@ public sealed class SM_SYSTEM_MESSAGE : AionServerPacket
         return new SM_SYSTEM_MESSAGE(1401122);
     }
 
+    /* Assembly canceled. */
+    public static SM_SYSTEM_MESSAGE STR_ASSEMBLY_ITEM_CANCELED()
+    {
+        return new SM_SYSTEM_MESSAGE(1401123);
+    }
+
     /* This emblem is already registered. */
     public static SM_SYSTEM_MESSAGE STR_GUILD_ALREADY_POSTED_THIS_EMBLEM()
     {
@@ -22335,6 +22341,60 @@ public sealed class SM_SYSTEM_MESSAGE : AionServerPacket
         return new SM_SYSTEM_MESSAGE(1401639, itemL10n);
     }
 
+    /* No Abyss Points can be extracted from %0. */
+    public static SM_SYSTEM_MESSAGE STR_MSG_AP_DECOMPOSE_CANNOT(string itemL10n)
+    {
+        return new SM_SYSTEM_MESSAGE(1401640, itemL10n);
+    }
+
+    /* The level of %0 is below %1. No Abyss Points can be obtained. */
+    public static SM_SYSTEM_MESSAGE STR_MSG_AP_DECOMPOSE_WRONG_LEVEL(string extractItemL10n, string targetItemL10n)
+    {
+        return new SM_SYSTEM_MESSAGE(1401641, extractItemL10n, targetItemL10n);
+    }
+
+    /* The value of %0 is lower than %1, so no Abyss Points can be obtained. */
+    public static SM_SYSTEM_MESSAGE STR_MSG_AP_DECOMPOSE_WRONG_QUALITY(string extractItemL10n, string targetItemL10n)
+    {
+        return new SM_SYSTEM_MESSAGE(1401642, extractItemL10n, targetItemL10n);
+    }
+
+    /* No Abyss Points can be extracted from %1 with %0. */
+    public static SM_SYSTEM_MESSAGE STR_MSG_AP_DECOMPOSE_WRONG_TARGET_ITEM_CATEGORY(string extractItemL10n, string targetItemL10n)
+    {
+        return new SM_SYSTEM_MESSAGE(1401643, extractItemL10n, targetItemL10n);
+    }
+
+    /* The extraction of Abyss Points from %0 was interrupted. */
+    public static SM_SYSTEM_MESSAGE STR_MSG_AP_DECOMPOSE_ITEM_CANCELED(string itemL10n)
+    {
+        return new SM_SYSTEM_MESSAGE(1401644, itemL10n);
+    }
+
+    /* Abyss Points were extracted from %0. */
+    public static SM_SYSTEM_MESSAGE STR_MSG_AP_DECOMPOSE_ITEM_SUCCEED(string itemL10n)
+    {
+        return new SM_SYSTEM_MESSAGE(1401645, itemL10n);
+    }
+
+    /* Abyss Points cannot be extracted from an equipped object. */
+    public static SM_SYSTEM_MESSAGE STR_MSG_AP_DECOMPOSE_WRONG_EQUIPED()
+    {
+        return new SM_SYSTEM_MESSAGE(1401646);
+    }
+
+    /* You have reached the maximum number of Abyss Points for Level %0. The extraction of %0 has been cancelled. */
+    public static SM_SYSTEM_MESSAGE STR_MSG_AP_DECOMPOSE_ITEM_CANCELED_BAN(string itemL10n)
+    {
+        return new SM_SYSTEM_MESSAGE(1401647, itemL10n);
+    }
+
+    /* You have received %num0 Abyss Point(s). */
+    public static SM_SYSTEM_MESSAGE STR_MSG_AP_DECOMPOSE_ITEM_SUCCEED_AP(int num0)
+    {
+        return new SM_SYSTEM_MESSAGE(1401656, num0);
+    }
+
     /* The Idian level is too high for the selected item. */
     public static SM_SYSTEM_MESSAGE STR_MSG_POLISH_WRONG_LEVEL()
     {
@@ -22351,6 +22411,12 @@ public sealed class SM_SYSTEM_MESSAGE : AionServerPacket
     public static SM_SYSTEM_MESSAGE STR_MSG_POLISH_CHANGE_CONDITION_END(string weaponL10n)
     {
         return new SM_SYSTEM_MESSAGE(1401652, weaponL10n);
+    }
+
+    /* Idian socketing for %0 was cancelled. */
+    public static SM_SYSTEM_MESSAGE STR_MSG_POLISH_CANCELED(string weaponL10n)
+    {
+        return new SM_SYSTEM_MESSAGE(1401653, weaponL10n);
     }
 
     /* A third wave of pillagers will arrive in 10 seconds! */

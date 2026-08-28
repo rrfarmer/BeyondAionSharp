@@ -483,8 +483,7 @@ public class StigmaService
 
         public override void Abort()
         {
-            player.GetController().CancelTask(TaskId.ITEM_USE);
-            player.RemoveItemCoolDown(stigma.GetItemTemplate().GetUseLimits().GetDelayId());
+            player.GetController().CancelUseItem(false);
             PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_ITEM_CANCELED());
             PacketSendUtility.BroadcastPacket(player,
                 new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentObjectId, chargeStone.GetObjectId(), parentItemId, 0, 2, 0), true);

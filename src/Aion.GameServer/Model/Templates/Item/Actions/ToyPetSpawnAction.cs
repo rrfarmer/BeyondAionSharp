@@ -51,19 +51,40 @@ public class ToyPetSpawnAction : AbstractItemAction
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         // ShowAction
-        player.GetController().CancelUseItem();
+        int castingDelay = parentItem.GetItemTemplate().GetCastingDelay();
+        if (castingDelay <= 0)
+        {
+            FinishUse(player, parentItem);
+            return;
+        }
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
-            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 10000, 0, 0), true);
+            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), castingDelay, 0, 0), true);
         ItemUseObserver observer = new ToyPetUseObserver(player, parentItem);
         player.GetObserveController().Attach(observer);
         player.GetController().AddTask(Aion.GameServer.Model.TaskId.ITEM_USE, Aion.GameServer.Utils.ThreadPoolManager.GetInstance().Schedule(ct =>
         {
-            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
-                new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 0, 1, 1), true);
             player.GetObserveController().RemoveObserver(observer);
-            // RemoveKisk
-            if (!player.GetInventory().DecreaseByObjectId(parentItem.GetObjectId(), 1))
-                return ValueTask.CompletedTask;
+            FinishUse(player, parentItem);
+            return ValueTask.CompletedTask;
+        }, TimeSpan.FromMilliseconds(castingDelay)));
+    }
+
+    private void FinishUse(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem)
+    {
+        if (!CanAct(player, parentItem, null))
+        {
+            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
+                new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 0, 2, 0), true);
+            return;
+        }
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_USE_ITEM(parentItem.GetL10n()));
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
+            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 0, 1, 1), true);
+        // RemoveKisk
+        if (!player.GetInventory().DecreaseByObjectId(parentItem.GetObjectId(), 1))
+            return;
+        player.StartCooldown(parentItem);
+        {
             float x = player.GetX();
             float y = player.GetY();
             float z = player.GetZ();
@@ -83,15 +104,13 @@ public class ToyPetSpawnAction : AbstractItemAction
             kisk.GetController().AddTask(Aion.GameServer.Model.TaskId.DESPAWN, task);
 
             // ShowFinalAction
-            player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
             Aion.GameServer.Services.KiskService.GetInstance().RegKisk(kisk, objOwnerId);
 
             if (kisk.GetMaxMembers() > 1)
                 kisk.GetController().OnDialogRequest(player);
             else
                 Aion.GameServer.Services.KiskService.GetInstance().OnBind(kisk, player);
-            return ValueTask.CompletedTask;
-        }, TimeSpan.FromMilliseconds(10000)));
+        }
     }
 
     private bool IsPutKiskZone(Aion.GameServer.Model.GameObjects.Players.Player player)
@@ -118,8 +137,7 @@ public class ToyPetSpawnAction : AbstractItemAction
 
         public override void Abort()
         {
-            player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
-            player.RemoveItemCoolDown(parentItem.GetItemTemplate().GetUseLimits().GetDelayId());
+            player.GetController().CancelUseItem(false);
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ITEM_CANCELED());
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
                 new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 2, 0), true);

@@ -52,6 +52,28 @@ public class PortalCooldownList
         return portalCooldowns == null ? null : (portalCooldowns.TryGetValue(worldId, out PortalCooldown cd) ? cd : null);
     }
 
+    /// <summary>
+    /// The cooldown of the given world, creating it if absent, or null if the world has no entry limit (the client
+    /// displays such instances as unlimited, as long as we don't send any entry info for them).
+    /// </summary>
+    public PortalCooldown GetOrCreatePortalCooldown(int worldId)
+    {
+        long reuseTime = Aion.GameServer.Dataholders.DataManager.INSTANCE_COOLTIME_DATA.CalculateInstanceEntranceCooltime(owner, worldId);
+        return reuseTime == 0 ? null : GetOrCreatePortalCooldown(worldId, reuseTime);
+    }
+
+    private PortalCooldown GetOrCreatePortalCooldown(int worldId, long reuseTime)
+    {
+        lock (this)
+        {
+            if (portalCooldowns == null)
+                portalCooldowns = new Dictionary<int, PortalCooldown>();
+            if (!portalCooldowns.TryGetValue(worldId, out PortalCooldown cd))
+                portalCooldowns[worldId] = cd = new PortalCooldown(worldId, reuseTime, 0);
+            return cd;
+        }
+    }
+
     public Dictionary<int, PortalCooldown> GetPortalCoolDowns()
     {
         return portalCooldowns;
@@ -64,14 +86,7 @@ public class PortalCooldownList
 
     public void AddPortalCooldown(int worldId, long useDelay)
     {
-        if (portalCooldowns == null)
-            portalCooldowns = new Dictionary<int, PortalCooldown>();
-
-        if (!portalCooldowns.TryGetValue(worldId, out PortalCooldown portalCooldown) || portalCooldown == null)
-            portalCooldown = new PortalCooldown(worldId, useDelay, 0);
-
-        portalCooldown.IncreaseEnterCount();
-        portalCooldowns[worldId] = portalCooldown;
+        GetOrCreatePortalCooldown(worldId, useDelay).IncreaseEnterCount();
 
         Aion.GameServer.Dao.PortalCooldownsDAO.StorePortalCooldowns(owner);
 

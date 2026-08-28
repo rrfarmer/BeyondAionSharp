@@ -27,7 +27,7 @@ public partial class ItemTemplate : VisibleObjectTemplate
     [XmlAttribute("pack_count")] public int packCount;
     [XmlAttribute("level")] public int level;
     [XmlAttribute("quality")] public ItemQuality itemQuality;
-    [XmlAttribute("item_type")] public ItemType itemType;
+    [XmlAttribute("item_type")] public ItemType itemType = ItemType.NORMAL;
     [XmlAttribute("attack_type")] public ItemAttackType attackType;
     [XmlAttribute("attack_gap")] public float attackGap;
     [XmlAttribute("desc")] public int description;
@@ -40,7 +40,9 @@ public partial class ItemTemplate : VisibleObjectTemplate
     [XmlElement("godstone")] public GodstoneInfo godstoneInfo;
     [XmlElement("stigma")] public Stigma stigma;
     [XmlAttribute("name")] public string name;
-    [XmlIgnore] public byte[] levelRestrictions;
+    private static readonly byte[] DEFAULT_LEVEL_RESTRICTION = new byte[] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+
+    [XmlIgnore] public byte[] levelRestrictions = DEFAULT_LEVEL_RESTRICTION;
     [XmlIgnore] public byte[] maxLevelRestrictions;
     [XmlAttribute("m_slots")] public int manastoneSlots;
     [XmlAttribute("s_slots")] public int specialSlots;
@@ -48,6 +50,7 @@ public partial class ItemTemplate : VisibleObjectTemplate
     [XmlAttribute("max_enchant_bonus")] public int maxEnchantBonus;
     [XmlAttribute("enchant_type")] public int enchantType;
     [XmlAttribute("max_tampering")] public int maxTampering;
+    [XmlAttribute("casting_delay")] public int castingDelay;
     [XmlAttribute("temp_exchange_time")] public int temExchangeTime;
     [XmlAttribute("expire_time")] public int expireTime;
     [XmlElement("weapon_stats")] public WeaponStats weaponStats;
@@ -298,6 +301,11 @@ public partial class ItemTemplate : VisibleObjectTemplate
     public bool IsKinah()
     {
         return itemId == Aion.GameServer.Model.Items.ItemId.KINAH;
+    }
+
+    public int GetCastingDelay()
+    {
+        return castingDelay;
     }
 
     public bool IsStigma()

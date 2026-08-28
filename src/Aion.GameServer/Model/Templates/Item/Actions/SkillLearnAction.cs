@@ -44,14 +44,13 @@ public class SkillLearnAction : AbstractItemAction
 
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
-        // item animation and message
-        Aion.GameServer.Model.Templates.Items.ItemTemplate itemTemplate = parentItem.GetItemTemplate();
-        player.GetController().CancelUseItem();
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
-            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), itemTemplate.GetTemplateId()), true);
+            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId()), true);
 
-        // add skill
+        // add skill (the "you learned" message is embedded in SM_SKILL_LIST, sent by SkillLearnService)
         Aion.GameServer.Services.SkillLearnService.LearnSkillBook(player, skillid);
+
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_USE_ITEM(parentItem.GetL10n()));
 
         // remove book from inventory (assuming it's not stackable)
         Item item = player.GetInventory().GetItemByObjId(parentItem.GetObjectId());

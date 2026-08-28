@@ -7,21 +7,37 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 /// <summary>Java parity: model/templates/item/actions/ApExtractAction.</summary>
 public class ApExtractAction : AbstractItemAction
 {
+    private const int CASTING_DELAY = 3000;
+
     [XmlAttribute("target")] public UseTarget target;
     [XmlAttribute("rate")] public float rate;
 
     public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         if (targetItem == null || !targetItem.CanApExtract())
+        {
+            if (targetItem != null)
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_AP_DECOMPOSE_CANNOT(targetItem.GetL10n()));
             return false;
+        }
+        if (targetItem.IsEquipped())
+        {
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_AP_DECOMPOSE_WRONG_EQUIPED());
+            return false;
+        }
         if (parentItem.GetItemTemplate().GetLevel() < targetItem.GetItemTemplate().GetLevel())
+        {
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_AP_DECOMPOSE_WRONG_LEVEL(parentItem.GetL10n(), targetItem.GetL10n()));
             return false;
-        if (parentItem.GetItemTemplate().GetItemQuality() != targetItem.GetItemTemplate().GetItemQuality())
+        }
+        if (parentItem.GetItemTemplate().GetItemQuality().GetQualityId() < targetItem.GetItemTemplate().GetItemQuality().GetQualityId())
+        {
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,
+                Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_AP_DECOMPOSE_WRONG_QUALITY(parentItem.GetL10n(), targetItem.GetL10n()));
             return false;
+        }
 
-        // TODO: ApExtractTarget.OTHER, ApExtractTarget.ALL. Find out what should go there
-
-        UseTarget? type = null;
+        UseTarget type;
         switch (targetItem.GetItemTemplate().GetItemGroup())
         {
             case ItemGroup.SWORD:
@@ -39,6 +55,11 @@ public class ApExtractAction : AbstractItemAction
             case ItemGroup.CANNON:
                 type = UseTarget.WEAPON;
                 break;
+            case ItemGroup.TORSO:
+            case ItemGroup.PANTS:
+            case ItemGroup.SHOULDER:
+            case ItemGroup.GLOVE:
+            case ItemGroup.SHOES:
             case ItemGroup.RB_TORSO:
             case ItemGroup.RB_PANTS:
             case ItemGroup.RB_SHOULDER:
@@ -74,34 +95,91 @@ public class ApExtractAction : AbstractItemAction
             case ItemGroup.HEAD:
                 type = UseTarget.ACCESSORY;
                 break;
+            case ItemGroup.WING:
+                type = UseTarget.WING;
+                break;
             case ItemGroup.NONE:
-                if (targetItem.GetItemTemplate().GetItemGroup() == ItemGroup.WING)
-                {
-                    type = UseTarget.WING;
-                    break;
-                }
-                return false;
+                // e.g. non-equipment "junk" items retail still allows AP extraction on (confirmed only matched by the OTHER/ALL target types)
+                type = UseTarget.OTHER;
+                break;
             default:
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_AP_DECOMPOSE_CANNOT(targetItem.GetL10n()));
                 return false;
         }
-        return (target == UseTarget.EQUIPMENT || target == type);
+        // EQUIPMENT is a shorthand for "any of WEAPON/ARMOR/ACCESSORY/WING", confirmed on retail it does NOT also match OTHER
+        if (target != UseTarget.ALL && target != type && !(target == UseTarget.EQUIPMENT && type != UseTarget.OTHER))
+        {
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_AP_DECOMPOSE_CANNOT(targetItem.GetL10n()));
+            return false;
+        }
+        return true;
     }
 
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
+            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), CASTING_DELAY, 0, 0), true);
+
+        var observer = new ApExtractObserver(player, parentItem, targetItem);
+        player.GetObserveController().Attach(observer);
+        player.GetController().AddTask(Aion.GameServer.Model.TaskId.ITEM_USE, Aion.GameServer.Utils.ThreadPoolManager.GetInstance().Schedule(ct =>
+        {
+            player.GetObserveController().RemoveObserver(observer);
+            FinishUse(player, parentItem, targetItem);
+            return System.Threading.Tasks.ValueTask.CompletedTask;
+        }, System.TimeSpan.FromMilliseconds(CASTING_DELAY)));
+    }
+
+    // Java parity: anonymous ItemUseObserver in act.
+    private sealed class ApExtractObserver : Aion.GameServer.Controllers.Observer.ItemUseObserver
+    {
+        private readonly Aion.GameServer.Model.GameObjects.Players.Player player;
+        private readonly Item parentItem;
+        private readonly Item targetItem;
+
+        public ApExtractObserver(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem)
+        {
+            this.player = player;
+            this.parentItem = parentItem;
+            this.targetItem = targetItem;
+        }
+
+        public override void Abort()
+        {
+            player.GetController().CancelUseItem(false);
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_AP_DECOMPOSE_ITEM_CANCELED(targetItem.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
+                new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 0, 2, 0), true);
+            player.GetObserveController().RemoveObserver(this);
+        }
+    }
+
+    private void FinishUse(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem)
+    {
+        bool success = ExtractAp(player, parentItem, targetItem);
+        if (success)
+            player.StartCooldown(parentItem);
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
+            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 0, success ? 1 : 2, 0), true);
+    }
+
+    private bool ExtractAp(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem)
+    {
+        if (!CanAct(player, parentItem, targetItem))
+            return false;
         Aion.GameServer.Model.Templates.Items.Acquisition acquisition = targetItem.GetItemTemplate().GetAcquisition();
         if (acquisition == null || acquisition.GetRequiredAp() == 0)
-            return;
-        int ap = (int)(acquisition.GetRequiredAp() * rate);
+            return false;
         Aion.GameServer.Model.Items.Storage.Storage inventory = player.GetInventory();
-
-        if (inventory.Delete(targetItem) != null)
+        if (!inventory.DecreaseByObjectId(parentItem.GetObjectId(), 1) || inventory.Delete(targetItem) == null)
         {
-            if (inventory.DecreaseByObjectId(parentItem.GetObjectId(), 1))
-                Aion.GameServer.Services.Abyss.AbyssPointsService.AddAp(player, ap);
-        }
-        else
             Aion.GameServer.Utils.Audit.AuditLogger.Log(player, "possibly using item AP extraction hack");
+            return false;
+        }
+        int ap = (int)(acquisition.GetRequiredAp() * rate);
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_AP_DECOMPOSE_ITEM_SUCCEED(targetItem.GetL10n()));
+        Aion.GameServer.Services.Abyss.AbyssPointsService.AddAp(player, ap, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_AP_DECOMPOSE_ITEM_SUCCEED_AP);
+        return true;
     }
 
     public UseTarget GetTarget()

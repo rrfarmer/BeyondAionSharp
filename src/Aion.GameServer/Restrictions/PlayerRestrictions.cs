@@ -62,9 +62,8 @@ public class PlayerRestrictions
         {
             return false;
         }
-        // check if is casting to avoid multicast exploit
-        // TODO cancel skill if other is used
-        if (player.IsCasting())
+        // item casts are interruptible (PlayerController cancels them), skill casts are not
+        if (player.IsCasting() && player.GetCastingSkill().GetItemTemplate() == null)
             return false;
 
         if (!player.CanAttack() && !template.HasEvadeEffect())
@@ -382,6 +381,13 @@ public class PlayerRestrictions
             return false;
         }
 
+        // Checked before the "no actions" fallback below so a race mismatch reports correctly even without one
+        if (item.GetItemTemplate().GetRace() != Race.PC_ALL && item.GetItemTemplate().GetRace() != player.GetRace())
+        {
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_CANNOT_USE_ITEM_INVALID_RACE());
+            return false;
+        }
+
         ItemActions itemActions = item.GetItemTemplate().GetActions();
         if (itemActions == null || itemActions.GetItemActions().Count == 0)
         {
@@ -396,12 +402,6 @@ public class PlayerRestrictions
         if (limits.GetGenderPermitted() != null && limits.GetGenderPermitted() != player.GetGender())
         {
             PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_CANNOT_USE_ITEM_INVALID_GENDER());
-            return false;
-        }
-
-        if (item.GetItemTemplate().GetRace() != Race.PC_ALL && item.GetItemTemplate().GetRace() != player.GetRace())
-        {
-            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_CANNOT_USE_ITEM_INVALID_RACE());
             return false;
         }
 

@@ -170,13 +170,11 @@ public class _1114TheNymphsGown : AbstractQuestHandler
     {
         Player player = env.GetPlayer();
         int id = item.GetItemTemplate().GetTemplateId();
-        int itemObjId = item.GetObjectId();
         QuestState qs = player.GetQuestStateList().GetQuestState(questId);
 
         if (id != 182200214)
             return HandlerResult.UNKNOWN;
 
-        PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 20, 1, 0), true);
         if (qs == null || qs.IsStartable())
         {
             QuestService.StartQuest(env);

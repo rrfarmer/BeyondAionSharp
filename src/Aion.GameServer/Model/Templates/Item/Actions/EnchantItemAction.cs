@@ -77,8 +77,8 @@ public class EnchantItemAction : AbstractItemAction
         bool isEnchantmentStone = parentItem.GetItemTemplate().GetItemGroup() == ItemGroup.ENCHANTMENT;
         int enchantDurationMillis = isEnchantmentStone ? 4000 : 2000;
 
-        StartMovingListener move = new EnchantStartMovingListener(player, targetItem, isEnchantmentStone);
-        player.GetObserveController().Attach(move);
+        var observer = new EnchantItemUseObserver(player, targetItem, isEnchantmentStone);
+        player.GetObserveController().Attach(observer);
 
         // Current enchant level
         int currentEnchant = targetItem.GetEnchantLevel();
@@ -88,7 +88,7 @@ public class EnchantItemAction : AbstractItemAction
 
         player.GetController().AddTask(Aion.GameServer.Model.TaskId.ITEM_USE, Aion.GameServer.Utils.ThreadPoolManager.GetInstance().Schedule(ct =>
         {
-            player.GetObserveController().RemoveObserver(move);
+            player.GetObserveController().RemoveObserver(observer);
 
             if (player.GetInventory().GetItemByObjId(targetItem.GetObjectId()) == null && !targetItem.IsEquipped())
             {
@@ -97,6 +97,7 @@ public class EnchantItemAction : AbstractItemAction
                 return ValueTask.CompletedTask;
             }
 
+            player.StartCooldown(parentItem);
             if (isEnchantmentStone)
                 Aion.GameServer.Services.EnchantService.EnchantItemAct(player, parentItem, targetItem, supplementItem, currentEnchant, isSuccess);
             else // Manastone
@@ -194,26 +195,25 @@ public class EnchantItemAction : AbstractItemAction
         return true;
     }
 
-    // Java parity: anonymous StartMovingListener in act().
-    private sealed class EnchantStartMovingListener : StartMovingListener
+    // Java parity: anonymous ItemUseObserver in act().
+    private sealed class EnchantItemUseObserver : Aion.GameServer.Controllers.Observer.ItemUseObserver
     {
         private readonly Aion.GameServer.Model.GameObjects.Players.Player player;
         private readonly Item targetItem;
         private readonly bool isEnchantmentStone;
 
-        public EnchantStartMovingListener(Aion.GameServer.Model.GameObjects.Players.Player player, Item targetItem, bool isEnchantmentStone)
+        public EnchantItemUseObserver(Aion.GameServer.Model.GameObjects.Players.Player player, Item targetItem, bool isEnchantmentStone)
         {
             this.player = player;
             this.targetItem = targetItem;
             this.isEnchantmentStone = isEnchantmentStone;
         }
 
-        public override void Moved()
+        public override void Abort()
         {
-            base.Moved();
-            player.GetObserveController().RemoveObserver(this);
             player.GetController().CancelUseItem();
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, isEnchantmentStone ? Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ENCHANT_ITEM_CANCELED(targetItem.GetL10n()) : Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GIVE_ITEM_OPTION_CANCELED(targetItem.GetL10n()));
+            player.GetObserveController().RemoveObserver(this);
         }
     }
 }

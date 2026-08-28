@@ -69,7 +69,7 @@ public class ItemActionService
 
         public override void Abort()
         {
-            player.GetController().CancelTask(TaskId.ITEM_USE);
+            player.GetController().CancelUseItem(false);
             PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_ITEM_IDENTIFY_CANCELED(item.GetL10n()));
             PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), item.GetObjectId(), itemId, 0, 11, 0), true);
             player.GetObserveController().RemoveObserver(this);

@@ -367,8 +367,10 @@ public class Skill
 
     private int CalculateCastDuration()
     {
-        // ap & cash revival stones, or 2nd+ time of multicast-skill activation
-        if (GetSkillId() == 10802 || GetMultiCastCount() > 0)
+        if (GetItemTemplate() != null)
+            return GetItemTemplate().GetCastingDelay();
+        // 2nd+ time of multicast-skill activation
+        if (GetMultiCastCount() > 0)
             return 0;
         if (skillTemplate.GetTypeValue() != SkillType.MAGICAL || !IsCastDurationAffectedByCastSpeed())
             return baseCastDuration;
@@ -585,20 +587,16 @@ public class Skill
         effector.SetCasting(null);
 
         // try removing item, if its not possible return to prevent exploits
-        if (effector is Player && skillMethod == SkillMethod.ITEM)
+        if (skillMethod == SkillMethod.ITEM && effector is Player itemUser)
         {
-            Item item = ((Player)effector).GetInventory().GetItemByObjId(itemObjectId);
+            Item item = itemUser.GetInventory().GetItemByObjId(itemObjectId);
             if (item == null)
                 return;
             if (item.GetActivationCount() > 1)
-            {
                 item.SetActivationCount(item.GetActivationCount() - 1);
-            }
-            else
-            {
-                if (!((Player)effector).GetInventory().DecreaseByObjectId(item.GetObjectId(), 1, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType.DEC_ITEM_USE))
-                    return;
-            }
+            else if (!itemUser.GetInventory().DecreaseByObjectId(item.GetObjectId(), 1, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType.DEC_ITEM_USE))
+                return;
+            itemUser.StartCooldown(item);
         }
 
         EndCondCheck();

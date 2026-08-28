@@ -38,10 +38,15 @@ public class ExpExtractAction : AbstractItemAction
 
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,
-            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 5000, 0, 0));
+        int castingDelay = parentItem.GetItemTemplate().GetCastingDelay();
+        if (castingDelay <= 0)
+        {
+            FinishUse(player, parentItem);
+            return;
+        }
 
-        player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,
+            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), castingDelay, 0, 0));
 
         ItemUseObserver observer = new ExpExtractUseObserver(player, parentItem);
         player.GetObserveController().Attach(observer);
@@ -49,26 +54,31 @@ public class ExpExtractAction : AbstractItemAction
         player.GetController().AddTask(Aion.GameServer.Model.TaskId.ITEM_USE, Aion.GameServer.Utils.ThreadPoolManager.GetInstance().Schedule(ct =>
         {
             player.GetObserveController().RemoveObserver(observer);
-
-            Aion.GameServer.Model.GameObjects.Players.PlayerCommonData cd = player.GetCommonData();
-            long requiredExp = GetRequiredExp(cd);
-            long newExp = cd.GetExp() - requiredExp;
-            if (!CanExtractExp(player, newExp) || !player.GetInventory().DecreaseByItemId(parentItem.GetItemId(), 1))
-            {
-                player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,
-                    new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 2, 0));
-                return ValueTask.CompletedTask;
-            }
-
-            cd.SetExp(newExp);
-            Aion.GameServer.Services.Items.ItemService.AddItem(player, itemId, 1);
-            string rewardItem = DataManager.ITEM_DATA.GetItemTemplate(itemId).GetL10n();
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_EXP_EXTRACTION_USE(parentItem.GetL10n(), requiredExp, rewardItem));
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,
-                new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 1, 0));
+            FinishUse(player, parentItem);
             return ValueTask.CompletedTask;
-        }, TimeSpan.FromMilliseconds(5000)));
+        }, TimeSpan.FromMilliseconds(castingDelay)));
+    }
+
+    private void FinishUse(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem)
+    {
+        Aion.GameServer.Model.GameObjects.Players.PlayerCommonData cd = player.GetCommonData();
+        long requiredExp = GetRequiredExp(cd);
+        long newExp = cd.GetExp() - requiredExp;
+        if (!CanExtractExp(player, newExp) || !player.GetInventory().DecreaseByItemId(parentItem.GetItemId(), 1))
+        {
+            player.GetController().CancelUseItem(false);
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,
+                new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 2, 0));
+            return;
+        }
+
+        player.StartCooldown(parentItem);
+        cd.SetExp(newExp);
+        Aion.GameServer.Services.Items.ItemService.AddItem(player, itemId, 1);
+        string rewardItem = DataManager.ITEM_DATA.GetItemTemplate(itemId).GetL10n();
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_EXP_EXTRACTION_USE(parentItem.GetL10n(), requiredExp, rewardItem));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,
+            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 1, 0));
     }
 
     private long GetRequiredExp(Aion.GameServer.Model.GameObjects.Players.PlayerCommonData cd)
@@ -94,7 +104,7 @@ public class ExpExtractAction : AbstractItemAction
 
         public override void Abort()
         {
-            player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
+            player.GetController().CancelUseItem(false);
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_CANCELED(parentItem.GetL10n()));
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,
                 new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 2, 0));

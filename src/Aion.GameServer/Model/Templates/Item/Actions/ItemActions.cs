@@ -34,7 +34,6 @@ public class ItemActions
     [XmlElement("remodel", typeof(RemodelAction))]
     [XmlElement("expextract", typeof(ExpExtractAction))]
     [XmlElement("polish", typeof(PolishAction))]
-    [XmlElement("composition", typeof(CompositionAction))]
     [XmlElement("tuning", typeof(TuningAction))]
     [XmlElement("megaphone", typeof(MegaphoneAction))]
     [XmlElement("pack", typeof(PackAction))]

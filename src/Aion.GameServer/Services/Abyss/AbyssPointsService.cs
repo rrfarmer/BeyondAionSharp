@@ -26,6 +26,11 @@ public class AbyssPointsService
 
     public static void AddAp(Player player, int amount)
     {
+        AddAp(player, amount, SM_SYSTEM_MESSAGE.STR_MSG_COMBAT_MY_ABYSS_POINT_GAIN);
+    }
+
+    public static void AddAp(Player player, int amount, System.Func<int, SM_SYSTEM_MESSAGE> gainMessage)
+    {
         if (player == null)
             return;
 
@@ -34,7 +39,7 @@ public class AbyssPointsService
         player.GetAbyssRank().AddAp(amount);
         int added = player.GetAbyssRank().GetAp() - oldAp;
 
-        SM_SYSTEM_MESSAGE msg = amount >= 0 ? SM_SYSTEM_MESSAGE.STR_MSG_COMBAT_MY_ABYSS_POINT_GAIN(added) : SM_SYSTEM_MESSAGE.STR_MSG_USE_ABYSSPOINT(-added);
+        SM_SYSTEM_MESSAGE msg = amount >= 0 ? gainMessage(added) : SM_SYSTEM_MESSAGE.STR_MSG_USE_ABYSSPOINT(-added);
         PacketSendUtility.SendPacket(player, msg);
         OnRankChanged(player, added != 0, oldAbyssRank != player.GetAbyssRank().GetRank(), null);
         if (player.IsLegionMember() && added > 0)

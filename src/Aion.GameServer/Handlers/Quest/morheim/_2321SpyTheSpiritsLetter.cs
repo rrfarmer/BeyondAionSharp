@@ -88,7 +88,6 @@ public class _2321SpyTheSpiritsLetter : AbstractQuestHandler
     {
         Player player = env.GetPlayer();
         int id = item.GetItemTemplate().GetTemplateId();
-        int itemObjId = item.GetObjectId();
         QuestState qs = player.GetQuestStateList().GetQuestState(questId);
 
         if (id != 182204242)
@@ -96,13 +95,7 @@ public class _2321SpyTheSpiritsLetter : AbstractQuestHandler
 
         if (qs == null || qs.IsStartable())
         {
-            PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 3000, 0, 0), true);
-            ThreadPoolManager.GetInstance().Schedule(ct =>
-            {
-                PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 0, 1, 0), true);
-                SendQuestDialog(env, 4);
-                return ValueTask.CompletedTask;
-            }, 3000L);
+            SendQuestDialog(env, 4);
             return HandlerResult.SUCCESS;
         }
         return HandlerResult.UNKNOWN;

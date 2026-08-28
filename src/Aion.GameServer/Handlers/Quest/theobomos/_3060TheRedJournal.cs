@@ -129,19 +129,11 @@ public class _3060TheRedJournal : AbstractQuestHandler
 
     public override HandlerResult OnItemUseEvent(QuestEnv env, Item item)
     {
-        Player player = env.GetPlayer();
         int id = item.GetItemTemplate().GetTemplateId();
-        int itemObjId = item.GetObjectId();
 
         if (id != 182208043)
             return HandlerResult.UNKNOWN;
-        PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 3000, 0, 0), true);
-        ThreadPoolManager.GetInstance().Schedule(ct =>
-        {
-            PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 3000, 1, 0), true);
-            SendQuestDialog(env, 4);
-            return ValueTask.CompletedTask;
-        }, 3000L);
+        SendQuestDialog(env, 4);
         return HandlerResult.SUCCESS;
     }
 }

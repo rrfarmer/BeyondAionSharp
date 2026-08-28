@@ -101,7 +101,7 @@ public class Decompose : PlayerCommand
                     {
                         Run();
                         return ValueTask.CompletedTask;
-                    }, TimeSpan.FromMilliseconds(10), TimeSpan.FromMilliseconds(DecomposeAction.USAGE_DELAY + 100)));
+                    }, TimeSpan.FromMilliseconds(10), TimeSpan.FromMilliseconds(Aion.GameServer.Dataholders.DataManager.ITEM_DATA.GetItemTemplate(itemId).GetCastingDelay() + 100)));
         }
 
         public void Abort()

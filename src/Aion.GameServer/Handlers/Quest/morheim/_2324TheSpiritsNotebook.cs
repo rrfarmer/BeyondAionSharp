@@ -5,6 +5,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.QuestEngine.Handlers;
 using Aion.GameServer.QuestEngine.Model;
+using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Handlers.Quest;
@@ -33,19 +34,15 @@ public class _2324TheSpiritsNotebook : AbstractQuestHandler
         if (env.GetVisibleObject() is Npc npc)
             targetId = npc.GetNpcId();
 
-        if (qs == null)
-            return false;
-
         if (targetId == 0)
         {
-            if (env.GetDialogActionId() == DialogAction.QUEST_ACCEPT_1)
+            if (env.GetDialogActionId() == DialogAction.QUEST_ACCEPT_1 && (qs == null || qs.IsStartable()))
             {
-                qs.SetStatus(QuestStatus.START);
-                PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(0, 0));
-                return true;
+                QuestService.StartQuest(env);
+                return CloseDialogWindow(env);
             }
         }
-        else if (targetId == 204373)
+        else if (qs != null && targetId == 204373)
         {
             if (qs.GetStatus() == QuestStatus.START)
             {
@@ -70,17 +67,10 @@ public class _2324TheSpiritsNotebook : AbstractQuestHandler
     {
         Player player = env.GetPlayer();
         int id = item.GetItemTemplate().GetTemplateId();
-        int itemObjId = item.GetObjectId();
 
         if (id != 182204123)
             return HandlerResult.UNKNOWN;
-        PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 3000, 0, 0), true);
-        ThreadPoolManager.GetInstance().Schedule(ct =>
-        {
-            PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 0, 1, 0), true);
-            SendQuestDialog(env, 4);
-            return ValueTask.CompletedTask;
-        }, 3000L);
+        SendQuestDialog(env, 4);
         return HandlerResult.SUCCESS;
     }
 }

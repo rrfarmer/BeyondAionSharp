@@ -34,13 +34,16 @@ public class ExtractAction : AbstractItemAction
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 5000, 0, 0));
-        player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
         ItemUseObserver observer = new ExtractUseObserver(player, parentItem, targetItem);
         player.GetObserveController().Attach(observer);
         player.GetController().AddTask(Aion.GameServer.Model.TaskId.ITEM_USE, Aion.GameServer.Utils.ThreadPoolManager.GetInstance().Schedule(ct =>
         {
             player.GetObserveController().RemoveObserver(observer);
-            bool result = Aion.GameServer.Services.EnchantService.BreakItem(player, targetItem, parentItem);
+            bool result = CanAct(player, parentItem, targetItem) && Aion.GameServer.Services.EnchantService.BreakItem(player, targetItem, parentItem);
+            if (result)
+                // The only item with an extract action has no use delay, so this is effectively
+                // a no-op, but kept for consistency with the other actions.
+                player.StartCooldown(parentItem);
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, result ? 1 : 2, 0));
             return ValueTask.CompletedTask;
         }, TimeSpan.FromMilliseconds(5000)));
@@ -62,7 +65,7 @@ public class ExtractAction : AbstractItemAction
 
         public override void Abort()
         {
-            player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
+            player.GetController().CancelUseItem(false);
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_CANCELED(targetItem.GetL10n()));
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 2, 0));
             player.GetObserveController().RemoveObserver(this);

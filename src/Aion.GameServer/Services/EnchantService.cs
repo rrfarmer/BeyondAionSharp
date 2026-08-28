@@ -58,15 +58,13 @@ public class EnchantService
         else
             stoneId = 166000191; // Alpha
 
-        if (inventory.Delete(targetItem) != null)
-        {
-            if (inventory.DecreaseByObjectId(parentItem.GetObjectId(), 1))
-                ItemService.AddItem(player, stoneId, itemTemplate.IsWeapon() ? Rnd.Get(2, 5) : Rnd.Get(1, 3));
-        }
-        else
+        if (!inventory.DecreaseByObjectId(parentItem.GetObjectId(), 1) || inventory.Delete(targetItem) == null)
         {
             AuditLogger.Log(player, "possibly used break item hack");
+            return false;
         }
+        PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_SUCCEED(targetItem.GetL10n()));
+        ItemService.AddItem(player, stoneId, itemTemplate.IsWeapon() ? Rnd.Get(2, 5) : Rnd.Get(1, 3));
         return true;
     }
 
@@ -430,10 +428,10 @@ public class EnchantService
 
     public static bool SocketManastoneAct(Player player, Item parentItem, Item targetItem, Item supplementItem, int targetWeapon, bool result)
     {
-        // Decrease required supplements
-        player.UpdateSupplements();
         if (!player.GetInventory().DecreaseByObjectId(parentItem.GetObjectId(), 1))
             return false;
+        // Decrease required supplements
+        player.UpdateSupplements();
         if (result)
         {
             PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GIVE_ITEM_OPTION_SUCCEED(targetItem.GetL10n()));

@@ -186,6 +186,15 @@ public partial class Player
         return true;
     }
 
+    public void StartCooldown(Item item)
+    {
+        Aion.GameServer.Model.Templates.Items.ItemUseLimits limits = item.GetItemTemplate().GetUseLimits();
+        if (limits == null || limits.GetDelayTime() <= 0)
+            return;
+
+        AddItemCoolDown(limits.GetDelayId(), System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + limits.GetDelayTime(), limits.GetDelayTime() / 1000);
+    }
+
     public long GetItemReuseTime(int delayId)
     {
         itemCoolDowns.TryGetValue(delayId, out Aion.GameServer.Model.Items.ItemCooldown cd);

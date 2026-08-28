@@ -70,13 +70,18 @@ public class CM_USE_ITEM : AionClientPacket
         if (player.IsCasting())
             player.GetController().CancelCurrentSkill(null);
 
+        // notify item use observer
+        player.GetObserveController().NotifyItemuseObservers(item);
+
         if (!PlayerRestrictions.CanUseItem(player, item))
             return;
 
-        HandlerResult result = global::Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnItemUseEvent(new QuestEnv(null, player, 0), item);
-
         List<AbstractItemAction> itemActions = item.GetItemTemplate().GetActions() == null ? new List<AbstractItemAction>()
             : item.GetItemTemplate().GetActions().GetItemActions();
+
+        // QuestStartAction opens the quest dialog itself (after the casting delay), quest handlers must not open it a second time
+        HandlerResult result = itemActions.Exists(a => a is QuestStartAction) ? HandlerResult.UNKNOWN
+            : global::Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnItemUseEvent(new QuestEnv(null, player, 0), item);
 
         if (itemActions.Count == 0 && result != HandlerResult.SUCCESS)
         {
@@ -111,13 +116,6 @@ public class CM_USE_ITEM : AionClientPacket
 
         if (actions.Count == 0)
             return; // notification should be handled in canAct
-
-        int useDelay = item.GetItemTemplate().GetUseLimits().GetDelayTime();
-        if (useDelay > 0)
-            player.AddItemCoolDown(item.GetItemTemplate().GetUseLimits().GetDelayId(), DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + useDelay, useDelay / 1000);
-
-        // notify item use observer
-        player.GetObserveController().NotifyItemuseObservers(item);
 
         foreach (AbstractItemAction itemAction in actions)
         {

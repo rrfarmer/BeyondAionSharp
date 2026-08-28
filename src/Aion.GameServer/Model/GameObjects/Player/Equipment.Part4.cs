@@ -90,15 +90,13 @@ public partial class Equipment
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(responder,
                 new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(responder.GetObjectId(), item.GetObjectId(), item.GetItemId(), 5000, 4), true);
 
-            responder.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
-
-            ActionObserver moveObserver = new SoulBindMoveObserver(responder, item);
-            responder.GetObserveController().Attach(moveObserver);
+            ActionObserver observer = new SoulBindItemUseObserver(responder, item);
+            responder.GetObserveController().Attach(observer);
 
             // item usage animation
             responder.GetController().AddTask(Aion.GameServer.Model.TaskId.ITEM_USE, Aion.GameServer.Utils.ThreadPoolManager.GetInstance().Schedule(ct =>
             {
-                responder.GetObserveController().RemoveObserver(moveObserver);
+                responder.GetObserveController().RemoveObserver(observer);
 
                 Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(responder,
                     new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(responder.GetObjectId(), item.GetObjectId(), item.GetItemId(), 0, 6), true);
@@ -119,21 +117,21 @@ public partial class Equipment
         }
     }
 
-    // Java parity: anonymous ActionObserver(MOVE) in soulBindItem's acceptRequest.
-    private sealed class SoulBindMoveObserver : ActionObserver
+    // Java parity: anonymous ItemUseObserver in soulBindItem's acceptRequest.
+    private sealed class SoulBindItemUseObserver : Aion.GameServer.Controllers.Observer.ItemUseObserver
     {
         private readonly Player responder;
         private readonly Item item;
 
-        public SoulBindMoveObserver(Player responder, Item item) : base(ObserverType.MOVE)
+        public SoulBindItemUseObserver(Player responder, Item item)
         {
             this.responder = responder;
             this.item = item;
         }
 
-        public override void Moved()
+        public override void Abort()
         {
-            responder.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
+            responder.GetController().CancelUseItem(false);
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(responder, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_ITEM_CANCELED(item.GetL10n()));
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(responder,
                 new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(responder.GetObjectId(), item.GetObjectId(), item.GetItemId(), 0, 8), true);

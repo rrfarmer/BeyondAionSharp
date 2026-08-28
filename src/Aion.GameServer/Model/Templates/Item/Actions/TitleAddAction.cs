@@ -43,6 +43,7 @@ public class TitleAddAction : AbstractItemAction
 
         if (player.GetTitleList().AddTitle(titleid, false, minutes == null ? 0 : ((int)(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000)) + minutes.Value * 60))
         {
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_USE_ITEM(parentItem.GetL10n()));
             Item item = player.GetInventory().GetItemByObjId(parentItem.GetObjectId());
             player.GetInventory().Delete(item);
         }

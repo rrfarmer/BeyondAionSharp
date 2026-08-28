@@ -11,13 +11,13 @@ public class CraftLearnAction : AbstractItemAction
 
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
-        player.GetController().CancelUseItem();
-        if (player.GetInventory().DecreaseByObjectId(parentItem.GetObjectId(), 1))
+        if (!player.GetInventory().DecreaseByObjectId(parentItem.GetObjectId(), 1))
+            return;
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_USE_ITEM(parentItem.GetL10n()));
+        // client shows the "you learned" toast from this
+        if (Aion.GameServer.Services.RecipeService.AddRecipe(player, recipeid, false))
         {
-            if (Aion.GameServer.Services.RecipeService.AddRecipe(player, recipeid, false))
-            {
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId()));
-            }
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId()));
         }
     }
 

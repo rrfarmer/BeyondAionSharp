@@ -32,20 +32,13 @@ public class _1561TheMisersMap : AbstractQuestHandler
         env.SetQuestId(questId);
         Player player = env.GetPlayer();
         int id = item.GetItemTemplate().GetTemplateId();
-        int itemObjId = item.GetObjectId();
         QuestState qs = player.GetQuestStateList().GetQuestState(questId);
 
         if (qs == null || qs.IsStartable())
         {
-            PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 3000, 0, 0), true);
-            ThreadPoolManager.GetInstance().Schedule(ct =>
-            {
-                PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 0, 1, 0), true);
-                RemoveQuestItem(env, id, 1);
-                QuestService.StartQuest(env);
-                // SendQuestDialog(env, 4);
-                return ValueTask.CompletedTask;
-            }, 3000L);
+            RemoveQuestItem(env, id, 1);
+            QuestService.StartQuest(env);
+            // SendQuestDialog(env, 4);
             return HandlerResult.SUCCESS;
         }
         return HandlerResult.UNKNOWN;

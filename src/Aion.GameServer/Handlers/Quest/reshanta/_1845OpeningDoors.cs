@@ -5,6 +5,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.QuestEngine.Handlers;
 using Aion.GameServer.QuestEngine.Model;
+using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Handlers.Quest;
@@ -23,7 +24,7 @@ public class _1845OpeningDoors : AbstractQuestHandler
         qe.RegisterQuestNpc(278591).AddOnTalkEvent(questId);
         qe.RegisterQuestNpc(278624).AddOnTalkEvent(questId);
         qe.RegisterQuestNpc(798316).AddOnTalkEvent(questId);
-        qe.RegisterQuestItem(182204181, questId);
+        qe.RegisterQuestItem(182202181, questId);
     }
 
     public override bool OnDialogEvent(QuestEnv env)
@@ -36,11 +37,10 @@ public class _1845OpeningDoors : AbstractQuestHandler
             targetId = ((Npc)env.GetVisibleObject()).GetNpcId();
         if (targetId == 0)
         {
-            if (env.GetDialogActionId() == DialogAction.QUEST_ACCEPT_1)
+            if (env.GetDialogActionId() == DialogAction.QUEST_ACCEPT_1 && (qs == null || qs.IsStartable()))
             {
-                qs.SetStatus(QuestStatus.START);
-                PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(0, 0));
-                return true;
+                QuestService.StartQuest(env);
+                return CloseDialogWindow(env);
             }
         }
         else if (targetId == 278591)
@@ -104,17 +104,10 @@ public class _1845OpeningDoors : AbstractQuestHandler
     {
         Player player = env.GetPlayer();
         int id = item.GetItemTemplate().GetTemplateId();
-        int itemObjId = item.GetObjectId();
 
         if (id != 182202181)
             return HandlerResult.UNKNOWN;
-        PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 3000, 0, 0), true);
-        ThreadPoolManager.GetInstance().Schedule(ct =>
-        {
-            PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 0, 1, 0), true);
-            SendQuestDialog(env, 4);
-            return ValueTask.CompletedTask;
-        }, 3000L);
+        SendQuestDialog(env, 4);
         return HandlerResult.SUCCESS;
     }
 }

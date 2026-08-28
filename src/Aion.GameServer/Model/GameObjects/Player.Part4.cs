@@ -397,7 +397,7 @@ public partial class Player
         this.isInSprintMode = isInSprintMode;
     }
 
-    public void SetRideObservers(ActionObserver observer)
+    public void AddRideObserver(ActionObserver observer)
     {
         if (rideObservers == null)
             rideObservers = new List<ActionObserver>();

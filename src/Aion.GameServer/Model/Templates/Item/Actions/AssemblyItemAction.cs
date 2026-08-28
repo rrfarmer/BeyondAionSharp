@@ -32,26 +32,46 @@ public class AssemblyItemAction : AbstractItemAction
 
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
-        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 1000, 0, 0), true);
+        int castingDelay = parentItem.GetItemTemplate().GetCastingDelay();
+        if (castingDelay <= 0)
+        {
+            FinishUse(player, parentItem);
+            return;
+        }
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), castingDelay, 0, 0), true);
         ItemUseObserver observer = new AssemblyUseObserver(player, parentItem);
         player.GetObserveController().Attach(observer);
         player.GetController().AddTask(Aion.GameServer.Model.TaskId.ITEM_USE, Aion.GameServer.Utils.ThreadPoolManager.GetInstance().Schedule(ct =>
         {
             player.GetObserveController().RemoveObserver(observer);
-            player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
-            Aion.GameServer.Model.Templates.Items.AssemblyItem assemblyItem = GetAssemblyItem();
-            foreach (int itemId in assemblyItem.GetParts())
-            {
-                if (!player.GetInventory().DecreaseByItemId(itemId, 1))
-                {
-                    return ValueTask.CompletedTask;
-                }
-            }
-            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 1, 0), true);
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ASSEMBLY_ITEM_SUCCEEDED());
-            Aion.GameServer.Services.Items.ItemService.AddItem(player, assemblyItem.GetId(), 1);
+            FinishUse(player, parentItem);
             return ValueTask.CompletedTask;
-        }, TimeSpan.FromMilliseconds(1000)));
+        }, TimeSpan.FromMilliseconds(castingDelay)));
+    }
+
+    private void FinishUse(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem)
+    {
+        Aion.GameServer.Model.Templates.Items.AssemblyItem assemblyItem = GetAssemblyItem();
+        var requiredCounts = new System.Collections.Generic.Dictionary<int, long>();
+        foreach (int partId in assemblyItem.GetParts())
+            requiredCounts[partId] = requiredCounts.TryGetValue(partId, out long c) ? c + 1 : 1;
+        foreach (var requiredCount in requiredCounts)
+        {
+            if (player.GetInventory().GetItemCountByItemId(requiredCount.Key) < requiredCount.Value)
+            {
+                Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 2, 0), true);
+                return;
+            }
+        }
+        player.StartCooldown(parentItem);
+        foreach (int itemId in assemblyItem.GetParts())
+        {
+            player.GetInventory().DecreaseByItemId(itemId, 1);
+        }
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 1, 0), true);
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_USE_ITEM(parentItem.GetL10n()));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ASSEMBLY_ITEM_SUCCEEDED());
+        Aion.GameServer.Services.Items.ItemService.AddItem(player, assemblyItem.GetId(), 1);
     }
 
     // Java parity: anonymous ItemUseObserver in act().
@@ -68,9 +88,8 @@ public class AssemblyItemAction : AbstractItemAction
 
         public override void Abort()
         {
-            player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
-            player.RemoveItemCoolDown(parentItem.GetItemTemplate().GetUseLimits().GetDelayId());
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ITEM_CANCELED());
+            player.GetController().CancelUseItem(false);
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ASSEMBLY_ITEM_CANCELED());
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 2, 0), true);
             player.GetObserveController().RemoveObserver(this);
         }

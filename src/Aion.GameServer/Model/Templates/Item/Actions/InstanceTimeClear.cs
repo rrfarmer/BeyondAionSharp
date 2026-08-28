@@ -14,6 +14,8 @@ public class InstanceTimeClear : AbstractItemAction
 {
     [XmlIgnore] private List<int> syncIds;
 
+    [XmlAttribute("recovery_instance_count")] public int recoveryInstanceCount = 1;
+
     // Java parity: @XmlAttribute List<Integer> sync_ids — space-separated.
     [XmlAttribute("sync_ids")]
     public string SyncIdsXml
@@ -33,10 +35,6 @@ public class InstanceTimeClear : AbstractItemAction
     {
         int syncId = (int)@params[0];
         if (!syncIds.Contains(syncId))
-            return false;
-        int worldId = DataManager.INSTANCE_COOLTIME_DATA.GetWorldId(syncId);
-        Aion.GameServer.Model.GameObjects.Players.PortalCooldown portalCooldown = player.GetPortalCooldownList().GetPortalCooldown(worldId);
-        if (portalCooldown == null || (portalCooldown.GetReuseTime() < DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() && portalCooldown.GetEnterCount() == 0))
         {
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_CANT_INSTANCE_COOL_TIME_INIT());
             return false;
@@ -46,38 +44,50 @@ public class InstanceTimeClear : AbstractItemAction
 
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
+        int castingDelay = parentItem.GetItemTemplate().GetCastingDelay();
         int syncId = (int)@params[0];
+        if (castingDelay <= 0)
+        {
+            FinishUse(player, parentItem, syncId);
+            return;
+        }
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(player,
-            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 1000, 0, 0));
+            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), castingDelay, 0, 0));
 
         ItemUseObserver observer = new InstanceTimeClearUseObserver(player, parentItem);
         player.GetObserveController().Attach(observer);
         player.GetController().AddTask(Aion.GameServer.Model.TaskId.ITEM_USE, Aion.GameServer.Utils.ThreadPoolManager.GetInstance().Schedule(ct =>
         {
             player.GetObserveController().RemoveObserver(observer);
-            if (parentItem.GetActivationCount() > 1)
-            {
-                parentItem.SetActivationCount(parentItem.GetActivationCount() - 1);
-            }
-            else
-            {
-                player.GetInventory().DecreaseByObjectId(parentItem.GetObjectId(), 1);
-            }
-
-            int worldId = DataManager.INSTANCE_COOLTIME_DATA.GetWorldId(syncId);
-            Aion.GameServer.Model.GameObjects.Players.PortalCooldown portalCD = player.GetPortalCooldownList().GetPortalCooldown(worldId);
-            if (portalCD == null || portalCD.GetEnterCount() < 1)
-                return ValueTask.CompletedTask; // don't spam with not needed packets!
-
-            portalCD.DecreaseEnterCount();
-            if (portalCD.GetEnterCount() < 1)
-                player.GetPortalCooldownList().RemovePortalCooldown(worldId);
-
-            player.GetPortalCooldownList().SendEntryInfo(worldId);
-            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(player,
-                new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 0, 1, 0));
+            FinishUse(player, parentItem, syncId);
             return ValueTask.CompletedTask;
-        }, TimeSpan.FromMilliseconds(1000)));
+        }, TimeSpan.FromMilliseconds(castingDelay)));
+    }
+
+    private void FinishUse(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, int syncId)
+    {
+        int worldId = DataManager.INSTANCE_COOLTIME_DATA.GetWorldId(syncId);
+
+        if (parentItem.GetActivationCount() > 1)
+        {
+            if (player.GetInventory().GetItemByObjId(parentItem.GetObjectId()) == null)
+                return; // item was traded or sold during the casting delay
+            parentItem.SetActivationCount(parentItem.GetActivationCount() - 1);
+        }
+        else if (!player.GetInventory().DecreaseByObjectId(parentItem.GetObjectId(), 1))
+            return;
+
+        player.StartCooldown(parentItem);
+
+        Aion.GameServer.Model.GameObjects.Players.PortalCooldown portalCD = player.GetPortalCooldownList().GetOrCreatePortalCooldown(worldId);
+        if (portalCD != null)
+        {
+            portalCD.DecreaseEnterCount(recoveryInstanceCount);
+            player.GetPortalCooldownList().SendEntryInfo(worldId);
+        }
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_USE_ITEM(parentItem.GetL10n()));
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(player,
+            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 0, 1, 0));
     }
 
     // Java parity: anonymous ItemUseObserver in act().
@@ -94,9 +104,7 @@ public class InstanceTimeClear : AbstractItemAction
 
         public override void Abort()
         {
-            // TODO: abort is invalid. Should we abort all or only the last syncid?
-            player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
-            player.RemoveItemCoolDown(parentItem.GetItemTemplate().GetUseLimits().GetDelayId());
+            player.GetController().CancelUseItem(false);
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ITEM_CANCELED());
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
                 new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 2, 0), true);

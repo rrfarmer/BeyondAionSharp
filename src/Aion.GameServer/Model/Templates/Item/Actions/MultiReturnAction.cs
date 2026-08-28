@@ -13,8 +13,6 @@ public class MultiReturnAction : AbstractItemAction
 {
     [XmlAttribute("id")] public int id;
 
-    [XmlIgnore] private const short USAGE_DELAY = 5000;
-
     public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item item, Item targetItem, params object[] @params)
     {
         return true;
@@ -22,27 +20,41 @@ public class MultiReturnAction : AbstractItemAction
 
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item item, Item targetItem, params object[] @params)
     {
+        int castingDelay = item.GetItemTemplate().GetCastingDelay();
         int indexReturn = (int)@params[0];
-        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), item.GetObjectId(), item.GetItemId(), USAGE_DELAY, 0, 0), true);
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
+            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), item.GetObjectId(), item.GetItemId(), castingDelay, 0, 0), true);
 
         ItemUseObserver observer = new MultiReturnUseObserver(player, item);
+        if (castingDelay <= 0)
+        {
+            FinishUse(player, item, observer, indexReturn);
+            return;
+        }
+
         player.GetObserveController().Attach(observer);
         player.GetController().AddTask(Aion.GameServer.Model.TaskId.ITEM_USE, Aion.GameServer.Utils.ThreadPoolManager.GetInstance().Schedule(ct =>
         {
-            Aion.GameServer.Model.Templates.Items.ReturnLocList loc = DataManager.MULTIRETURN_DATA.GetReturnLocListById(id)[indexReturn];
-            if (loc != null && loc.GetAlias() != null && loc.GetWorldid() > 0)
-            {
-                if (!player.GetInventory().DecreaseByObjectId(item.GetObjectId(), 1))
-                {
-                    observer.Abort();
-                    return ValueTask.CompletedTask;
-                }
-                player.GetObserveController().RemoveObserver(observer);
-                Aion.GameServer.Services.Teleport.TeleportService.UseTeleportScroll(player, loc.GetAlias().ToUpperInvariant(), loc.GetWorldid());
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_USE_ITEM(item.GetL10n()));
-            }
+            player.GetObserveController().RemoveObserver(observer);
+            FinishUse(player, item, observer, indexReturn);
             return ValueTask.CompletedTask;
-        }, TimeSpan.FromMilliseconds(USAGE_DELAY)));
+        }, TimeSpan.FromMilliseconds(castingDelay)));
+    }
+
+    private void FinishUse(Aion.GameServer.Model.GameObjects.Players.Player player, Item item, ItemUseObserver observer, int indexReturn)
+    {
+        Aion.GameServer.Model.Templates.Items.ReturnLocList loc = DataManager.MULTIRETURN_DATA.GetReturnLocListById(id)[indexReturn];
+        if (loc != null && loc.GetAlias() != null && loc.GetWorldid() > 0)
+        {
+            if (!player.GetInventory().DecreaseByObjectId(item.GetObjectId(), 1))
+            {
+                observer.Abort();
+                return;
+            }
+            player.StartCooldown(item);
+            Aion.GameServer.Services.Teleport.TeleportService.UseTeleportScroll(player, loc.GetAlias().ToUpperInvariant(), loc.GetWorldid());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_USE_ITEM(item.GetL10n()));
+        }
     }
 
     // Java parity: anonymous ItemUseObserver in act().
@@ -59,8 +71,7 @@ public class MultiReturnAction : AbstractItemAction
 
         public override void Abort()
         {
-            player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
-            player.RemoveItemCoolDown(item.GetItemTemplate().GetUseLimits().GetDelayId());
+            player.GetController().CancelUseItem(false);
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ITEM_CANCELED());
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), item.GetObjectId(), item.GetItemId(), 0, 2, 0), true);
             player.GetObserveController().RemoveObserver(this);

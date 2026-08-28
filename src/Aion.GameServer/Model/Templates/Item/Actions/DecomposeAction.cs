@@ -18,7 +18,6 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 public class DecomposeAction : AbstractItemAction
 {
     private static readonly ILogger log = NullLogger.Instance;
-    public const int USAGE_DELAY = 3000;
     private static readonly Dictionary<Race, int[]> chunkEarth = new();
     private static readonly Dictionary<Race, int[]> chunkSand = new();
     private static readonly Dictionary<Race, int[]> premiumOphidanRecipe = new();
@@ -83,8 +82,7 @@ public class DecomposeAction : AbstractItemAction
     {
         if (player.IsDead() || !player.IsSpawned())
             return false;
-        List<ExtractedItemsCollection> itemsCollections = null;
-        itemsCollections = DataManager.DECOMPOSABLE_ITEMS_DATA.GetInfoByItemId(parentItem.GetItemId());
+        List<ExtractedItemsCollection> itemsCollections = DataManager.DECOMPOSABLE_ITEMS_DATA.GetInfoByItemId(parentItem.GetItemId());
         if (itemsCollections == null || itemsCollections.Count == 0)
         {
             if (DataManager.DECOMPOSABLE_ITEMS_DATA.GetSelectableItems(parentItem.GetItemId()) != null) // selectable decomposable
@@ -102,7 +100,6 @@ public class DecomposeAction : AbstractItemAction
 
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
-        player.GetController().CancelUseItem();
         ICollection<ResultedItem> selectable = DataManager.DECOMPOSABLE_ITEMS_DATA.GetSelectableItems(parentItem.GetItemId());
         if (selectable != null)
         {
@@ -122,9 +119,14 @@ public class DecomposeAction : AbstractItemAction
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_FAILED(parentItem.GetL10n()));
             return;
         }
-
+        int castingDelay = parentItem.GetItemTemplate().GetCastingDelay();
+        if (castingDelay <= 0)
+        {
+            FinishUse(player, parentItem, targetItem, selectedCollection);
+            return;
+        }
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
-            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), USAGE_DELAY, 0, 0), true);
+            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), castingDelay, 0, 0), true);
 
         ItemUseObserver observer = new DecomposeUseObserver(player, parentItem);
 
@@ -132,10 +134,19 @@ public class DecomposeAction : AbstractItemAction
         player.GetController().AddTask(TaskId.ITEM_USE, Aion.GameServer.Utils.ThreadPoolManager.GetInstance().Schedule(ct =>
         {
             player.GetObserveController().RemoveObserver(observer);
+            FinishUse(player, parentItem, targetItem, selectedCollection);
+            return ValueTask.CompletedTask;
+        }, TimeSpan.FromMilliseconds(castingDelay)));
+    }
+
+    private void FinishUse(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, ExtractedItemsCollection selectedCollection)
+    {
             bool validAction = PostValidate(player, parentItem, targetItem);
             if (validAction)
             {
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_SUCCEED(parentItem.GetL10n()));
+                player.StartCooldown(parentItem);
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_UNCOMPRESS_COMPRESSED_ITEM_SUCCEEDED(parentItem.GetL10n()));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_USE_ITEM(parentItem.GetL10n()));
                 foreach (ResultedItem resultItem in selectedCollection.GetItems())
                 {
                     if (resultItem.IsObtainableFor(player))
@@ -358,8 +369,6 @@ public class DecomposeAction : AbstractItemAction
             }
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
                 new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 0, validAction ? 1 : 2, 0), true);
-            return ValueTask.CompletedTask;
-        }, TimeSpan.FromMilliseconds(USAGE_DELAY)));
     }
 
     // Java parity: postValidate(player, parentItem) — nested in the anonymous Runnable; targetItem captured from enclosing scope.
@@ -456,9 +465,8 @@ public class DecomposeAction : AbstractItemAction
 
         public override void Abort()
         {
-            player.GetController().CancelTask(TaskId.ITEM_USE);
-            player.RemoveItemCoolDown(parentItem.GetItemTemplate().GetUseLimits().GetDelayId());
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_CANCELED(parentItem.GetL10n()));
+            player.GetController().CancelUseItem(false);
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_UNCOMPRESS_COMPRESSED_ITEM_CANCELED(parentItem.GetL10n()));
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
                 new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 2, 0), true);
             player.GetObserveController().RemoveObserver(this);

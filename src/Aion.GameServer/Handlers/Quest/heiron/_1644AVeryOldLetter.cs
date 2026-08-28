@@ -112,7 +112,6 @@ namespace Aion.GameServer.Handlers.Quest
         public override HandlerResult OnItemUseEvent(QuestEnv env, Item item)
         {
             Player player = env.GetPlayer();
-            int itemObjId = item.GetObjectId();
             int id = item.GetItemTemplate().GetTemplateId();
             QuestState qs = player.GetQuestStateList().GetQuestState(questId);
 
@@ -130,13 +129,7 @@ namespace Aion.GameServer.Handlers.Quest
                 }
             }
 
-            PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 3000, 0, 0), true);
-            ThreadPoolManager.GetInstance().Schedule(ct =>
-            {
-                PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 0, 1, 0), true);
-                SendQuestDialog(env, 4);
-                return ValueTask.CompletedTask;
-            }, 3000L);
+            SendQuestDialog(env, 4);
             return HandlerResult.SUCCESS;
         }
     }

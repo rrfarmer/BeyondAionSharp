@@ -19,9 +19,9 @@ public class PortalCooldown
         this.enterCount++;
     }
 
-    public void DecreaseEnterCount()
+    public void DecreaseEnterCount(int count)
     {
-        this.enterCount--;
+        this.enterCount -= count;
     }
 
     public int GetWorldId()
