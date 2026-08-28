@@ -152,12 +152,7 @@ internal class PDefFunction : StatFunction
     public override void Apply(Stat2 stat, params CalculationType[] calculationTypes)
     {
         if (stat.GetOwner().IsInFlyingState())
-            stat.SetBonus(stat.GetBonus() - (stat.GetBase() / 2));
-    }
-
-    public override int GetPriority()
-    {
-        return 60;
+            stat.SetFinalRate(0.6f);
     }
 }
 

@@ -14,6 +14,7 @@ public abstract class Stat2
     protected float BaseField;
     protected float BonusField;
     protected float FixedBonusRate;
+    protected float FinalRate = 1f;
     private readonly Creature _owner;
     protected readonly StatEnum Stat;
 
@@ -58,13 +59,13 @@ public abstract class Stat2
     public int GetBonus() => (int)BonusField;
 
     // Java parity: getCurrent()
-    public int GetCurrent() => (int)(BaseField * BaseRateField + BonusField * BonusRate + BaseField * FixedBonusRate);
+    public int GetCurrent() => (int)GetExactCurrent();
 
     // Java parity: getExactCurrent()
-    public float GetExactCurrent() => BaseField * BaseRateField + BonusField * BonusRate + BaseField * FixedBonusRate;
+    public float GetExactCurrent() => (BaseField * BaseRateField + BonusField * BonusRate + BaseField * FixedBonusRate) * FinalRate;
 
     // Java parity: getExactCurrentWithoutFixedBonus()
-    public float GetExactCurrentWithoutFixedBonus() => BaseField * BaseRateField + BonusField * BonusRate;
+    public float GetExactCurrentWithoutFixedBonus() => (BaseField * BaseRateField + BonusField * BonusRate) * FinalRate;
 
     // Java parity: setBonus(float)
     public void SetBonus(float bonus) => BonusField = bonus;
@@ -83,6 +84,14 @@ public abstract class Stat2
 
     // Java parity: getFixedBonusRate()
     public float GetFixedBonusRate() => FixedBonusRate;
+
+    /// <summary>
+    /// Rate applied to the final value (base and bonus alike), meant for situational penalties which are not part of the stat itself, like the physical
+    /// defense loss while flying. Must be set after all stat functions have been applied, since caps are calculated without it.
+    /// </summary>
+    public void SetFinalRate(float finalRate) => FinalRate = finalRate;
+
+    public float GetFinalRate() => FinalRate;
 
     // Java parity: calculatePercent(int)
     public abstract float CalculatePercent(int delta);

@@ -112,9 +112,8 @@ public class AttackUtil
             bool isPhysical = element == SkillElement.NONE;
             StatEnum attackStat = isPhysical ? StatEnum.PHYSICAL_ATTACK : StatEnum.MAGICAL_ATTACK;
             StatEnum defenseStat = isPhysical ? StatEnum.PHYSICAL_DEFENSE : StatEnum.MAGICAL_DEFEND;
-            float defenseBase = isPhysical ? attacked.GetGameStats().GetPDef().GetBase() : attacked.GetGameStats().GetMDef().GetBase();
-            float defenseBonus = isPhysical ? attacked.GetGameStats().GetPDef().GetBonus() : attacked.GetGameStats().GetMDef().GetBonus();
-            float defense = StatFunctions.AdjustStatByMovementModifier(attacked, defenseStat, defenseBase) + defenseBonus;
+            float defenseStatValue = isPhysical ? attacked.GetGameStats().GetPDef().GetCurrent() : attacked.GetGameStats().GetMDef().GetCurrent();
+            float defense = StatFunctions.AdjustStatByMovementModifier(attacked, defenseStat, defenseStatValue);
             float damage = attackResultList[i].GetDamage() - (defense / 10);
             damage *= damageMultiplier;
             damage = StatFunctions.AdjustStatByMovementModifier(attacker, attackStat, damage);
@@ -381,8 +380,7 @@ public class AttackUtil
 
         if (isPhysical)
         {
-            float def = effected.GetGameStats().GetPDef().GetBonus() + StatFunctions.AdjustStatByMovementModifier(effected, StatEnum.PHYSICAL_DEFENSE,
-                    effected.GetGameStats().GetPDef().GetBase());
+            float def = StatFunctions.AdjustStatByMovementModifier(effected, StatEnum.PHYSICAL_DEFENSE, effected.GetGameStats().GetPDef().GetCurrent());
             damage -= def / 10;
         }
 
