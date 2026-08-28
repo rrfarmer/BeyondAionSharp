@@ -191,7 +191,7 @@ public class PlayerGameStats : CreatureGameStats<Player>
         if (mainHandWeapon != null)
         {
             if (mainHandWeapon.GetItemTemplate().GetAttackType().IsMagical())
-                return new AdditionStat(StatEnum.MAIN_HAND_POWER, 0, owner);
+                return new AdditionStat(StatEnum.PHYSICAL_ATTACK, 0, owner);
             if (ArrContains(calculationTypes, CalculationType.DISPLAY))
             {
                 baseV = mainHandWeapon.GetItemTemplate().GetWeaponStats().GetMeanDamage();
@@ -208,7 +208,7 @@ public class PlayerGameStats : CreatureGameStats<Player>
         }
         Stat2 stat = GetStat(StatEnum.PHYSICAL_ATTACK, baseV, calculationTypes);
         calculationTypes = ArrRemove(calculationTypes, CalculationType.MAIN_HAND);
-        return GetStat(StatEnum.MAIN_HAND_POWER, stat, calculationTypes);
+        return ApplyStatFunctions(StatEnum.MAIN_HAND_POWER, stat, calculationTypes);
     }
 
     public Stat2 GetOffHandPAttack(params CalculationType[] calculationTypes)
@@ -237,9 +237,9 @@ public class PlayerGameStats : CreatureGameStats<Player>
                 stat.SetBonusRate(stat.GetBonusRate() * GetOffHandDamageRatio());
             }
             calculationTypes = ArrRemove(calculationTypes, CalculationType.OFF_HAND);
-            return GetStat(StatEnum.OFF_HAND_POWER, stat, calculationTypes);
+            return ApplyStatFunctions(StatEnum.OFF_HAND_POWER, stat, calculationTypes);
         }
-        return new AdditionStat(StatEnum.OFF_HAND_POWER, 0, owner);
+        return new AdditionStat(StatEnum.PHYSICAL_ATTACK, 0, owner);
     }
 
     public override Stat2 GetMainHandMAttack(params CalculationType[] calculationTypes)
@@ -251,14 +251,14 @@ public class PlayerGameStats : CreatureGameStats<Player>
         if (mainHandWeapon != null)
         {
             if (!mainHandWeapon.GetItemTemplate().GetAttackType().IsMagical())
-                return new AdditionStat(StatEnum.MAIN_HAND_POWER, 0, owner);
+                return new AdditionStat(StatEnum.MAGICAL_ATTACK, 0, owner);
             baseV = mainHandWeapon.GetItemTemplate().GetWeaponStats().GetMeanDamage();
             if (ArrContains(calculationTypes, CalculationType.APPLY_POWER_SHARD_DAMAGE))
                 baseV += GetPowerShardDamage(true, ArrContains(calculationTypes, CalculationType.REMOVE_POWER_SHARD));
         }
         Stat2 stat = GetStat(StatEnum.MAGICAL_ATTACK, baseV, calculationTypes);
         calculationTypes = ArrRemove(calculationTypes, CalculationType.MAIN_HAND);
-        return GetStat(StatEnum.MAIN_HAND_POWER, stat, calculationTypes);
+        return ApplyStatFunctions(StatEnum.MAIN_HAND_POWER, stat, calculationTypes);
     }
 
     public Stat2 GetOffHandMAttack(params CalculationType[] calculationTypes)
@@ -278,9 +278,9 @@ public class PlayerGameStats : CreatureGameStats<Player>
                 stat.SetBonusRate(stat.GetBonusRate() * GetOffHandDamageRatio());
             }
             calculationTypes = ArrRemove(calculationTypes, CalculationType.OFF_HAND);
-            return GetStat(StatEnum.OFF_HAND_POWER, stat, calculationTypes);
+            return ApplyStatFunctions(StatEnum.OFF_HAND_POWER, stat, calculationTypes);
         }
-        return new AdditionStat(StatEnum.OFF_HAND_POWER, 0, owner);
+        return new AdditionStat(StatEnum.MAGICAL_ATTACK, 0, owner);
     }
 
     public override Stat2 GetMainHandPCritical()
@@ -297,16 +297,16 @@ public class PlayerGameStats : CreatureGameStats<Player>
 
     public Stat2 GetOffHandPCritical()
     {
-        int baseV = GetStatsTemplate().GetPcrit();
         Equipment equipment = owner.GetEquipment();
         Item offHandWeapon = equipment.GetOffHandWeapon();
         if (offHandWeapon != null && !offHandWeapon.Equals(equipment.GetMainHandWeapon()) && offHandWeapon.GetItemTemplate().IsWeapon()
             && !offHandWeapon.GetItemTemplate().GetAttackType().IsMagical())
         {
+            int baseV = GetStatsTemplate().GetPcrit();
             baseV += offHandWeapon.GetItemTemplate().GetWeaponStats().GetCritical();
             return GetStat(StatEnum.PHYSICAL_CRITICAL, baseV);
         }
-        return new AdditionStat(StatEnum.OFF_HAND_CRITICAL, 0, owner);
+        return new AdditionStat(StatEnum.PHYSICAL_CRITICAL, 0, owner);
     }
 
     public override Stat2 GetMainHandPAccuracy()
@@ -330,7 +330,7 @@ public class PlayerGameStats : CreatureGameStats<Player>
             baseV += offHandWeapon.GetItemTemplate().GetWeaponStats().GetPhysicalAccuracy();
             return GetStat(StatEnum.PHYSICAL_ACCURACY, baseV);
         }
-        return new AdditionStat(StatEnum.OFF_HAND_ACCURACY, 0, owner);
+        return new AdditionStat(StatEnum.PHYSICAL_ACCURACY, 0, owner);
     }
 
     public override Stat2 GetMBoost()

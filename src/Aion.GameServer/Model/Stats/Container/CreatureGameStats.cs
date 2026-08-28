@@ -130,28 +130,28 @@ public abstract class CreatureGameStats
     public virtual Stat2 GetStat(StatEnum statEnum, float baseValue, params CalculationType[] calculationTypes)
     {
         Stat2 stat = new AdditionStat(statEnum, baseValue, owner);
-        return GetStat(statEnum, stat, calculationTypes);
+        return ApplyStatFunctions(statEnum, stat, calculationTypes);
     }
 
     public Stat2 GetStat(StatEnum statEnum, float baseValue, float bonusRate, params CalculationType[] calculationTypes)
     {
         Stat2 stat = new AdditionStat(statEnum, baseValue, owner, bonusRate);
-        return GetStat(statEnum, stat, calculationTypes);
+        return ApplyStatFunctions(statEnum, stat, calculationTypes);
     }
 
     public Stat2 GetReverseStat(StatEnum statEnum, float baseValue)
     {
         Stat2 stat = new ReverseStat(statEnum, baseValue, owner);
-        return GetStat(statEnum, stat);
+        return ApplyStatFunctions(statEnum, stat);
     }
 
     public Stat2 GetReverseStat(StatEnum statEnum, float baseValue, float bonusRate)
     {
         Stat2 stat = new ReverseStat(statEnum, baseValue, owner, bonusRate);
-        return GetStat(statEnum, stat);
+        return ApplyStatFunctions(statEnum, stat);
     }
 
-    public virtual Stat2 GetStat(StatEnum statEnum, Stat2 stat, params CalculationType[] calculationTypes)
+    public virtual Stat2 ApplyStatFunctions(StatEnum statEnum, Stat2 stat, params CalculationType[] calculationTypes)
     {
         List<IStatFunction> functions = GetStatsSorted(statEnum);
         if (functions != null)
