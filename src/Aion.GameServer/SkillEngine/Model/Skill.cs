@@ -692,14 +692,22 @@ public class Skill
         if (!blockedPenaltySkill)
             StartPenaltySkill();
 
-        if (IsInstantSkill())
+        bool isItemSkill = skillMethod == SkillMethod.ITEM;
+        bool sentCastSpellResultPacket = false;
+        // the client must learn the hit time before any HP change reaches it, or it updates the status bar before displaying the hit
+        if (isItemSkill)
+            sentCastSpellResultPacket = SendCastSpellEnd(dashStatus, effects);
+
+        // item skills apply their effects immediately, hitTime only tells the client when to display the hit
+        if (IsInstantSkill() || isItemSkill)
             ApplyEffect(effects);
         else
             ThreadPoolManager.GetInstance().Schedule(_ => { ApplyEffect(effects); return System.Threading.Tasks.ValueTask.CompletedTask; }, TimeSpan.FromMilliseconds(hitTime));
 
-        if (skillMethod == SkillMethod.PENALTY || skillMethod == SkillMethod.CAST || skillMethod == SkillMethod.ITEM)
+        if (skillMethod == SkillMethod.PENALTY || skillMethod == SkillMethod.CAST || isItemSkill)
         {
-            bool sentCastSpellResultPacket = SendCastSpellEnd(dashStatus, effects);
+            if (!isItemSkill)
+                sentCastSpellResultPacket = SendCastSpellEnd(dashStatus, effects);
             if (sentCastSpellResultPacket && skillMethod != SkillMethod.PENALTY && effector is Player player)
             {
                 // animation times must be calculated after applyEffect of instant skills in order to honor speed buffs from this skill
