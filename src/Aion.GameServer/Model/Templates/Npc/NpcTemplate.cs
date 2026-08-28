@@ -56,6 +56,8 @@ public class NpcTemplate : CreatureTemplate
 
     [XmlAttribute("cast_speed")] public int castSpeed = 1000;
 
+    [XmlAttribute("cancel_level")] public int cancelLevel = 100;
+
     [XmlAttribute("flag_type")] public int flagType;
 
     [XmlAttribute("war_flag")] public int warFlagGroupId;
@@ -228,6 +230,11 @@ public class NpcTemplate : CreatureTemplate
     public int GetAttackRange()
     {
         return attackRange;
+    }
+
+    public int GetCancelLevel()
+    {
+        return cancelLevel;
     }
 
     public int GetCastSpeed()

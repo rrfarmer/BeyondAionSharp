@@ -176,16 +176,14 @@ public abstract class CreatureController : VisibleObjectController
                 else
                 {
                     int cancelRate = skill.GetSkillTemplate().GetCancelRate();
-                    if (cancelRate >= 99999)
+                    if (cancelRate > 0)
                     {
-                        CancelCurrentSkill(attacker);
-                    }
-                    else if (cancelRate > 0 && !(GetOwner() is Npc && ((Npc)GetOwner()).IsBoss()))
-                    {
-                        int conc = GetOwner().GetGameStats().GetStat(StatEnum.CONCENTRATION, 0).GetCurrent();
+                        int concentration = GetOwner().GetGameStats().GetStat(StatEnum.CONCENTRATION, 0).GetCurrent();
                         float maxHp = GetOwner().GetGameStats().GetMaxHp().GetCurrent();
-                        int cancel = JRound(((7f * (damage / maxHp) * 100f) - conc / 2f) * (cancelRate / 100f));
-                        if (Rnd.Chance() < cancel)
+                        // chance per mille, driven by the share of max HP the hit took. Skills with an extreme cancel rate, like Return, Bandage Heal and
+                        // Herb Treatment, exceed 1000 for any noticeable hit and are therefore always interrupted.
+                        int cancelChance = (int)(damage / maxHp * cancelRate * 100 * (GetOwner().GetCancelLevel() / 100f) - concentration);
+                        if (cancelChance > 0 && Rnd.Get(1, 1000) <= cancelChance)
                             CancelCurrentSkill(attacker);
                     }
                 }

@@ -356,6 +356,11 @@ public class Npc : Creature
         return GetObjectTemplate().GetNpcTemplateType() == Aion.GameServer.Model.Templates.Npc.NpcTemplateType.RAID_MONSTER;
     }
 
+    public override int GetCancelLevel()
+    {
+        return GetObjectTemplate().GetCancelLevel();
+    }
+
     public bool IsBoss()
     {
         return GetObjectTemplate().GetRating() == Aion.GameServer.Model.Templates.Npc.NpcRating.HERO || GetObjectTemplate().GetRating() == Aion.GameServer.Model.Templates.Npc.NpcRating.LEGENDARY;
