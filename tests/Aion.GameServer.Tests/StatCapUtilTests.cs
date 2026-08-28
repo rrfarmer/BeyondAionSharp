@@ -33,8 +33,7 @@ public sealed class StatCapUtilTests
     [InlineData(StatEnum.HEALTH, 80, 999)]
     [InlineData(StatEnum.KNOWLEDGE, 80, 999)]
     [InlineData(StatEnum.WILL, 80, 999)]
-    [InlineData(StatEnum.MAIN_HAND_POWER, 0, int.MaxValue)]
-    [InlineData(StatEnum.OFF_HAND_CRITICAL, 0, int.MaxValue)]
+    [InlineData(StatEnum.PHYSICAL_ATTACK, 0, int.MaxValue)]
     [InlineData(StatEnum.PHYSICAL_DEFENSE, 0, int.MaxValue)]
     [InlineData(StatEnum.MAGICAL_ACCURACY, 0, int.MaxValue)]
     public void FixedRulesMatchUpstream(StatEnum stat, int expectedLower, int expectedUpper)
@@ -93,6 +92,15 @@ public sealed class StatCapUtilTests
         Assert.Equal(int.MinValue, StatCapUtil.GetLowerCap(StatEnum.ATTACK_SPEED, nonPlayer));
         Assert.Equal(int.MaxValue, StatCapUtil.GetUpperCap(StatEnum.ATTACK_SPEED, nonPlayer));
         Assert.Equal(int.MaxValue, StatCapUtil.GetDifferenceLimit(StatEnum.ATTACK_SPEED));
+    }
+
+    [Fact]
+    public void MainAndOffHandStatsAreNoLongerRegistered()
+    {
+        Assert.Equal(int.MinValue, StatCapUtil.GetLowerCap(StatEnum.MAIN_HAND_POWER, nonPlayer));
+        Assert.Equal(int.MaxValue, StatCapUtil.GetUpperCap(StatEnum.MAIN_HAND_POWER, nonPlayer));
+        Assert.Equal(int.MinValue, StatCapUtil.GetLowerCap(StatEnum.OFF_HAND_CRITICAL, nonPlayer));
+        Assert.Equal(int.MaxValue, StatCapUtil.GetUpperCap(StatEnum.OFF_HAND_CRITICAL, nonPlayer));
     }
 
     [Fact]

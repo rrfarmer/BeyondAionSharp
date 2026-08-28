@@ -55,9 +55,7 @@ public class StatCapUtil
 
         foreach (StatEnum stat in new[]
                  {
-                     StatEnum.MAIN_HAND_POWER, StatEnum.MAIN_HAND_ACCURACY, StatEnum.MAIN_HAND_CRITICAL,
-                     StatEnum.OFF_HAND_POWER, StatEnum.OFF_HAND_ACCURACY, StatEnum.OFF_HAND_CRITICAL,
-                     StatEnum.PHYSICAL_DEFENSE, StatEnum.PHYSICAL_ACCURACY, StatEnum.MAGICAL_ACCURACY
+                     StatEnum.PHYSICAL_ATTACK, StatEnum.PHYSICAL_DEFENSE, StatEnum.PHYSICAL_ACCURACY, StatEnum.MAGICAL_ACCURACY
                  })
         {
             Register(stat, 0, UnlimitedUpper);
