@@ -4,38 +4,32 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using Aion.Commons.Nio;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aion.GameServer.Commons.Utils;
 
 /// <summary>Java parity: commons/utils/NetworkUtils (KID, -Nemesiss-). java.net InetAddress→System.Net.IPAddress; String.format %0NX→ToString("XN").</summary>
 public class NetworkUtils
 {
-    /// <summary>The first matching non-loopback IPv4 address on this machine (network reachable).</summary>
+    private static readonly ILogger log = NullLogger.Instance;
+
+    /// <summary>The outbound IPv4 address, or null if unavailable.</summary>
     public static IPAddress FindLocalIPv4()
     {
         try
         {
-            foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
-            {
-                foreach (UnicastIPAddressInformation ua in ni.GetIPProperties().UnicastAddresses)
-                {
-                    IPAddress addr = ua.Address;
-                    if (addr.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(addr) && !IsMulticast(addr))
-                        return addr;
-                }
-            }
-            return null;
+            // Java parity: connect an unbound UDP socket to 1.1.1.1:80 (no packets are sent) and read the
+            // local address the OS picked for the outbound route.
+            using Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            socket.Connect(new IPAddress(new byte[] { 1, 1, 1, 1 }), 80);
+            return ((IPEndPoint)socket.LocalEndPoint).Address;
         }
-        catch (Exception)
+        catch (Exception e)
         {
+            log.LogError(e, "Could not find local IPv4 address");
             return null;
         }
-    }
-
-    private static bool IsMulticast(IPAddress addr)
-    {
-        byte first = addr.GetAddressBytes()[0];
-        return first >= 224 && first <= 239;
     }
 
     /// <summary>
