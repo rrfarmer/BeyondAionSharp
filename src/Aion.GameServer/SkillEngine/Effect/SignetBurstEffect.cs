@@ -9,7 +9,7 @@ using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.SkillEngine.Effects;
 
-/// <summary>Java parity: skillengine/effect/SignetBurstEffect (ATracer, kecimis) : DamageEffect. @XmlAttribute signetlvl/signet; @XmlAttribute(name="add_effect_prob_multi"); calculateDamage: base value, Element!=NONE→*knowledge/100f (lossy int*=float preserved); SIGNET_DATA_TEMPLATES.getSignetData(SignetEnum.valueOf(signet)→JavaEnum.ValueOf, lvl); *damageMultiplier, effectProb*=multi; AttackUtil.calculateSkillResult; setLaunchSubEffect(Rnd.chance<effectProb); endEffect. calculate: base.Calculate(effect,null,null) false→endEffect. SignetData/SignetEnum red-tolerated.</summary>
+/// <summary>Java parity: skillengine/effect/SignetBurstEffect (ATracer, kecimis) : DamageEffect. @XmlAttribute signetlvl/signet; @XmlAttribute(name="add_effect_prob_multi"); calculateDamage: base value, Element!=NONE→*knowledge/100f (lossy int*=float preserved); SIGNET_DATA_TEMPLATES.getSignetData(SignetEnum.valueOf(signet)→JavaEnum.ValueOf, signetLvl=min(signetlvl, stacked skill level)); *damageMultiplier, effectProb*=multi; setSignetBurstedCount(signetLvl); AttackUtil.calculateSkillResult; setLaunchSubEffect(Rnd.chance<effectProb); endEffect. calculate: base.Calculate(effect,null,null) false→endEffect. SignetData/SignetEnum red-tolerated.</summary>
 [XmlType("SignetBurstEffect")]
 public class SignetBurstEffect : DamageEffect
 {
@@ -28,12 +28,14 @@ public class SignetBurstEffect : DamageEffect
             valueWithDelta = (int)(valueWithDelta * (effect.GetEffector().GetGameStats().GetKnowledge().GetCurrent() / 100f));
 
         int effectProb = 0;
-        SignetData signetData = DataManager.SIGNET_DATA_TEMPLATES.GetSignetData(JavaEnum.ValueOf<SignetEnum>(signet), signetEffect == null ? 0 : signetEffect.GetSkillLevel());
+        int signetLvl = Math.Min(signetlvl, signetEffect == null ? 0 : signetEffect.GetSkillLevel());
+        SignetData signetData = DataManager.SIGNET_DATA_TEMPLATES.GetSignetData(JavaEnum.ValueOf<SignetEnum>(signet), signetLvl);
         if (signetData != null)
         {
             valueWithDelta = (int)(valueWithDelta * signetData.GetDamageMultiplier());
             effectProb = signetData.GetAddEffectProb() * addEffectProbMultiplier;
         }
+        effect.SetSignetBurstedCount(signetLvl);
         AttackUtil.CalculateSkillResult(effect, valueWithDelta, this, false);
         effect.SetLaunchSubEffect(Rnd.Chance() < effectProb);
         if (signetEffect != null)
