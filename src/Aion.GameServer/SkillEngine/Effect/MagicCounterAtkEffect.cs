@@ -9,14 +9,13 @@ using SM_ATTACK_STATUS = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStat
 
 namespace Aion.GameServer.SkillEngine.Effects;
 
-/// <summary>Java parity: skillengine/effect/MagicCounterAtkEffect (ViAl) : EffectTemplate. @XmlAttribute maxdmg; applyEffect→addToEffectedController; startEffect: anonymous ActionObserver(ENDSKILLCAST).endSkillCast→nested CounterObserver capturing outer+effect+effected: non-ITEM && MAGICAL→damage=min(maxdmg, maxHp.base/100f*Value), onAttack(MAGICCOUNTERATK, ..., Hoptype). Skill.SkillMethod/SkillType red-tolerated.</summary>
+/// <summary>Java parity: skillengine/effect/MagicCounterAtkEffect (ViAl) : EffectTemplate. @XmlAttribute maxdmg; applyEffect→addToEffectedController; startEffect: anonymous ActionObserver(ENDSKILLCAST).endSkillCast→nested CounterObserver capturing outer+effect+effected: non-ITEM && MAGICAL→maxHpDamage=maxHp.base*calculateBaseValue/100f, pvp/pve-adjusted via StatFunctions, damage=min(maxdmg, adjusted), onAttack(MAGICCOUNTERATK, ..., Hoptype). Skill.SkillMethod/SkillType red-tolerated.</summary>
 [XmlType("MagicCounterAtkEffect")]
 public class MagicCounterAtkEffect : EffectTemplate
 {
     [XmlAttribute]
     public int maxdmg;
 
-    // TODO bosses are resistent to this?
     public override void ApplyEffect(Effect effect)
     {
         effect.AddToEffectedController();
@@ -46,8 +45,14 @@ public class MagicCounterAtkEffect : EffectTemplate
         {
             if (skill.GetSkillMethod() != SkillMethod.ITEM && skill.GetSkillTemplate().GetType_() == SkillType.MAGICAL)
             {
-                int damage = Math.Min(outer.maxdmg, (int)(effected.GetGameStats().GetMaxHp().GetBase() / 100f * outer.Value));
-                effected.GetController().OnAttack(effect, TYPE.MAGICCOUNTERATK, damage, true, LOG.MAGICCOUNTERATK, outer.Hoptype);
+                float maxHpDamage = effected.GetGameStats().GetMaxHp().GetBase() * outer.CalculateBaseValue(effect) / 100f;
+
+                float adjustedDamage = Aion.GameServer.Utils.Stats.StatFunctions.AdjustDamageByPvpOrPveModifiers(
+                    effect.GetEffector(), effect.GetEffected(), maxHpDamage, effect.GetSkillTemplate().GetPvpDamage(), false, outer.Element);
+
+                int finalDamage = (int)Math.Min(outer.maxdmg, adjustedDamage);
+
+                effected.GetController().OnAttack(effect, TYPE.MAGICCOUNTERATK, finalDamage, true, LOG.MAGICCOUNTERATK, outer.Hoptype);
             }
         }
     }
