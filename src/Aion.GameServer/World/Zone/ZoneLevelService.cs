@@ -11,12 +11,12 @@ namespace Aion.GameServer.World.Zone;
 /// <summary>
 /// Java parity: world/zone/ZoneLevelService (ATracer). Checks water level (start drowning) and map death level (die).
 /// Anonymous Runnable + scheduleAtFixedRate(0, period) -> ScheduleAtFixedRateTask(ct => {...; return ValueTask.CompletedTask;},
-/// TimeSpan, TimeSpan) per the reworked async ThreadPoolManager API; Math.round(float) -> (int)Math.Floor(x+0.5f). World.GetInstance/
+/// TimeSpan, TimeSpan) per the reworked async ThreadPoolManager API. World.GetInstance/
 /// GetWorldMap red-tolerated (World is a partially-ported god class).
 /// </summary>
 public class ZoneLevelService
 {
-    private const long DROWN_PERIOD = 2000;
+    private const long DROWN_PERIOD = 1000;
 
     /// <summary>Check water level (start drowning) and map death level (die)</summary>
     public static void CheckZoneLevels(Player player)
@@ -52,7 +52,7 @@ public class ZoneLevelService
             return;
         player.GetController().AddTask(TaskId.DROWN, ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(ct =>
         {
-            int value = (int)Math.Floor(player.GetLifeStats().GetMaxHp() / 10f + 0.5f);
+            int value = player.GetLifeStats().GetMaxHp() / 20;
             if (player.GetLifeStats().ReduceHp(SmAttackStatus.TYPE.DROWNING, value, 0, SmAttackStatus.LOG.REGULAR, player) == 0)
                 StopDrowning(player);
             return ValueTask.CompletedTask;
