@@ -11,16 +11,16 @@ public class OnFlyCondition : Condition
 {
     public override bool Validate(Skill env)
     {
-        return env.GetEffector().IsFlying();
+        return env.GetEffector().IsInFlyingState();
     }
 
     public override bool Validate(Stat2 stat, IStatFunction statFunction)
     {
-        return stat.GetOwner().IsFlying();
+        return stat.GetOwner().IsInFlyingState();
     }
 
     public override bool Validate(Effect effect)
     {
-        return effect.GetEffected().IsFlying();
+        return effect.GetEffected().IsInFlyingState();
     }
 }

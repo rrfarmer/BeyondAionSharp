@@ -227,7 +227,7 @@ public partial class Player
     /// <summary>CreatureState is unreliable for players; returns true if player is flying or gliding.</summary>
     public override bool IsFlying()
     {
-        return flyState >= 1;
+        return flyState != 0;
     }
 
     /// <summary>CreatureState is unreliable for players; returns true if player is flying.</summary>
