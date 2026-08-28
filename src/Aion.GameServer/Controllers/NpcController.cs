@@ -60,12 +60,12 @@ public class NpcController : CreatureController<Npc>
                     return System.Threading.Tasks.ValueTask.CompletedTask;
                 }, TimeSpan.FromMilliseconds(750));
             }
-            else
+            else if (newTarget != null && !GetOwner().Equals(newTarget))
             {
-                if (newTarget != null && !GetOwner().Equals(newTarget))
-                    GetOwner().GetPosition().SetH(PositionUtil.GetHeadingTowards(GetOwner(), newTarget));
-                PacketSendUtility.BroadcastPacket(GetOwner(), new Aion.GameServer.Network.Aion.ServerPackets.SM_LOOKATOBJECT(GetOwner()));
+                GetOwner().GetPosition().SetH(PositionUtil.GetHeadingTowards(GetOwner(), newTarget));
             }
+            // broadcast NPC's current target and heading
+            PacketSendUtility.BroadcastPacket(GetOwner(), new Aion.GameServer.Network.Aion.ServerPackets.SM_LOOKATOBJECT(GetOwner()));
         }
     }
 

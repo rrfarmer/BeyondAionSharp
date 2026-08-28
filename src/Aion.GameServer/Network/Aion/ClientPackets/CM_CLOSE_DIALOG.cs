@@ -27,6 +27,9 @@ public class CM_CLOSE_DIALOG : AionClientPacket
     {
         Player player = GetConnection().GetActivePlayer();
         VisibleObject target = player.GetKnownList().GetObject(targetObjectId);
+        if (target == null)
+            return;
         DialogService.OnCloseDialog(player, target);
+        SendPacket(new global::Aion.GameServer.Network.Aion.ServerPackets.SM_LOOKATOBJECT(target));
     }
 }
