@@ -413,11 +413,6 @@ public partial class Player
         return rideObservers;
     }
 
-    public Aion.GameServer.Model.GameObjects.Players.AbsoluteStatOwner GetAbsoluteStats()
-    {
-        return absStatsHolder;
-    }
-
     public override void SetPosition(WorldPosition position)
     {
         base.SetPosition(position);

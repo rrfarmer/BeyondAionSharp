@@ -326,6 +326,17 @@ public static class ChatUtil
 		return name;
 	}
 
+	/// <summary>
+	/// The string padded to the given width for display in chat.
+	/// </summary>
+	public static string LeftPad(long number, int width)
+	{
+		string num = number.ToString();
+		if (num.Length >= width)
+			return num;
+		return string.Concat(System.Linq.Enumerable.Repeat("	", width - num.Length)) + num;
+	}
+
 	private static string FormatColorComponent(float value)
 	{
 		// Java DecimalFormat(".##"): up to 2 decimal places, no leading zero for values < 1.

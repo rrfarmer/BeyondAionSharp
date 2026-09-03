@@ -75,7 +75,6 @@ public partial class Player : Creature
     private readonly Aion.GameServer.Model.Items.Storage.Storage[] cabinets = new Aion.GameServer.Model.Items.Storage.Storage[Aion.GameServer.Model.Items.Storage.StorageType.HOUSE_WH_MAX - Aion.GameServer.Model.Items.Storage.StorageType.HOUSE_WH_MIN + 1];
     private Item usingItem;
 
-    private readonly Aion.GameServer.Model.GameObjects.Players.AbsoluteStatOwner absStatsHolder;
     private Aion.GameServer.Model.GameObjects.Players.PlayerSettings playerSettings;
 
     private Aion.GameServer.Model.Team.Group.PlayerGroup playerGroup;
@@ -177,7 +176,6 @@ public partial class Player : Creature
 
         SetGameStats(new PlayerGameStats(this));
         SetLifeStats(new Aion.GameServer.Model.Stats.Container.PlayerLifeStats(this));
-        absStatsHolder = new Aion.GameServer.Model.GameObjects.Players.AbsoluteStatOwner(this, 0);
     }
 
     public bool IsInPlayerMode(Aion.GameServer.Model.Actions.PlayerMode mode)

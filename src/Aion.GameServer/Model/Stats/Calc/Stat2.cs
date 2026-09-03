@@ -64,6 +64,9 @@ public abstract class Stat2
     // Java parity: getExactCurrent()
     public float GetExactCurrent() => (BaseField * BaseRateField + BonusField * BonusRate + BaseField * FixedBonusRate) * FinalRate;
 
+    // Java parity: getExactCurrentWithoutBonus() (pulled forward from upstream f6e9a1816 - b2e1bb57c calls it but only the next commit adds it)
+    public float GetExactCurrentWithoutBonus() => (BaseField * BaseRateField + BaseField * FixedBonusRate) * FinalRate;
+
     // Java parity: getExactCurrentWithoutFixedBonus()
     public float GetExactCurrentWithoutFixedBonus() => (BaseField * BaseRateField + BonusField * BonusRate) * FinalRate;
 

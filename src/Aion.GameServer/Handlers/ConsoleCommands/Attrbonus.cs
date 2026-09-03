@@ -1,56 +1,45 @@
-using System.Collections.Generic;
-using Aion.GameServer.Model.GameObjects;
+using System;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Model.Stats.Calc;
-using Aion.GameServer.Model.Stats.Calc.Functions;
-using Aion.GameServer.Model.Stats.Container;
-using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.ChatHandlers;
 
 namespace Aion.GameServer.Handlers.ConsoleCommands;
 
-/// <summary>Java parity: data/handlers/consolecommands/Attrbonus (ginho1). Sets a stat on the admin to a fixed value.</summary>
-public class Attrbonus : ConsoleCommand, IStatOwner
+/// <summary>Java parity: data/handlers/consolecommands/Attrbonus (ginho1). Modifies your stats via the Stat admin command.</summary>
+public class Attrbonus : ConsoleCommand
 {
     public Attrbonus()
-        : base("attrbonus")
+        : base("attrbonus", "Modifies your stats.")
     {
+        SetSyntaxInfo(
+            "list - Lists all stats.",
+            "<stat> - Shows active stat functions for the given stat.",
+            "<stat> <value> - Sets the given stat to the given value.",
+            "cancel - Cancels all active stat overrides.",
+            "Stat parameters accept lowercase and abbreviated formats, such as flytime or flyt instead of FLY_TIME.");
     }
 
     public override void Execute(Player admin, params string[] paramsArr)
     {
-        if (paramsArr.Length < 1)
+        Aion.GameServer.Handlers.AdminCommands.Stat statCommand = ChatProcessor.GetInstance().GetCommand<Aion.GameServer.Handlers.AdminCommands.Stat>();
+        if (paramsArr.Length == 1 && "list".Equals(paramsArr[0], StringComparison.OrdinalIgnoreCase))
         {
-            Info(admin, null);
-            return;
+            statCommand.ListStats(admin);
         }
-
-        // Java StatEnum.valueOf accepts an exact enum name only and throws for invalid input.
-        StatEnum stat = ParseEnumName<StatEnum>(paramsArr[0]);
-
-        // Java parity: Integer.parseInt(params[1]) throws NumberFormatException -> "Invalid params."
-        if (!TryParseInt(paramsArr[1], out int value))
+        else if (paramsArr.Length == 1 && "cancel".Equals(paramsArr[0], StringComparison.OrdinalIgnoreCase))
         {
-            PacketSendUtility.SendMessage(admin, "Invalid params.");
-            return;
+            statCommand.CancelStatOverrides(admin, admin);
         }
-
-        Creature effected = admin;
-        CreatureGameStats cgs = effected.GetGameStats();
-
-        List<IStatFunction> modifiers = new List<IStatFunction>();
-
-        modifiers.Add(new StatSetFunction(stat, value));
-
-        if (modifiers.Count > 0)
-            cgs.AddEffect(this, modifiers);
-
-        PacketSendUtility.SendMessage(admin, "Character stat " + stat.ToString() + " increased.");
-    }
-
-    // Java parity: Attrbonus.info(Player, String) — ChatCommand has no info() in the C# port, so this is a private helper.
-    private void Info(Player admin, string message)
-    {
-        PacketSendUtility.SendMessage(admin, "syntax ///attrbonus <stat> <value>");
+        else if (paramsArr.Length == 1)
+        {
+            statCommand.ShowStatFunctions(admin, admin, paramsArr[0]);
+        }
+        else if (paramsArr.Length == 2)
+        {
+            statCommand.SetStat(admin, admin, paramsArr[0], Aion.GameServer.Utils.ChatHandlers.JavaNumberParser.ParseInt(paramsArr[1]));
+        }
+        else
+        {
+            SendInfo(admin);
+        }
     }
 }
