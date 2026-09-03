@@ -153,44 +153,36 @@ public abstract class CreatureGameStats
 
     public virtual Stat2 ApplyStatFunctions(StatEnum statEnum, Stat2 stat, params CalculationType[] calculationTypes)
     {
-        List<IStatFunction> functions = GetStatsSorted(statEnum);
-        if (functions != null)
+        foreach (IStatFunction func in GetStatsSorted(statEnum))
         {
-            foreach (IStatFunction func in functions)
+            if (func.Validate(stat))
             {
-                if (func.Validate(stat))
+                if ((statEnum == StatEnum.PHYSICAL_ATTACK || statEnum == StatEnum.MAGICAL_ATTACK) && func.GetOwner() is Aion.GameServer.Model.Enchants.EnchantEffect ef)
                 {
-                    if ((statEnum == StatEnum.PHYSICAL_ATTACK || statEnum == StatEnum.MAGICAL_ATTACK) && func.GetOwner() is Aion.GameServer.Model.Enchants.EnchantEffect ef)
-                    {
-                        if (ef.GetItemSlot() == Aion.GameServer.Model.Items.ItemSlot.MAIN_HAND && Array.IndexOf(calculationTypes, CalculationType.MAIN_HAND) >= 0
-                            || ef.GetItemSlot() == Aion.GameServer.Model.Items.ItemSlot.SUB_HAND && Array.IndexOf(calculationTypes, CalculationType.OFF_HAND) >= 0)
-                        {
-                            func.Apply(stat, calculationTypes);
-                        }
-                    }
-                    else
+                    if (ef.GetItemSlot() == Aion.GameServer.Model.Items.ItemSlot.MAIN_HAND && Array.IndexOf(calculationTypes, CalculationType.MAIN_HAND) >= 0
+                        || ef.GetItemSlot() == Aion.GameServer.Model.Items.ItemSlot.SUB_HAND && Array.IndexOf(calculationTypes, CalculationType.OFF_HAND) >= 0)
                     {
                         func.Apply(stat, calculationTypes);
                     }
                 }
+                else
+                {
+                    func.Apply(stat, calculationTypes);
+                }
             }
-            StatCapUtil.CalculateBaseValue(stat, owner);
         }
+        StatCapUtil.CalculateBaseValue(stat, owner);
         return stat;
     }
 
     public Stat2 GetItemStatBoost(StatEnum statEnum, Stat2 stat)
     {
-        List<IStatFunction> functions = GetStatsSorted(statEnum);
-        if (functions != null)
+        foreach (IStatFunction func in GetStatsSorted(statEnum))
         {
-            foreach (IStatFunction func in functions)
+            if (func.IsBonus() && func.Validate(stat) && (func.GetOwner() is Item || func.GetOwner() is Aion.GameServer.Model.Items.ManaStone
+                || func.GetOwner() is Aion.GameServer.Model.Templates.Itemset.ItemSetTemplate || func.GetOwner() is Aion.GameServer.Model.Items.RandomBonusEffect))
             {
-                if (func.IsBonus() && func.Validate(stat) && (func.GetOwner() is Item || func.GetOwner() is Aion.GameServer.Model.Items.ManaStone
-                    || func.GetOwner() is Aion.GameServer.Model.Templates.Itemset.ItemSetTemplate || func.GetOwner() is Aion.GameServer.Model.Items.RandomBonusEffect))
-                {
-                    func.Apply(stat);
-                }
+                func.Apply(stat);
             }
         }
         return stat;
@@ -412,7 +404,7 @@ public abstract class CreatureGameStats
     public List<IStatFunction> GetStatsSorted(StatEnum stat)
     {
         if (!stats.TryGetValue(stat, out List<IStatFunction> statFunctions) || statFunctions == null)
-            return null;
+            return new List<IStatFunction>();
         lock (statFunctions)
         {
             return new List<IStatFunction>(statFunctions);

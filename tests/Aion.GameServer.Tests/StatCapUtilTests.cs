@@ -34,7 +34,9 @@ public sealed class StatCapUtilTests
     [InlineData(StatEnum.KNOWLEDGE, 80, 999)]
     [InlineData(StatEnum.WILL, 80, 999)]
     [InlineData(StatEnum.PHYSICAL_ATTACK, 0, int.MaxValue)]
+    [InlineData(StatEnum.MAGICAL_ATTACK, 0, int.MaxValue)]
     [InlineData(StatEnum.PHYSICAL_DEFENSE, 0, int.MaxValue)]
+    [InlineData(StatEnum.MAGICAL_DEFEND, 0, int.MaxValue)]
     [InlineData(StatEnum.MAGICAL_ACCURACY, 0, int.MaxValue)]
     public void FixedRulesMatchUpstream(StatEnum stat, int expectedLower, int expectedUpper)
     {

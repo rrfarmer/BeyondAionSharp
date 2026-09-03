@@ -55,7 +55,7 @@ public class StatCapUtil
 
         foreach (StatEnum stat in new[]
                  {
-                     StatEnum.PHYSICAL_ATTACK, StatEnum.PHYSICAL_DEFENSE, StatEnum.PHYSICAL_ACCURACY, StatEnum.MAGICAL_ACCURACY
+                     StatEnum.PHYSICAL_ATTACK, StatEnum.MAGICAL_ATTACK, StatEnum.PHYSICAL_DEFENSE, StatEnum.MAGICAL_DEFEND, StatEnum.PHYSICAL_ACCURACY, StatEnum.MAGICAL_ACCURACY
                  })
         {
             Register(stat, 0, UnlimitedUpper);
@@ -119,13 +119,18 @@ public class StatCapUtil
 
     private static void Calculate(Stat2 stat2, int lowerCap, int upperCap)
     {
-        if (stat2.GetCurrent() > upperCap)
+        float exactCurrent = stat2.GetExactCurrent();
+        if (exactCurrent > upperCap)
         {
-            stat2.SetBonus(upperCap - stat2.GetBase());
+            stat2.SetFinalRate(1f);
+            stat2.SetBonusRate(1f);
+            stat2.SetBonus(upperCap - stat2.GetExactCurrentWithoutBonus());
         }
-        else if (stat2.GetCurrent() < lowerCap)
+        else if (exactCurrent < lowerCap)
         {
-            stat2.SetBonus(lowerCap - stat2.GetBase());
+            stat2.SetFinalRate(1f);
+            stat2.SetBonusRate(1f);
+            stat2.SetBonus(lowerCap - stat2.GetExactCurrentWithoutBonus());
         }
     }
 
