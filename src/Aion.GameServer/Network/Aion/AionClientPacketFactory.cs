@@ -222,7 +222,7 @@ public static class AionClientPacketFactory
 			packets[192] = new PacketInfo(typeof(CM_INSTANCE_INFO), State.IN_GAME); // [C_INSTANCE_DUNGEON_COOLTIMES (InstanceDungeonCooltimePacket)]
 			// packets[193] = // [C_SHOP_REQUEST]
 			packets[194] = new PacketInfo(typeof(CM_SHOW_RESTRICTIONS), State.IN_GAME); // [C_ASK_BOT_POINT (&LAB_14063b3e0)] when writing /restriction in chat
-			// packets[195] = new PacketInfo(typeof(CM_SUMMON_TELEPORT_RESPONSE), State.IN_GAME); // [C_RECALLED_BY_OTHER_ANSWER (&LAB_14063b5b0)] when player accepts/declines SM_SUMMON_TELEPORT_REQUEST window
+			packets[195] = new PacketInfo(typeof(CM_RECALLED_BY_OTHER_ANSWER), State.IN_GAME); // [C_RECALLED_BY_OTHER_ANSWER (&LAB_14063b5b0)] when player accepts/declines SM_RECALLED_BY_OTHER window
 			packets[196] = new PacketInfo(typeof(CM_SHOW_MAP), State.IN_GAME); // [C_REQUEST_SERIAL_KILLER_LIST (RequestSerialKillerListPacket)]
 			packets[197] = new PacketInfo(typeof(CM_APPEARANCE), State.IN_GAME); // [C_ADDED_SERVICE_REQUEST (&LAB_14063ba60)]
 			// packets[198] = [C_SNDC_CHECK_MESSAGE (SndcCheckMessagePacket)]

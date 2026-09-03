@@ -509,6 +509,16 @@ public class PlayerController : CreatureController<Player>
 
     public override void CancelCurrentSkill(Creature lastAttacker)
     {
+        Skill playerCastingSkill = GetOwner().GetCastingSkill();
+        // RecallInstantEffect sends its own cast cancellation message.
+        if (playerCastingSkill != null && playerCastingSkill.GetSkillTemplate().HasRecallInstant())
+        {
+            Creature recallTarget = playerCastingSkill.GetFirstTarget();
+            string targetName = recallTarget != null ? recallTarget.GetName() : "";
+            // Summoning of %0 is cancelled.
+            CancelCurrentSkill(lastAttacker, SM_SYSTEM_MESSAGE.STR_MSG_Recall_CANCEL_EFFECT(targetName));
+            return;
+        }
         CancelCurrentSkill(lastAttacker, SM_SYSTEM_MESSAGE.STR_SKILL_CANCELED());
     }
 

@@ -108,15 +108,17 @@ public class PlayerRestrictions
             }
         }
 
-        // Fix for Summon Group Member, cannot be used while either caster or summoned is actively in combat
-        // example skillId: 1606
         if (skill.GetSkillTemplate().HasRecallInstant())
         {
             if (!(target is Player))
                 return false;
-            if (player.GetController().IsInCombat() || ((Player)target).GetController().IsInCombat()
-                || ((Player)target).GetTransformModel().GetRes1() == 1)// cannot be summoned while transformed
+            if (player.GetController().IsInCombat()
+                || ((Player)target).GetController().IsInCombat()
+                || ((Player)target).GetTransformModel().GetRes1() == 1
+                || target.GetWorldId() != player.GetWorldId()
+                || !Aion.GameServer.SkillEngine.Effects.RecallInstantEffect.CanRecallTo(player))
             {
+                // %0 cannot be summoned right now.
                 PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_Recall_CANNOT_ACCEPT_EFFECT(target.GetName()));
                 return false;
             }

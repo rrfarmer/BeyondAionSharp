@@ -78,6 +78,7 @@ public class ServerPacketsOpcodes
         AddPacketOpcode(66, typeof(SM_GM_SHOW_LEGION_MEMBERLIST));
         AddPacketOpcode(67, typeof(SM_WEATHER));
         AddPacketOpcode(68, typeof(SM_PLAYER_STATE));
+        AddPacketOpcode(69, typeof(SM_RECALLED_BY_OTHER)); // [S_RECALLED_BY_OTHER]
         AddPacketOpcode(70, typeof(SM_ACTION_ANIMATION));
         AddPacketOpcode(71, typeof(SM_QUEST_LIST));
         AddPacketOpcode(72, typeof(SM_KEY));

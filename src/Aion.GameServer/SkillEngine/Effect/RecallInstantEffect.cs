@@ -8,7 +8,7 @@ using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.SkillEngine.Effects;
 
-/// <summary>Java parity: skillengine/effect/RecallInstantEffect (Bio, Sippolo) : EffectTemplate. applyEffect: anonymous RequestResponseHandler&lt;Creature&gt; capturing effect world/instance/loc→nested RecallRequestHandler; deny→STR_MSG_Recall_Rejected_EFFECT both sides, accept→TeleportService.teleportTo; putRequest STR_SUMMON_PARTY_DO_YOU_ACCEPT_REQUEST→SM_QUESTION_WINDOW (30s); calculate: Player + not in combat + same world + effector not in instance + not enemy→setTargetPosition + addSuccessEffect. RequestResponseHandler/SM_QUESTION_WINDOW red-tolerated.</summary>
+/// <summary>Java parity: skillengine/effect/RecallInstantEffect (Bio, Sippolo, SVDNESS) : EffectTemplate. applyEffect: SM_RECALLED_BY_OTHER window with 3-way answer handling (0 accept, 1 refuse, 2 timeout) and a duplicate-effect message when a request is already pending; calculate: Player + not in combat + same world + not enemy + canRecallTo; canRecallTo checks destination zones and world map RECALL flag.</summary>
 [XmlType("RecallInstantEffect")]
 public class RecallInstantEffect : EffectTemplate
 {
@@ -16,35 +16,61 @@ public class RecallInstantEffect : EffectTemplate
     {
         Creature effector = effect.GetEffector();
         Player effected = (Player)effect.GetEffected();
-
-        // TODO need to confirm if cannot be summoned while on abnormal effects stunned, sleeping, feared, etc.
         RequestResponseHandler<Creature> rrh = new RecallRequestHandler(effector, effect);
-
-        if (effected.GetResponseRequester().PutRequest(SM_QUESTION_WINDOW.STR_SUMMON_PARTY_DO_YOU_ACCEPT_REQUEST, rrh))
-            PacketSendUtility.SendPacket(effected,
-                new SM_QUESTION_WINDOW(SM_QUESTION_WINDOW.STR_SUMMON_PARTY_DO_YOU_ACCEPT_REQUEST, 0, 0, effector.GetName(), "Summon Group Member", 30));
+        if (effected.GetResponseRequester().PutRequest(SM_RECALLED_BY_OTHER.RECALL_REQUEST_ID, rrh))
+        {
+            PacketSendUtility.SendPacket(effected, new SM_RECALLED_BY_OTHER(effector.GetName(), effect.GetSkillId(), 30));
+        }
+        else
+        {
+            // You cannot summon %0 as you are already under the same effect.
+            PacketSendUtility.SendPacket((Player)effector, SM_SYSTEM_MESSAGE.STR_MSG_Recall_DUPLICATE_EFFECT(effected.GetName()));
+        }
     }
 
     public override void Calculate(Effect effect)
     {
         Creature effector = effect.GetEffector();
-
-        if (!(effect.GetEffected() is Player))
-            return;
-        Player effected = (Player)effect.GetEffected();
-
-        if (effected.GetController().IsInCombat())
-            return;
-
-        if (effector.GetWorldId() == effected.GetWorldId() && !effector.IsInInstance() && !(effector.IsEnemy(effected)))
+        if (!(effect.GetEffected() is Player effected))
         {
-            effect.GetSkill().SetTargetPosition(effector.GetX(), effector.GetY(), effector.GetZ(), (sbyte)effector.GetHeading());
-            effect.AddSuccessEffect(this);
+            return;
         }
+        if (effected.GetController().IsInCombat())
+        {
+            return;
+        }
+        if (effector.GetWorldId() != effected.GetWorldId())
+        {
+            return;
+        }
+        if (effector.IsEnemy(effected))
+        {
+            return;
+        }
+        if (!CanRecallTo(effector))
+        {
+            return;
+        }
+        effect.GetSkill().SetTargetPosition(effector.GetX(), effector.GetY(), effector.GetZ(), (sbyte)effector.GetHeading());
+        effect.AddSuccessEffect(this);
+    }
+
+    /// <summary>Single check for recall restrictions in the destination zone and world. Used before and after the cast.</summary>
+    public static bool CanRecallTo(Creature effector)
+    {
+        foreach (Aion.GameServer.World.Zone.ZoneInstance zone in effector.FindZones())
+        {
+            if (!zone.CanRecall())
+            {
+                return false;
+            }
+        }
+        return effector.GetPosition().GetWorldMapInstance().GetParent().CanRecall();
     }
 
     private sealed class RecallRequestHandler : RequestResponseHandler<Creature>
     {
+        private readonly Creature effector;
         private readonly int worldId;
         private readonly int instanceId;
         private readonly float locationX;
@@ -55,6 +81,7 @@ public class RecallInstantEffect : EffectTemplate
         public RecallRequestHandler(Creature effector, Effect effect)
             : base(effector)
         {
+            this.effector = effector;
             worldId = effect.GetWorldId();
             instanceId = effect.GetInstanceId();
             locationX = effect.GetSkill().GetX();
@@ -63,15 +90,31 @@ public class RecallInstantEffect : EffectTemplate
             locationH = (byte)effect.GetSkill().GetH();
         }
 
-        public override void DenyRequest(Creature effector, Player effected)
-        {
-            PacketSendUtility.SendPacket((Player)effector, SM_SYSTEM_MESSAGE.STR_MSG_Recall_Rejected_EFFECT(effected.GetName()));
-            PacketSendUtility.SendPacket(effected, SM_SYSTEM_MESSAGE.STR_MSG_Recall_Rejected_EFFECT(effector.GetName()));
-        }
-
         public override void AcceptRequest(Creature effector, Player effected)
         {
             TeleportService.TeleportTo(effected, worldId, instanceId, locationX, locationY, locationZ, locationH);
+        }
+
+        public override void Handle(Player responder, int answer)
+        {
+            switch (answer)
+            {
+                case 0: // Accept.
+                    AcceptRequest(effector, responder);
+                    break;
+                case 1: // Refuse.
+                    // %0 declined your summoning.
+                    PacketSendUtility.SendPacket((Player)effector, SM_SYSTEM_MESSAGE.STR_MSG_Recall_Rejected_EFFECT(responder.GetName()));
+                    // You declined %0's summoning.
+                    PacketSendUtility.SendPacket(responder, SM_SYSTEM_MESSAGE.STR_MSG_Recall_Reject_EFFECT(effector.GetName()));
+                    break;
+                case 2: // Time-out.
+                    // Summoning of %0 is cancelled as the confirmation stand-by time has been exceeded.
+                    PacketSendUtility.SendPacket((Player)effector, SM_SYSTEM_MESSAGE.STR_MSG_Recall_DONOT_ACCEPT_EFFECT(responder.GetName()));
+                    break;
+                default:
+                    break;
+            }
         }
     }
 }
