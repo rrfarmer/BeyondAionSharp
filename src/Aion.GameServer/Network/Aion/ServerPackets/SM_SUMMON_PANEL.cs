@@ -8,7 +8,7 @@ namespace Aion.GameServer.Network.Aion.ServerPackets;
 // Java parity (writeImpl audited 1:1 vs game-server/.../SM_SUMMON_PANEL.java): 2026-06-17 — reads live Summon/lifeStats/gameStats graph (T2 audit-only).
 public class SM_SUMMON_PANEL : AionServerPacket
 {
-    private Summon summon;
+    private readonly Summon summon;
 
     public SM_SUMMON_PANEL(Summon summon)
     {
@@ -24,10 +24,8 @@ public class SM_SUMMON_PANEL : AionServerPacket
         WriteD(summon.GetLifeStats().GetCurrentHp());
         WriteD(summon.GetGameStats().GetMaxHp().GetCurrent());
         WriteD(summon.GetGameStats().GetMainHandPAttack(CalculationType.DISPLAY).GetCurrent());
-        WriteH(summon.GetGameStats().GetPDef().GetCurrent());
-        WriteH(0);
-        WriteH(summon.GetGameStats().GetMResist().GetCurrent());
-        WriteH(0);// unk
+        WriteD(summon.GetGameStats().GetPDef().GetCurrent());
+        WriteD(summon.GetGameStats().GetMDef().GetCurrent());
         WriteH(0);// unk
         WriteD(summon.GetLiveTime()); // life time
     }
