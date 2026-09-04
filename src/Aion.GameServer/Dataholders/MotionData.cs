@@ -73,11 +73,8 @@ public class MotionData
         int motionSpeed = skill.GetSkillTemplate().GetMotion().GetSpeed() * 10;
         float attackRate = GetAttackRate(player);
         float motionSpeedRate = skill.AllowAnimationBoostByCastSpeed() ? Math.Min(attackRate, CalculateCastSpeedRate(skill.GetCastSpeedForAnimationBoostAndChargeSkills())) : attackRate;
-        // TODO parse movement related times (see "_run" suffix in client templates)
         int animationLastHitMillis = (int)(times.GetMaxTime() * motionSpeed * motionSpeedRate);
-        // TODO parse animation_length to remove approxAnimationLength (currently only parsed for AT)
-        float approxAnimationLength = times.GetAnimationLength() > 0 ? times.GetAnimationLength() : 1.4f + times.GetMaxTime();
-        int animationFullDurationMillis = (int)(approxAnimationLength * motionSpeed * motionSpeedRate);
+        int animationFullDurationMillis = (int)(times.GetAnimationLength() * motionSpeed * motionSpeedRate);
         return new AnimationTimes(animationLastHitMillis, animationFullDurationMillis);
     }
 
