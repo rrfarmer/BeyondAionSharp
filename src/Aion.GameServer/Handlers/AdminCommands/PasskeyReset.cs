@@ -16,7 +16,7 @@ public class PasskeyReset : AdminCommand
 
     public override void Execute(Player player, params string[] paramsArr)
     {
-        if (paramsArr == null || paramsArr.Length < 1)
+        if (paramsArr.Length < 2)
         {
             PacketSendUtility.SendMessage(player, "syntax: //passkeyreset <player> <passkey>");
             return;

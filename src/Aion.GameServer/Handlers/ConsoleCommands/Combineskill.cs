@@ -19,7 +19,7 @@ public class Combineskill : ConsoleCommand
 
     public override void Execute(Player admin, params string[] paramsArr)
     {
-        if (paramsArr.Length < 1)
+        if (paramsArr.Length < 2)
         {
             Info(admin, null);
             return;

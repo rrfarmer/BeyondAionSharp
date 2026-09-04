@@ -18,8 +18,11 @@ public class Damage : AdminCommand
 
     public override void Execute(Player admin, params string[] paramsArr)
     {
-        if (paramsArr.Length > 2)
+        if (paramsArr.Length < 1 || paramsArr.Length > 2)
+        {
             Info(admin, null);
+            return;
+        }
 
         VisibleObject target = admin.GetTarget();
         if (target == null)

@@ -73,7 +73,7 @@ public class Weather : AdminCommand
                 }
                 else
                 {
-                    weatherCode = TryParseInt(paramsArr[1], out int code) ? code : -1;
+                    weatherCode = paramsArr.Length > 1 ? Aion.GameServer.Utils.ChatHandlers.JavaNumberParser.ParseInt(paramsArr[1]) : -1;
                     if (weatherCode < 0 || weatherCode > 12)
                     {
                         SendInfo(admin, "Weather code must be between 0 and 12.");
@@ -90,7 +90,7 @@ public class Weather : AdminCommand
                 {
                     SendInfo(admin, "This region has no weather defined.");
                 }
-                return;
+                break; // Java removed its return; C# switch sections must not fall through
         }
     }
 }

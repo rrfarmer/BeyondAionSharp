@@ -15,7 +15,7 @@ public class SecurityToken : AdminCommand
 
     public override void Execute(Player player, params string[] paramsArr)
     {
-        if (paramsArr.Length < 1)
+        if (paramsArr.Length < 1 || (paramsArr[0].Equals("show") && paramsArr.Length < 2))
         {
             PacketSendUtility.SendMessage(player, "Syntax: //stoken <playername> || //stoken show <playername>");
             return;

@@ -33,7 +33,7 @@ public class Remove : AdminCommand
         }
 
         string itemString = paramsArr[1];
-        if (itemString.Equals("[item:") && paramsArr.Length >= 2)
+        if (itemString.Equals("[item:") && paramsArr.Length > 2)
         {
             // some item links have space before their ID
             itemString += paramsArr[2];

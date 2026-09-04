@@ -49,7 +49,7 @@ public class Rift : AdminCommand
 
         if (COMMAND_OPEN.Equals(paramsArr[0], StringComparison.OrdinalIgnoreCase))
         {
-            bool guards = ParseBoolean(paramsArr[2]);
+            bool guards = paramsArr.Length > 2 && ParseBoolean(paramsArr[2]);
             result = RiftService.GetInstance().OpenRifts(id, guards);
             PacketSendUtility.SendMessage(player, result ? "Rifts is opened!" : "Rifts was already opened");
         }
