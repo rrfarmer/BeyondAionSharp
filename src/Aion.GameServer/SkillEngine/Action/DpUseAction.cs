@@ -15,15 +15,26 @@ public class DpUseAction : Action
 
     public override bool Act(Skill skill)
     {
-        Player effector = (Player)skill.GetEffector();
-        int currentDp = effector.GetCommonData().GetDp();
-
+        if (!(skill.GetEffector() is Player player))
+            return true;
+        int currentDp = player.GetCommonData().GetDp(); // read once, setDp has no lower bound
         if (currentDp <= 0 || currentDp < value)
         {
-            PacketSendUtility.SendPacket(effector, SM_SYSTEM_MESSAGE.STR_SKILL_NOT_ENOUGH_DP());
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_SKILL_NOT_ENOUGH_DP());
             return false;
         }
-        effector.GetCommonData().SetDp(currentDp - value);
+        player.GetCommonData().SetDp(currentDp - value);
         return true;
+    }
+
+    public override bool CanAct(Skill skill)
+    {
+        if (!(skill.GetEffector() is Player player))
+            return true;
+        int currentDp = player.GetCommonData().GetDp();
+        if (currentDp > 0 && currentDp >= value)
+            return true;
+        PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_SKILL_NOT_ENOUGH_DP());
+        return false;
     }
 }

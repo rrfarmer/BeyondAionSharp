@@ -23,8 +23,25 @@ public class MpUseAction : Action
 
     public override bool Act(Skill skill)
     {
-        Creature effector = skill.GetEffector();
-        int currentMp = effector.GetLifeStats().GetCurrentMp();
+        if (!CanAct(skill))
+            return false;
+        skill.GetEffector().GetLifeStats().ReduceMp(SmAttackStatus.TYPE.USED_MP, GetCost(skill), 0, SmAttackStatus.LOG.REGULAR);
+        return true;
+    }
+
+    public override bool CanAct(Skill skill)
+    {
+        // npcs have no mp, so they must not be blocked by an mp cost
+        if (skill.GetEffector() is Player player && player.GetLifeStats().GetCurrentMp() < GetCost(skill))
+        {
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_SKILL_NOT_ENOUGH_MP());
+            return false;
+        }
+        return true;
+    }
+
+    private int GetCost(Skill skill)
+    {
         int valueWithDelta = value + delta * skill.GetSkillLevel();
         if (ratio)
             valueWithDelta = skill.GetEffector().GetLifeStats().GetMaxMp() * valueWithDelta / 100;
@@ -34,17 +51,6 @@ public class MpUseAction : Action
             // changeMpPercent is negative
             valueWithDelta = valueWithDelta - ((valueWithDelta / ((100 / changeMpPercent))));
         }
-
-        if (effector is Player)
-        {
-            if (currentMp <= 0 || currentMp < valueWithDelta)
-            {
-                PacketSendUtility.SendPacket((Player)effector, SM_SYSTEM_MESSAGE.STR_SKILL_NOT_ENOUGH_MP());
-                return false;
-            }
-        }
-
-        effector.GetLifeStats().ReduceMp(SmAttackStatus.TYPE.USED_MP, valueWithDelta, 0, SmAttackStatus.LOG.REGULAR);
-        return true;
+        return valueWithDelta;
     }
 }

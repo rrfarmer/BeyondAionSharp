@@ -99,7 +99,8 @@ public abstract class CreatureLifeStats
                 return 0;
 
             previousHp = currentHp;
-            currentHp = newHp = Math.Min(currentHp, Math.Max(currentHp - value, 0));
+            int minHp = type == TYPE.USED_HP ? 1 : 0; // a skill cost drains its caster down to 1 hp, it never kills him
+            currentHp = newHp = Math.Clamp(currentHp - value, Math.Min(minHp, currentHp), currentHp);
             if (IsDead())
             {
                 currentMp = 0;

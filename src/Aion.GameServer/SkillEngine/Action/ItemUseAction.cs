@@ -19,18 +19,28 @@ public class ItemUseAction : Action
     [XmlAttribute]
     public int count;
 
+    /// <summary>False, if the item is required but not consumed.</summary>
+    [XmlAttribute]
+    public bool expendable = true;
+
     public override bool Act(Skill skill)
     {
-        if (skill.GetEffector() is Player)
+        if (!expendable)
+            return CanAct(skill);
+        if (skill.GetEffector() is Player player && !player.GetInventory().DecreaseByItemId(itemid, count))
         {
-            ItemTemplate item = DataManager.ITEM_DATA.GetItemTemplate(itemid);
-            Player player = (Player)skill.GetEffector();
-            Storage inventory = player.GetInventory();
-            if (!inventory.DecreaseByItemId(itemid, count))
-            {
-                PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_SKILL_NOT_ENOUGH_ITEM(item.GetL10n()));
-                return false;
-            }
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_SKILL_NOT_ENOUGH_ITEM(DataManager.ITEM_DATA.GetItemTemplate(itemid).GetL10n()));
+            return false;
+        }
+        return true;
+    }
+
+    public override bool CanAct(Skill skill)
+    {
+        if (skill.GetEffector() is Player player && player.GetInventory().GetItemCountByItemId(itemid) < count)
+        {
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_SKILL_NOT_ENOUGH_ITEM(DataManager.ITEM_DATA.GetItemTemplate(itemid).GetL10n()));
+            return false;
         }
         return true;
     }

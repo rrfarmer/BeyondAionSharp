@@ -148,7 +148,29 @@ public class Skill
             }
         }
 
+        if (castState == CastState.CAST_START && !CanPayCastCosts())
+            return false;
+
         return ValidateEffectedList();
+    }
+
+    /// <summary>
+    /// Checks the costs the cast will have to pay when it ends, without paying them, so that a cast which cannot be afforded never starts (example:
+    /// Dimensional Fragments for Summon Group Member, skillId: 3777).
+    /// </summary>
+    /// <returns>True, if all costs can be paid</returns>
+    private bool CanPayCastCosts()
+    {
+        var endConditions = skillTemplate.GetEndConditions();
+        if (endConditions != null && !endConditions.CanValidate(this))
+            return false;
+        var checkedActions = skillTemplate.GetActions();
+        if (checkedActions == null)
+            return true;
+        foreach (Aion.GameServer.SkillEngine.Action.Action action in checkedActions.GetActions())
+            if (!action.CanAct(this))
+                return false;
+        return true;
     }
 
     private bool ValidateEffectedList()
@@ -584,33 +606,12 @@ public class Skill
             effector.GetController().CancelCurrentSkill(null); // calls effector.setCasting(null) and sends skill cancel packet
             return;
         }
+        if (!PayCastCosts())
+        {
+            effector.GetController().CancelCurrentSkill(null!, null!); // the unpaid cost already told the player what is missing
+            return;
+        }
         effector.SetCasting(null);
-
-        // try removing item, if its not possible return to prevent exploits
-        if (skillMethod == SkillMethod.ITEM && effector is Player itemUser)
-        {
-            Item item = itemUser.GetInventory().GetItemByObjId(itemObjectId);
-            if (item == null)
-                return;
-            if (item.GetActivationCount() > 1)
-                item.SetActivationCount(item.GetActivationCount() - 1);
-            else if (!itemUser.GetInventory().DecreaseByObjectId(item.GetObjectId(), 1, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType.DEC_ITEM_USE))
-                return;
-            itemUser.StartCooldown(item);
-        }
-
-        EndCondCheck();
-
-        // Perform necessary actions (use mp,dp items etc)
-        var skillActions = skillTemplate.GetActions();
-        if (skillActions != null)
-        {
-            foreach (Aion.GameServer.SkillEngine.Action.Action action in skillActions.GetActions())
-            {
-                if (!action.Act(this))
-                    return;
-            }
-        }
 
         // Create effects and precalculate result
         int dashStatus = 0;
@@ -848,6 +849,44 @@ public class Skill
     }
 
     /// <summary>Check all conditions after using skill.</summary>
+    /// <summary>
+    /// Consumes everything the cast costs: the used item, the skill conditions and the skill actions (mp, dp, items).
+    /// </summary>
+    /// <returns>False, if any of them could not be paid, in which case the cast must be cancelled</returns>
+    private bool PayCastCosts()
+    {
+        if (!CanPayCastCosts()) // nothing may be paid before it is certain that everything can be paid
+            return false;
+
+        // try removing item, if its not possible return to prevent exploits
+        if (skillMethod == SkillMethod.ITEM && effector is Player itemUser)
+        {
+            Item item = itemUser.GetInventory().GetItemByObjId(itemObjectId);
+            if (item == null)
+                return false;
+            if (item.GetActivationCount() > 1)
+                item.SetActivationCount(item.GetActivationCount() - 1);
+            else if (!itemUser.GetInventory().DecreaseByObjectId(item.GetObjectId(), 1, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType.DEC_ITEM_USE))
+                return false;
+            itemUser.StartCooldown(item);
+        }
+
+        if (!EndCondCheck())
+            return false;
+
+        // Perform necessary actions (use mp,dp items etc)
+        var skillActions = skillTemplate.GetActions();
+        if (skillActions != null)
+        {
+            foreach (Aion.GameServer.SkillEngine.Action.Action action in skillActions.GetActions())
+            {
+                if (!action.Act(this))
+                    return false;
+            }
+        }
+        return true;
+    }
+
     private bool EndCondCheck()
     {
         var skillConditions = skillTemplate.GetEndConditions();

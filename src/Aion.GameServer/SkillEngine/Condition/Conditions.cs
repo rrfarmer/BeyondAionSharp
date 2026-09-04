@@ -66,6 +66,21 @@ public class Conditions
         return true;
     }
 
+    public bool CanValidate(Skill skill)
+    {
+        if (conditions != null)
+        {
+            foreach (Condition condition in GetConditions())
+            {
+                if (!condition.CanValidate(skill))
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     public bool Validate(Stat2 stat, IStatFunction statFunction)
     {
         if (conditions != null)

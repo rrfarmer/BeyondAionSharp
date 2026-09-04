@@ -21,20 +21,30 @@ public class HpUseAction : Action
 
     public override bool Act(Skill skill)
     {
+        if (!CanAct(skill))
+            return false;
         Creature effector = skill.GetEffector();
+        // npcs pass the check even when they cannot afford it and then pay what they have, down to 1 hp
+        effector.GetLifeStats().ReduceHp(SmAttackStatus.TYPE.USED_HP, GetCost(skill), 0, SmAttackStatus.LOG.REGULAR, effector);
+        return true;
+    }
+
+    public override bool CanAct(Skill skill)
+    {
+        // npcs are never blocked by an hp cost, they pay what they have, see Act()
+        if (skill.GetEffector() is Player player && player.GetLifeStats().GetCurrentHp() <= GetCost(skill)) // the cast may never be lethal
+        {
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_SKILL_NOT_ENOUGH_HP());
+            return false;
+        }
+        return true;
+    }
+
+    private int GetCost(Skill skill)
+    {
         int valueWithDelta = value + delta * skill.GetSkillLevel();
-        int currentHp = effector.GetLifeStats().GetCurrentHp();
         if (ratio)
             valueWithDelta = (int)(valueWithDelta / 100f * skill.GetEffector().GetLifeStats().GetMaxHp());
-        if (effector is Player)
-        {
-            if (currentHp <= 0 || currentHp < valueWithDelta)
-            {
-                PacketSendUtility.SendPacket((Player)effector, SM_SYSTEM_MESSAGE.STR_SKILL_NOT_ENOUGH_HP());
-                return false;
-            }
-        }
-        effector.GetLifeStats().ReduceHp(SmAttackStatus.TYPE.USED_HP, valueWithDelta, 0, SmAttackStatus.LOG.REGULAR, effector);
-        return true;
+        return valueWithDelta;
     }
 }

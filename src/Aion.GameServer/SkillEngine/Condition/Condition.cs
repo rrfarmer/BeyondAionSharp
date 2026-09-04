@@ -13,6 +13,15 @@ public abstract class Condition : StatCondition
     /// <summary>Validate condition specified in template.</summary>
     public abstract bool Validate(Skill env);
 
+    /// <summary>
+    /// Checks whether Validate(Skill) would succeed, without paying anything.
+    /// </summary>
+    /// <returns>True, if the condition is met</returns>
+    public virtual bool CanValidate(Skill skill)
+    {
+        return true;
+    }
+
     public virtual bool Validate(Stat2 stat, IStatFunction statFunction)
     {
         return true;
