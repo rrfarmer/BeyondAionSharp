@@ -10,10 +10,10 @@ using Aion.GameServer.Utils.Xml;
 namespace Aion.GameServer.Handlers.ConsoleCommands;
 
 /// <summary>Java parity: data/handlers/consolecommands/Addcskill (ginho1).</summary>
-public class Addcskill : ConsoleCommand
+public class Addskill : ConsoleCommand
 {
-    public Addcskill()
-        : base("addcskill")
+    public Addskill()
+        : base("addskill")
     {
     }
 
@@ -59,7 +59,7 @@ public class Addcskill : ConsoleCommand
 
     private void Info(Player admin, string message)
     {
-        PacketSendUtility.SendMessage(admin, "syntax ///addcskill <skill name>");
+        PacketSendUtility.SendMessage(admin, "syntax ///addskill <skill name>");
     }
 
     [XmlRoot("skill")]

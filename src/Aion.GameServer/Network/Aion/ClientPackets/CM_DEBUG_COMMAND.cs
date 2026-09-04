@@ -7,7 +7,7 @@ using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>
-/// Java parity: network/aion/clientpackets/CM_DEBUG_COMMAND. Sent for GM-panel commands prefixed by //// (builder control) or ///// (builder command),
+/// Java parity: network/aion/clientpackets/CM_DEBUG_COMMAND. Sent for GM-panel commands prefixed by / or //// (builder control) or ///// (builder command),
 /// and //// in macros when the console is enabled. Logs to the ADMINAUDIT_LOG channel via the base GM-command handler.
 /// </summary>
 public class CM_DEBUG_COMMAND : AbstractGmCommandPacket

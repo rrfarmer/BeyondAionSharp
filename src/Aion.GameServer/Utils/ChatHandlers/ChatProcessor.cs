@@ -55,10 +55,11 @@ public class ChatProcessor : GameEngine
 
     public void RegisterCommand(ChatCommand cmd)
     {
+        string cmdName = cmd.GetAliasWithPrefix();
         if (cmd.GetLevel() < 0)
-            throw new System.NullReferenceException("Failed to register chat command: Invalid access level for " + cmd.GetAlias() + ".");
-        if (!commandHandlers.TryAdd(cmd.GetAlias().ToLower(), cmd))
-            throw new System.ArgumentException("Failed to register chat command: " + cmd.GetAlias() + " is already registered.");
+            throw new System.ArgumentException("Failed to register " + cmd.GetType().Name + ": Invalid access level for " + cmdName + ".");
+        if (!commandHandlers.TryAdd(cmdName.ToLower(), cmd))
+            throw new System.ArgumentException("Failed to register " + cmd.GetType().Name + ": " + cmdName + " is already registered.");
     }
 
     public bool HandleChatCommand(Player player, string text)
@@ -66,19 +67,14 @@ public class ChatProcessor : GameEngine
         if (text == null || text.Length == 0)
             return false;
 
-        string prefix;
-        if (text.StartsWith(AdminCommand.PREFIX))
-            prefix = AdminCommand.PREFIX;
-        else if (text.StartsWith(PlayerCommand.PREFIX))
-            prefix = PlayerCommand.PREFIX;
-        else
+        if (!text.StartsWith(AdminCommand.PREFIX) && !text.StartsWith(PlayerCommand.PREFIX))
             return false;
         int splitIndex = text.IndexOf(' ');
-        string cmdName = text.Substring(prefix.Length, (splitIndex == -1 ? text.Length : splitIndex) - prefix.Length);
+        string cmdName = splitIndex == -1 ? text : text.Substring(0, splitIndex);
         ChatCommand cmd = GetCommand(cmdName);
         if (cmd == null)
             return false;
-        string cmdParams = splitIndex == -1 ? "" : text.Substring(splitIndex);
+        string cmdParams = text.Substring(cmdName.Length);
         return cmd.Process(player, GetParamsFromString(cmdParams));
     }
 
@@ -87,22 +83,15 @@ public class ChatProcessor : GameEngine
         if (text == null || text.Length == 0)
             return;
 
-        if (!text.StartsWith(ConsoleCommand.PREFIX))
-            return;
-
-        string cmdName = text.Split(' ')[0];
-        string cmdParams = text.Substring(cmdName.Length);
-
-        // TODO remove this temporary fix (AdminCommand is already called addskill)
-        if (cmdName.EndsWith("addskill"))
-            cmdName = cmdName.Replace("addskill", "addcskill");
-
-        ChatCommand cmd = GetCommand(cmdName.Substring(ConsoleCommand.PREFIX.Length));
-
-        if (cmd == null)
+        int splitIndex = text.IndexOf(' ');
+        string cmdName = splitIndex == -1 ? text : text.Substring(0, splitIndex);
+        if (!(GetCommand(cmdName) is ConsoleCommand consoleCommand))
+        {
             PacketSendUtility.SendMessage(player, "The command " + cmdName + " is not implemented.");
-        else if (cmd is ConsoleCommand)
-            cmd.Process(player, GetParamsFromString(cmdParams));
+            return;
+        }
+        string cmdParams = text.Substring(cmdName.Length);
+        consoleCommand.Process(player, GetParamsFromString(cmdParams));
     }
 
     private string[] GetParamsFromString(string paramsStr)
