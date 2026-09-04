@@ -459,15 +459,29 @@ public sealed class GoldenPacketFixtureTests
 		return list;
 	}
 
-	// SM_TRANSFORM custom (testing) ctor: creature objId + state (harness ACTIVE=1) + scalars + TransformType.
+	// SM_TRANSFORM: the custom (testing) ctor was removed upstream (d91f974ff); the fixture now drives the live
+	// transform-model path, mapping the old scalar fields onto the typed flags in write order
+	// (unk7=cantUseSkills, unk1=cantFly, unk2=cantUseItems, unk3=cantAttack, unk4=cantJump, unk5=cantRecall, unk6=cantMove).
 	private static SM_TRANSFORM ReconstructTransform(JsonElement inputs)
 	{
 		var c = new PacketHarnessCreature(inputs.GetProperty("objectId").GetInt32(), 50, new Dictionary<StatEnum, int>());
 		var type = Enum.Parse<Aion.GameServer.SkillEngine.Model.TransformType>(inputs.GetProperty("type").GetString()!);
-		return new SM_TRANSFORM(c, inputs.GetProperty("modelId").GetInt32(), inputs.GetProperty("unk7").GetInt32(), type,
-			inputs.GetProperty("unk1").GetInt32(), inputs.GetProperty("unk2").GetInt32(), inputs.GetProperty("unk3").GetInt32(),
-			inputs.GetProperty("unk4").GetInt32(), inputs.GetProperty("unk5").GetInt32(), inputs.GetProperty("unk6").GetInt32(),
-			inputs.GetProperty("panelId").GetInt32());
+		var model = c.GetTransformModel();
+		var modelType = typeof(Aion.GameServer.Model.GameObjects.TransformModel);
+		void Set(string field, object value) =>
+			(modelType.GetField(field, BindingFlags.Instance | BindingFlags.NonPublic)
+				?? throw new MissingFieldException(modelType.FullName, field)).SetValue(model, value);
+		Set("_modelId", inputs.GetProperty("modelId").GetInt32());
+		Set("_transformType", type);
+		Set("_panelId", inputs.GetProperty("panelId").GetInt32());
+		Set("_cantUseSkills", inputs.GetProperty("unk7").GetInt32() != 0);
+		Set("_cantFly", inputs.GetProperty("unk1").GetInt32() != 0);
+		Set("_cantUseItems", inputs.GetProperty("unk2").GetInt32() != 0);
+		Set("_cantAttack", inputs.GetProperty("unk3").GetInt32() != 0);
+		Set("_cantJump", inputs.GetProperty("unk4").GetInt32() != 0);
+		Set("_cantRecall", inputs.GetProperty("unk5").GetInt32() != 0);
+		Set("_cantMove", inputs.GetProperty("unk6").GetInt32() != 0);
+		return new SM_TRANSFORM(c);
 	}
 
 	// SM_DELETE_ITEM: map the fixture's raw delete-type mask to the matching ItemDeleteType class-enum

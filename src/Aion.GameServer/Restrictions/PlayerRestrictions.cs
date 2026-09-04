@@ -91,7 +91,7 @@ public class PlayerRestrictions
         // cannot use skills while transformed
         if (player.GetTransformModel().IsActive())
         {
-            if (player.GetTransformModel().GetBanUseSkills() == 1)
+            if (player.GetTransformModel().CantUseSkills())
             {
                 PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_SKILL_CAN_NOT_CAST_IN_SHAPECHANGE());
                 return false;
@@ -114,7 +114,7 @@ public class PlayerRestrictions
                 return false;
             if (player.GetController().IsInCombat()
                 || ((Player)target).GetController().IsInCombat()
-                || ((Player)target).GetTransformModel().GetRes1() == 1
+                || ((Player)target).GetTransformModel().CantRecall()
                 || target.GetWorldId() != player.GetWorldId()
                 || !Aion.GameServer.SkillEngine.Effects.RecallInstantEffect.CanRecallTo(player))
             {
@@ -291,7 +291,7 @@ public class PlayerRestrictions
         }
 
         // cannot attack while transformed
-        if (player.GetTransformModel().GetRes3() == 1)
+        if (player.GetTransformModel().CantAttack())
         {
             return false;
         }
@@ -364,7 +364,7 @@ public class PlayerRestrictions
         }
 
         // cannot use item while transformed
-        if (player.GetTransformModel().GetRes5() == 1)
+        if (player.GetTransformModel().CantUseItems())
         {
             // client sends message by itself
             return false;

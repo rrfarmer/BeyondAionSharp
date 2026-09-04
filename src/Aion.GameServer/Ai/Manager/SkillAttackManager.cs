@@ -83,7 +83,7 @@ public class SkillAttackManager
         if ((template.GetType_() == SkillType.MAGICAL && owner.GetEffectController().IsAbnormalSet(AbnormalState.SILENCE))
             || (template.GetType_() == SkillType.PHYSICAL && owner.GetEffectController().IsAbnormalSet(AbnormalState.BIND))
             || (owner.GetEffectController().IsInAnyAbnormalState(AbnormalState.CANT_ATTACK_STATE))
-            || (owner.IsTransformed() && owner.GetTransformModel().GetBanUseSkills() == 1))
+            || (owner.IsTransformed() && owner.GetTransformModel().CantUseSkills()))
         {
             AfterUseSkill(npcAI);
         }
@@ -230,7 +230,7 @@ public class SkillAttackManager
                 if ((template.GetType_() == SkillType.MAGICAL && owner.GetEffectController().IsAbnormalSet(AbnormalState.SILENCE))
                     || (template.GetType_() == SkillType.PHYSICAL && owner.GetEffectController().IsAbnormalSet(AbnormalState.BIND))
                     || (owner.GetEffectController().IsInAnyAbnormalState(AbnormalState.CANT_ATTACK_STATE))
-                    || (owner.IsTransformed() && owner.GetTransformModel().GetBanUseSkills() == 1))
+                    || (owner.IsTransformed() && owner.GetTransformModel().CantUseSkills()))
                 {
                     return false;
                 }

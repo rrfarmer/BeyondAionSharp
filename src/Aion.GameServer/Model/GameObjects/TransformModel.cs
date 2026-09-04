@@ -21,13 +21,13 @@ public class TransformModel
     private TribeClass? _transformTribe;
 
     // restrictions
-    protected int BanUseSkills;
-    protected int BanMovement;
-    protected int Res1;
-    protected int Res2;
-    protected int Res3;
-    protected int Res5;
-    protected int Res6;
+    protected bool _cantUseSkills;
+    protected bool _cantMove;
+    protected bool _cantRecall;
+    protected bool _cantJump;
+    protected bool _cantAttack;
+    protected bool _cantUseItems;
+    protected bool _cantFly;
 
     public TransformModel(Creature creature)
     {
@@ -37,10 +37,10 @@ public class TransformModel
     }
 
     // Java parity: apply(int)
-    public void Apply(int modelId) => Apply(modelId, _originalType, 0, 0, 0, 0, 0, 0, 0, 0);
+    public void Apply(int modelId) => Apply(modelId, _originalType, 0, false, false, false, false, false, false, false);
 
-    // Java parity: apply(int, TransformType, int, int, int, int, int, int, int, int)
-    public void Apply(int modelId, TransformType type, int panelId, int banUseSkills, int banMovement, int res1, int res2, int res3, int res5, int res6)
+    // Java parity: apply(int, TransformType, int, bool, bool, bool, bool, bool, bool, bool)
+    public void Apply(int modelId, TransformType type, int panelId, bool cantUseSkills, bool cantMove, bool cantRecall, bool cantJump, bool cantAttack, bool cantUseItems, bool cantFly)
     {
         int originalModelId = _owner.GetObjectTemplate().GetTemplateId();
         if (modelId == 0 || modelId == originalModelId) // reset
@@ -48,26 +48,26 @@ public class TransformModel
             _modelId = originalModelId;
             _transformType = _originalType;
             _panelId = 0;
-            BanUseSkills = 0;
-            BanMovement = 0;
-            Res1 = 0;
-            Res2 = 0;
-            Res3 = 0;
-            Res5 = 0;
-            Res6 = 0;
+            _cantUseSkills = false;
+            _cantMove = false;
+            _cantRecall = false;
+            _cantJump = false;
+            _cantAttack = false;
+            _cantUseItems = false;
+            _cantFly = false;
         }
         else // set new
         {
             _modelId = modelId;
             _transformType = type;
             _panelId = panelId;
-            BanUseSkills = banUseSkills;
-            BanMovement = banMovement;
-            Res1 = res1;
-            Res2 = res2;
-            Res3 = res3;
-            Res5 = res5;
-            Res6 = res6;
+            _cantUseSkills = cantUseSkills;
+            _cantMove = cantMove;
+            _cantRecall = cantRecall;
+            _cantJump = cantJump;
+            _cantAttack = cantAttack;
+            _cantUseItems = cantUseItems;
+            _cantFly = cantFly;
         }
 
         UpdateVisually();
@@ -105,7 +105,7 @@ public class TransformModel
 
     // Java parity: isUnrestricted()
     public bool IsUnrestricted() =>
-        BanUseSkills == 0 && BanMovement == 0 && Res1 == 0 && Res2 == 0 && Res3 == 0 && Res5 == 0 && Res6 == 0;
+        !_cantUseSkills && !_cantMove && !_cantRecall && !_cantJump && !_cantAttack && !_cantUseItems && !_cantFly;
 
     // Java parity: setEventModelId(int)
     public void SetEventModelId(int eventModelId) => _eventModelId = eventModelId;
@@ -135,11 +135,11 @@ public class TransformModel
         UpdateTribeVisually();
     }
 
-    public int GetBanUseSkills() => BanUseSkills;
-    public int GetBanMovement() => BanMovement;
-    public int GetRes1() => Res1;
-    public int GetRes2() => Res2;
-    public int GetRes3() => Res3;
-    public int GetRes5() => Res5;
-    public int GetRes6() => Res6;
+    public bool CantUseSkills() => _cantUseSkills;
+    public bool CantMove() => _cantMove;
+    public bool CantRecall() => _cantRecall;
+    public bool CantJump() => _cantJump;
+    public bool CantAttack() => _cantAttack;
+    public bool CantUseItems() => _cantUseItems;
+    public bool CantFly() => _cantFly;
 }

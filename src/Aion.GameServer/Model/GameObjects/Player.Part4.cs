@@ -443,7 +443,7 @@ public partial class Player
     public override bool CanPerformMove()
     {
         // player cannot move is transformed
-        if (GetTransformModel().GetBanMovement() == 1)
+        if (GetTransformModel().CantMove())
             return false;
 
         return base.CanPerformMove();

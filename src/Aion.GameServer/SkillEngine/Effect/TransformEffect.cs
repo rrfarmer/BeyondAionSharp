@@ -18,19 +18,19 @@ public abstract class TransformEffect : EffectTemplate
     public int panelid;
 
     [XmlAttribute]
-    public int banUseSkills;
+    public bool cantUseSkills;
     [XmlAttribute]
-    public int banMovement;
+    public bool cantMove;
     [XmlAttribute]
-    public int res1;
+    public bool cantRecall;
     [XmlAttribute]
-    public int res2;
+    public bool cantJump;
     [XmlAttribute]
-    public int res3;
+    public bool cantAttack;
     [XmlAttribute]
-    public int res5;
+    public bool cantUseItems;
     [XmlAttribute]
-    public int res6;
+    public bool cantFly;
 
     public override void ApplyEffect(Effect effect)
     {
@@ -63,17 +63,16 @@ public abstract class TransformEffect : EffectTemplate
             }
         }
         if (temp != null)
-            effected.GetTransformModel().Apply(temp.GetTransformId(), temp.GetTransformType(), temp.GetPanelId(), temp.GetBanUseSkills(),
-                temp.GetBanMovement(), temp.GetRes1(), temp.GetRes2(), temp.GetRes3(), temp.GetRes5(), temp.GetRes6());
+            effected.GetTransformModel().Apply(temp.GetTransformId(), temp.GetTransformType(), temp.GetPanelId(), temp.CantUseSkills(),
+                temp.CantMove(), temp.CantRecall(), temp.CantJump(), temp.CantAttack(), temp.CantUseItems(), temp.CantFly());
         else
             effected.EndTransformation();
     }
 
     public override void StartEffect(Effect effect)
     {
-        Creature effected = effect.GetEffected();
-        effected.GetTransformModel().Apply(this.GetTransformId(), this.GetTransformType(), this.GetPanelId(), this.GetBanUseSkills(),
-            this.GetBanMovement(), this.GetRes1(), this.GetRes2(), this.GetRes3(), this.GetRes5(), this.GetRes6());
+        effect.GetEffected().GetTransformModel().Apply(GetTransformId(), GetTransformType(), GetPanelId(), CantUseSkills(), CantMove(), CantRecall(),
+            CantJump(), CantAttack(), CantUseItems(), CantFly());
     }
 
     public TransformType GetTransformType()
@@ -91,45 +90,38 @@ public abstract class TransformEffect : EffectTemplate
         return panelid;
     }
 
-    /// <summary>the banUseSkills</summary>
-    public int GetBanUseSkills()
+    public bool CantUseSkills()
     {
-        return banUseSkills;
+        return cantUseSkills;
     }
 
-    /// <summary>the banMovement</summary>
-    public int GetBanMovement()
+    public bool CantMove()
     {
-        return banMovement;
+        return cantMove;
     }
 
-    /// <summary>the res1</summary>
-    public int GetRes1()
+    public bool CantRecall()
     {
-        return res1;
+        return cantRecall;
     }
 
-    /// <summary>the res2</summary>
-    public int GetRes2()
+    public bool CantJump()
     {
-        return res2;
+        return cantJump;
     }
 
-    /// <summary>the res3</summary>
-    public int GetRes3()
+    public bool CantAttack()
     {
-        return res3;
+        return cantAttack;
     }
 
-    /// <summary>the res5</summary>
-    public int GetRes5()
+    public bool CantUseItems()
     {
-        return res5;
+        return cantUseItems;
     }
 
-    /// <summary>the res6</summary>
-    public int GetRes6()
+    public bool CantFly()
     {
-        return res6;
+        return cantFly;
     }
 }

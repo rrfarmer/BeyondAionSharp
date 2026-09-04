@@ -98,7 +98,7 @@ public class FlyController
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_CANT_FLY_NOW_DUE_TO_NOFLY());
             return false;
         }
-        if (player.GetTransformModel().GetRes6() == 1)
+        if (player.GetTransformModel().CantFly())
         {
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_FLY_CANNOT_FLY_POLYMORPH_STATUS());
             return false;
@@ -137,7 +137,7 @@ public class FlyController
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GLIDE_ONLY_DEVA_CAN());
             return false;
         }
-        if (player.GetTransformModel().GetRes6() == 1)
+        if (player.GetTransformModel().CantFly())
         {
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GLIDE_CANNOT_GLIDE_POLYMORPH_STATUS());
             return false;

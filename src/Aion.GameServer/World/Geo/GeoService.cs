@@ -117,7 +117,7 @@ public class GeoService : GameEngine
     private float GetSeeCheckOffset(VisibleObject obj)
     {
         float height = obj.GetObjectTemplate().GetBoundRadius().GetUpper();
-        if (obj is Player p && p.IsTransformed() && p.GetTransformModel().GetBanMovement() == 1)
+        if (obj is Player p && p.IsTransformed() && p.GetTransformModel().CantMove())
         {
             NpcTemplate t = DataManager.NPC_DATA.GetNpcTemplate(p.GetTransformModel().GetModelId());
             if (t != null)

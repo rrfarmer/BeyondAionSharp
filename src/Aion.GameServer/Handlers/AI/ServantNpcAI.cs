@@ -85,7 +85,7 @@ public class ServantNpcAI : GeneralNpcAI
                 if ((template.GetType_() != SkillType.MAGICAL || !GetOwner().GetEffectController().IsAbnormalSet(AbnormalState.SILENCE))
                     && (template.GetType_() != SkillType.PHYSICAL || !GetOwner().GetEffectController().IsAbnormalSet(AbnormalState.BIND))
                     && (!GetOwner().GetEffectController().IsInAnyAbnormalState(AbnormalState.CANT_ATTACK_STATE))
-                    && (!GetOwner().IsTransformed() || GetOwner().GetTransformModel().GetBanUseSkills() != 1))
+                    && (!GetOwner().IsTransformed() || !GetOwner().GetTransformModel().CantUseSkills()))
                 {
                     SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), skill.GetSkillId(), skill.GetSkillLevel(), GetOwner().GetTarget()).UseSkill();
                 }
