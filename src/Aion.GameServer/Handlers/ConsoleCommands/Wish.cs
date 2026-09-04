@@ -1,18 +1,13 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Xml.Serialization;
+using System.Xml;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Items.Enums;
 using Aion.GameServer.Model.Templates.Spawns;
-using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Items;
-using Aion.GameServer.SpawnEngine;
-using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.ChatHandlers;
-using Aion.GameServer.Utils.Xml;
 
 namespace Aion.GameServer.Handlers.ConsoleCommands;
 
@@ -21,7 +16,8 @@ namespace Aion.GameServer.Handlers.ConsoleCommands;
 /// - Spawning npcs from the npc tab in the GM Panel (Shift + F1)
 /// - Adding items from the item tab in the GM Panel (Shift + F1)
 /// - Pressing Ctrl + Shift + Alt while clicking on an item if the console has been activated.
-/// Java parity: data/handlers/consolecommands/Wish (ginho1, Neon).
+/// Java parity: data/handlers/consolecommands/Wish (ginho1, Neon). Item names are read directly from
+/// item_templates.xml (cName attribute) via a streaming reader instead of a JAXB-bound items.xml.
 /// </summary>
 public class Wish : ConsoleCommand
 {
@@ -45,16 +41,12 @@ public class Wish : ConsoleCommand
         if (paramsArr.Length == 1)
         { // spawn npc
             string npcName = paramsArr[0];
-            FileInfo xml = new FileInfo("./data/handlers/consolecommands/data/npcs.xml");
-            NpcData data = JAXBUtil.Deserialize<NpcData>(xml);
-            NpcTemplate npcTemplate = data.GetNpcTemplate(npcName);
-
-            if (npcTemplate == null)
+            int npcId = FindNpcId(npcName);
+            if (npcId == 0)
             {
-                SendInfo(admin, "There is no template with this name");
+                SendInfo(admin, "There is no npc with that name.");
                 return;
             }
-            int npcId = npcTemplate.GetTemplateId();
             SpawnTemplate spawn = global::Aion.GameServer.SpawnEngine.SpawnEngine.NewSpawn(admin.GetWorldId(), npcId, admin.GetX(), admin.GetY(), admin.GetZ(),
                 admin.GetHeading(), 0);
             VisibleObject visibleObject = global::Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(spawn, admin.GetInstanceId());
@@ -69,16 +61,9 @@ public class Wish : ConsoleCommand
         }
         else
         { // add item
-            Player target = admin;
-
-            if (admin.GetTarget() is Player targetPlayer)
-            {
-                target = targetPlayer;
-            }
-
+            Player target = admin.GetTarget() is Player targetPlayer ? targetPlayer : admin;
             string itemName = paramsArr[0];
             long addCount = 1;
-            int itemId;
             int enchant = 0;
             if (TryParseInt(paramsArr[0], out int parsedAddCount))
             {
@@ -89,129 +74,87 @@ public class Wish : ConsoleCommand
             {
                 TryParseInt(paramsArr[1], out enchant);
             }
-
-            FileInfo xml = new FileInfo("./data/handlers/consolecommands/data/items.xml");
-            ItemData data = JAXBUtil.Deserialize<ItemData>(xml);
-            ItemTemplate itemTemplate = data.GetItemTemplate(itemName);
-
-            if (itemTemplate != null)
+            int itemId = FindItemId(itemName);
+            if (itemId == 0)
             {
-                itemId = itemTemplate.GetTemplateId();
-                if (!AdminService.GetInstance().CanOperate(admin, target, itemId, "command ///wish"))
+                SendInfo(admin, "There is no item named " + itemName + ".");
+                return;
+            }
+            if (!AdminService.GetInstance().CanOperate(admin, target, itemId, "command ///wish"))
+                return;
+
+            long addedCount;
+            if (enchant > 0)
+            {
+                global::Aion.GameServer.Model.GameObjects.Item newItem = ItemFactory.NewItem(itemId);
+
+                if (newItem == null)
                     return;
-
-                long addedCount;
-                if (enchant > 0)
+                enchant = Math.Min(enchant, 255);
+                if (newItem.GetItemTemplate().GetEquipmentType() != EquipType.PLUME)
                 {
-                    global::Aion.GameServer.Model.GameObjects.Item newItem = ItemFactory.NewItem(itemId);
-
-                    if (newItem == null)
-                        return;
-                    enchant = Math.Min(enchant, 255);
-                    if (newItem.GetItemTemplate().GetEquipmentType() != EquipType.PLUME)
+                    if (newItem.GetItemTemplate().CanTune() && newItem.GetItemTemplate().GetMaxEnchantBonus() > 0)
+                        enchant = Math.Min(enchant, newItem.GetItemTemplate().GetMaxEnchantLevel());
+                    newItem.SetEnchantLevel(enchant);
+                    if (enchant > newItem.GetItemTemplate().GetMaxEnchantLevel())
                     {
-                        if (newItem.GetItemTemplate().CanTune() && newItem.GetItemTemplate().GetMaxEnchantBonus() > 0)
-                            enchant = Math.Min(enchant, newItem.GetItemTemplate().GetMaxEnchantLevel());
-                        newItem.SetEnchantLevel(enchant);
-                        if (enchant > newItem.GetItemTemplate().GetMaxEnchantLevel())
-                        {
-                            newItem.SetAmplified(true);
-                            if (enchant >= 20)
-                                newItem.SetBuffSkill(EnchantService.GetEquipBuff(newItem));
-                        }
+                        newItem.SetAmplified(true);
+                        if (enchant >= 20)
+                            newItem.SetBuffSkill(EnchantService.GetEquipBuff(newItem));
                     }
-                    else
-                    {
-                        newItem.SetTempering(enchant);
-                    }
-                    addedCount = addCount - ItemService.AddItem(target, newItem);
                 }
                 else
                 {
-                    addedCount = addCount - ItemService.AddItem(target, itemId, addCount, true);
+                    newItem.SetTempering(enchant);
                 }
-
-                if (addedCount <= 0)
-                {
-                    SendInfo(admin, "Item couldn't be added");
-                }
-                else
-                {
-                    if (!admin.Equals(target))
-                    {
-                        SendInfo(admin, "You gave " + addedCount + " " + ChatUtil.Item(itemId) + " to " + target.GetName() + ".");
-                        SendInfo(target, "You received " + addedCount + " " + ChatUtil.Item(itemId) + " from " + admin.GetName() + ".");
-                    }
-                }
+                addedCount = addCount - ItemService.AddItem(target, newItem);
             }
-        }
-    }
-
-    [XmlRoot("item")]
-    public class ItemTemplate
-    {
-        [XmlAttribute("id")]
-        public string id;
-
-        [XmlAttribute("name")]
-        public string name;
-
-        public string GetName() => name;
-
-        // Java parity: afterUnmarshal parsed the @XmlID String id into an int.
-        public int GetTemplateId() => JavaNumberParser.ParseInt(id);
-    }
-
-    [XmlRoot("items")]
-    public class ItemData
-    {
-        [XmlElement("item")]
-        public List<ItemTemplate> its;
-
-        public ItemTemplate GetItemTemplate(string item)
-        {
-            foreach (ItemTemplate it in GetData())
+            else
             {
-                if (it.GetName().Equals(item))
-                    return it;
+                addedCount = addCount - ItemService.AddItem(target, itemId, addCount, true);
             }
-            return null;
-        }
 
-        protected List<ItemTemplate> GetData() => its;
-    }
-
-    [XmlRoot("npc")]
-    public class NpcTemplate
-    {
-        [XmlAttribute("id")]
-        public string id;
-
-        [XmlAttribute("name")]
-        public string name;
-
-        public string GetName() => name;
-
-        // Java parity: afterUnmarshal parsed the @XmlID String id into an int.
-        public int GetTemplateId() => JavaNumberParser.ParseInt(id);
-    }
-
-    [XmlRoot("npcs")]
-    public class NpcData
-    {
-        [XmlElement("npc")]
-        public List<NpcTemplate> its;
-
-        public NpcTemplate GetNpcTemplate(string npcName)
-        {
-            foreach (NpcTemplate it in GetData())
+            if (addedCount <= 0)
             {
-                if (it.GetName().ToLower().Equals(npcName.ToLower()))
-                    return it;
+                SendInfo(admin, "Item couldn't be added");
             }
-            return null;
+            else if (!admin.Equals(target))
+            {
+                SendInfo(admin, "You gave " + addedCount + " " + Aion.GameServer.Utils.ChatUtil.Item(itemId) + " to " + target.GetName() + ".");
+                SendInfo(target, "You received " + addedCount + " " + Aion.GameServer.Utils.ChatUtil.Item(itemId) + " from " + admin.GetName() + ".");
+            }
         }
+    }
 
-        protected List<NpcTemplate> GetData() => its;
+    private static int FindNpcId(string npcName)
+    {
+        return FindIdInXml("./data/handlers/consolecommands/data/npcs.xml", "npc", "name", npcName);
+    }
+
+    private static int FindItemId(string itemName)
+    {
+        return FindIdInXml("./data/static_data/items/item_templates.xml", "item_template", "cName", itemName);
+    }
+
+    private static int FindIdInXml(string xml, string elementName, string attributeName, string attributeValue)
+    {
+        try
+        {
+            using var stream = new StreamReader(xml);
+            using var reader = XmlReader.Create(stream);
+            while (reader.Read())
+            {
+                if (reader.NodeType == XmlNodeType.Element && elementName.Equals(reader.LocalName)
+                    && attributeValue.Equals(reader.GetAttribute(attributeName), StringComparison.OrdinalIgnoreCase))
+                {
+                    return JavaNumberParser.ParseInt(reader.GetAttribute("id")!);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            throw new InvalidOperationException("Failed to search " + xml, e);
+        }
+        return 0;
     }
 }
