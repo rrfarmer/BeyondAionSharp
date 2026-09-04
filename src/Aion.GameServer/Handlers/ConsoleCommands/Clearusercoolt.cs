@@ -13,10 +13,17 @@ public class Clearusercoolt : ConsoleCommand
     public Clearusercoolt()
         : base("clearusercoolt", "Clears cooldowns for instances.")
     {
+        SetSyntaxInfo("<player> - Removes the instance cooldowns of the given player.");
     }
 
     public override void Execute(Player admin, params string[] paramsArr)
     {
+        if (paramsArr.Length == 0)
+        {
+            SendInfo(admin);
+            return;
+        }
+
         string playerName = ChatUtil.GetRealCharName(paramsArr[0], true);
         Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(playerName);
         if (player == null)

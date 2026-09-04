@@ -21,7 +21,7 @@ public class AddSkill : AdminCommand
             return;
         }
 
-        VisibleObject target = player.GetTarget();
+        Player target = player.GetTarget() is Player p ? p : player;
 
         int skillId = 0;
         int skillLevel = 0;
@@ -32,11 +32,9 @@ public class AddSkill : AdminCommand
             return;
         }
 
-        if (target is Player targetpl)
-        {
-            targetpl.GetSkillList().AddSkill(targetpl, skillId, skillLevel);
-            PacketSendUtility.SendMessage(player, "You have success add skill");
-            PacketSendUtility.SendMessage(targetpl, "You have acquire a new skill");
-        }
+        target.GetSkillList().AddSkill(target, skillId, skillLevel);
+        PacketSendUtility.SendMessage(player, "You have success add skill");
+        if (!target.Equals(player))
+            PacketSendUtility.SendMessage(target, "You have acquire a new skill");
     }
 }

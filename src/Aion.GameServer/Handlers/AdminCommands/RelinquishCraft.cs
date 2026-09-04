@@ -14,8 +14,8 @@ public class RelinquishCraft : AdminCommand
         : base("relinquishcraft", "Removes a players crafting expert or master status.")
     {
         SetSyntaxInfo(
-            "<skillId> <expert|master> - Removes master or expert status of your target for the given crafting skill.",
-            "<name> <skillId> <expert|master> - Removes the players master or expert status for the given crafting skill.");
+            "<skillId> <expert|master> - Removes your target's master or expert status for the given crafting skill. Affects your own character if no player is targeted.",
+            "<name> <skillId> <expert|master> - Removes the player's master or expert status for the given crafting skill.");
     }
 
     public override void Execute(Player admin, params string[] paramsArr)
@@ -40,13 +40,7 @@ public class RelinquishCraft : AdminCommand
         }
         else
         {
-            if (admin.GetTarget() is Player p)
-                target = p;
-            else
-            {
-                PacketSendUtility.SendPacket(admin, SM_SYSTEM_MESSAGE.STR_INVALID_TARGET());
-                return;
-            }
+            target = admin.GetTarget() is Player p ? p : admin;
         }
 
         Profession? profession = ProfessionExtensions.GetBySkillId(TryParseInt(paramsArr[i++], out int skillId) ? skillId : 0);

@@ -55,35 +55,22 @@ public class DelSkill : AdminCommand
         }
         if (paramsArr.Length == 1)
         {
-            VisibleObject target = admin.GetTarget();
-            if (target == null)
-            {
-                PacketSendUtility.SendMessage(admin, "You should select a target first!");
-                return;
-            }
+            player = admin.GetTarget() is Player target ? target : admin;
 
-            if (target is Player)
-            {
-                player = (Player)target;
-
-                if ("all".StartsWith(paramsArr[0]))
-                    playerSkillList = player.GetSkillList();
-                else
-                {
-                    if (!TryParseInt(paramsArr[0], out skillId))
-                    {
-                        PacketSendUtility.SendMessage(admin, "Param 0 must be an integer or <all>.");
-                        return;
-                    }
-
-                    if (!Check(admin, player, skillId))
-                        return;
-                }
-                if (target is Player)
-                    Apply(admin, player, skillId, playerSkillList);
-            }
+            if ("all".StartsWith(paramsArr[0]))
+                playerSkillList = player.GetSkillList();
             else
-                PacketSendUtility.SendMessage(admin, "This command can only be used on a player !");
+            {
+                if (!TryParseInt(paramsArr[0], out skillId))
+                {
+                    PacketSendUtility.SendMessage(admin, "Param 0 must be an integer or <all>.");
+                    return;
+                }
+
+                if (!Check(admin, player, skillId))
+                    return;
+            }
+            Apply(admin, player, skillId, playerSkillList);
         }
     }
 

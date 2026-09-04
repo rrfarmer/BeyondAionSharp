@@ -28,18 +28,7 @@ public class Addquest : ConsoleCommand
             return;
         }
 
-        VisibleObject target = admin.GetTarget();
-        if (target == null)
-        {
-            PacketSendUtility.SendMessage(admin, "No target selected.");
-            return;
-        }
-
-        if (target is not Player player)
-        {
-            PacketSendUtility.SendMessage(admin, "This command can only be used on a player!");
-            return;
-        }
+        Player player = admin.GetTarget() is Player target ? target : admin;
 
         // Java parity: regex "[quest:(...)]" link, else parseInt(params[0]); NumberFormatException -> info(admin, null).
         int id;

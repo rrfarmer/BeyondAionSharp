@@ -13,7 +13,7 @@ public class Levelup : ConsoleCommand
     public Levelup()
         : base("levelup", "Levels a player up.")
     {
-        SetSyntaxInfo("<value> - Levels your target up by the specified number of levels.");
+        SetSyntaxInfo("<value> - Levels your target up by the specified number of levels (defaults to your character, if no player is targeted).");
     }
 
     public override void Execute(Player admin, params string[] paramsArr)
@@ -24,17 +24,12 @@ public class Levelup : ConsoleCommand
             return;
         }
 
-        VisibleObject target = admin.GetTarget();
-        if (target is not Player player)
-        {
-            PacketSendUtility.SendPacket(admin, SM_SYSTEM_MESSAGE.STR_INVALID_TARGET());
-            return;
-        }
+        Player player = admin.GetTarget() is Player target ? target : admin;
 
         // Java parity: try { newLevel = getLevel() + parseInt(...) } catch (NumberFormatException) { ... }
         if (!TryParseInt(paramsArr[0], out int delta))
         {
-            SendInfo(admin, "Please specify the number of levels to subtract.");
+            SendInfo(admin, "Please specify the number of levels to add.");
             return;
         }
         int newLevel = player.GetLevel() + delta;

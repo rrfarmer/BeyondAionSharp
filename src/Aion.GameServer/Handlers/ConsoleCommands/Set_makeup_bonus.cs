@@ -22,18 +22,7 @@ public class Set_makeup_bonus : ConsoleCommand
             return;
         }
 
-        VisibleObject target = admin.GetTarget();
-        if (target == null)
-        {
-            PacketSendUtility.SendMessage(admin, "No target selected.");
-            return;
-        }
-
-        if (target is not Player player)
-        {
-            PacketSendUtility.SendMessage(admin, "This command can only be used on a player!");
-            return;
-        }
+        Player player = admin.GetTarget() is Player target ? target : admin;
 
         // Java parity: Long.parseLong(params[0]) throws NumberFormatException -> info(admin, null).
         if (!TryParseLong(paramsArr[0], out long value))

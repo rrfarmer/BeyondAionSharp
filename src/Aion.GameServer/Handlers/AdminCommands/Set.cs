@@ -20,7 +20,8 @@ public class Set : AdminCommand
             "level <value> - Sets the level of the selected player.",
             "exp <value> - Sets the experience points of the selected player.",
             "ap <value> - Sets the abyss points of the selected player.",
-            "gp <value> - Sets the glory points of the selected player."
+            "gp <value> - Sets the glory points of the selected player.",
+            "Note: Any actions default to your character, if no player is targeted."
         );
     }
 
@@ -31,11 +32,7 @@ public class Set : AdminCommand
             SendInfo(admin);
             return;
         }
-        if (!(admin.GetTarget() is Player target))
-        {
-            PacketSendUtility.SendPacket(admin, SM_SYSTEM_MESSAGE.STR_INVALID_TARGET());
-            return;
-        }
+        Player target = admin.GetTarget() is Player player ? player : admin;
 
         if (paramsArr[0].Equals("class"))
         {
@@ -52,7 +49,7 @@ public class Set : AdminCommand
         {
             long exp = ParseLong(paramsArr[1]);
             target.GetCommonData().SetExp(exp);
-            PacketSendUtility.SendMessage(admin, "Set exp of target to " + target.GetCommonData().GetExp());
+            SendInfo(admin, "Set exp of target to " + target.GetCommonData().GetExp());
         }
         else if (paramsArr[0].Equals("ap"))
         {
@@ -73,6 +70,10 @@ public class Set : AdminCommand
                 SendInfo(admin, "Set " + target.GetName() + "'s glory points to " + target.GetAbyssRank().GetCurrentGP() + ".");
                 SendInfo(target, "Admin set your glory points to " + target.GetAbyssRank().GetCurrentGP() + ".");
             }
+        }
+        else
+        {
+            SendInfo(admin);
         }
     }
 }

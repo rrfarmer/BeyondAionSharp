@@ -15,7 +15,7 @@ public class Changeclass : ConsoleCommand
     public Changeclass()
         : base("changeclass", "Changes a players class.")
     {
-        SetSyntaxInfo("<class> - Changes your characters class to the one specified.");
+        SetSyntaxInfo("<class> - Changes your target's class to the one specified (defaults to your character, if no player is targeted).");
     }
 
     public override void Execute(Player admin, params string[] paramsArr)
@@ -26,12 +26,7 @@ public class Changeclass : ConsoleCommand
             return;
         }
 
-        VisibleObject target = admin.GetTarget();
-        if (target is not Player player)
-        {
-            PacketSendUtility.SendPacket(admin, SM_SYSTEM_MESSAGE.STR_INVALID_TARGET());
-            return;
-        }
+        Player player = admin.GetTarget() is Player target ? target : admin;
 
         string newClass = paramsArr[0];
 

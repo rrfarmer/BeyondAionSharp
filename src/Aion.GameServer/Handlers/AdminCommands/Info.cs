@@ -25,17 +25,12 @@ public class Info : AdminCommand
     public Info()
         : base("info", "Shows information about your target.")
     {
+        SetSyntaxInfo(" - Shows information about your target (defaults to your character, if no player is targeted).");
     }
 
     public override void Execute(Player admin, params string[] paramsArr)
     {
-        VisibleObject target = admin.GetTarget();
-
-        if (target == null)
-        {
-            PacketSendUtility.SendPacket(admin, SM_SYSTEM_MESSAGE.STR_INVALID_TARGET());
-            return;
-        }
+        VisibleObject target = admin.GetTarget() == null ? admin : admin.GetTarget();
 
         SendInfo(admin, "[Info about " + target.GetType().Name + "]\n\tName: " + target.GetName() + ", ObjectId: " + target.GetObjectId()
             + "\n\tTemplateId: " + target.GetObjectTemplate().GetTemplateId());

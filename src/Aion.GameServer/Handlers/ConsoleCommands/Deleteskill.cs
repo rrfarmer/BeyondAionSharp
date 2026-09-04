@@ -29,20 +29,7 @@ public class Deleteskill : ConsoleCommand
         string skillName = paramsArr[0];
         int skillId = 0;
 
-        VisibleObject target = admin.GetTarget();
-        if (target == null)
-        {
-            PacketSendUtility.SendMessage(admin, "No target selected.");
-            return;
-        }
-
-        if (!(target is Player))
-        {
-            PacketSendUtility.SendMessage(admin, "This command can only be used on a player!");
-            return;
-        }
-
-        Player player = (Player)target;
+        Player player = admin.GetTarget() is Player target ? target : admin;
         FileInfo xml = new FileInfo("./data/handlers/consolecommands/data/skills.xml");
         SkillData data = JAXBUtil.Deserialize<SkillData>(xml);
         SkillTemplate skillTemplate = data.GetSkillTemplate(skillName);

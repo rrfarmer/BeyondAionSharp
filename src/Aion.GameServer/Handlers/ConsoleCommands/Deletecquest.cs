@@ -13,7 +13,7 @@ public class Deletecquest : ConsoleCommand
     public Deletecquest()
         : base("deletecquest", "Deletes a quest from the players quest list.")
     {
-        SetSyntaxInfo("<3> <quest> - Deletes the quest from the targets quest list.");
+        SetSyntaxInfo("<quest link|ID> - Deletes the quest from your target's quest list (defaults to your character, if no player is targeted).");
     }
 
     public override void Execute(Player admin, params string[] paramsArr)
@@ -24,30 +24,8 @@ public class Deletecquest : ConsoleCommand
             return;
         }
 
-        VisibleObject target = admin.GetTarget();
-        if (target is not Player player)
-        {
-            PacketSendUtility.SendMessage(admin, "Please select a player.");
-            return;
-        }
-
-        // Java parity: Integer.valueOf(params[0]) throws NumberFormatException -> sendInfo(admin).
-        if (!TryParseInt(paramsArr[0], out int questId))
-        {
-            SendInfo(admin);
-            return;
-        }
-
-        QuestState qs = player.GetQuestStateList().DeleteQuest(questId);
-        if (qs == null)
-        {
-            SendInfo(admin, "Player " + player.GetName() + " does not have that quest.");
-            return;
-        }
-        if (qs.GetStatus() == QuestStatus.COMPLETE)
-            Aion.GameServer.QuestEngine.QuestEngine.GetInstance().SendCompletedQuests(player); // rewrite completed quest list
-        else
-            PacketSendUtility.SendPacket(player, new SM_QUEST_ACTION(SM_QUEST_ACTION.ActionType.ABANDON, qs));
-        player.GetController().UpdateNearbyQuests();
+        Player player = admin.GetTarget() is Player target ? target : admin;
+        Aion.GameServer.Handlers.AdminCommands.Quest questCommand = ChatProcessor.GetInstance().GetCommand<Aion.GameServer.Handlers.AdminCommands.Quest>();
+        questCommand.DeleteQuest(admin, player, ChatUtil.GetQuestId(paramsArr[0]));
     }
 }

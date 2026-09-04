@@ -15,7 +15,7 @@ public class Endquest : ConsoleCommand
     public Endquest()
         : base("endquest", "Completes a quest.")
     {
-        SetSyntaxInfo("<quest> - Completes the specified quest (without giving rewards).");
+        SetSyntaxInfo("<quest> - Completes the specified quest of your target, without giving rewards (defaults to your character, if no player is targeted).");
     }
 
     public override void Execute(Player admin, params string[] paramsArr)
@@ -26,12 +26,7 @@ public class Endquest : ConsoleCommand
             return;
         }
 
-        VisibleObject target = admin.GetTarget();
-        if (target is not Player player)
-        {
-            SendInfo(admin, "Please select a player.");
-            return;
-        }
+        Player player = admin.GetTarget() is Player target ? target : admin;
 
         int questId = ChatUtil.GetQuestId(paramsArr[0]);
         if (questId == 0)

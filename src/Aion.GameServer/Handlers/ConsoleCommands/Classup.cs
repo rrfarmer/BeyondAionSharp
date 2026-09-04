@@ -15,7 +15,7 @@ public class Classup : ConsoleCommand
     public Classup()
         : base("classup", "Promotes a players class.")
     {
-        SetSyntaxInfo("<class> - Promotes your characters class to the one specified.");
+        SetSyntaxInfo("<class> - Promotes your target's class to the one specified (defaults to your character, if no player is targeted).");
     }
 
     public override void Execute(Player admin, params string[] paramsArr)
@@ -26,12 +26,7 @@ public class Classup : ConsoleCommand
             return;
         }
 
-        VisibleObject target = admin.GetTarget();
-        if (target is not Player player)
-        {
-            PacketSendUtility.SendPacket(admin, SM_SYSTEM_MESSAGE.STR_INVALID_TARGET());
-            return;
-        }
+        Player player = admin.GetTarget() is Player target ? target : admin;
 
         string newClass = paramsArr[0];
 

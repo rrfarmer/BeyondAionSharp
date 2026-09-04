@@ -25,18 +25,7 @@ public class Delete_items : ConsoleCommand
             return;
         }
 
-        VisibleObject target = admin.GetTarget();
-        if (target == null)
-        {
-            PacketSendUtility.SendMessage(admin, "No target selected.");
-            return;
-        }
-
-        if (target is not Player player)
-        {
-            PacketSendUtility.SendMessage(admin, "This command can only be used on a player!");
-            return;
-        }
+        Player player = admin.GetTarget() is Player target ? target : admin;
 
         // Java parity: Integer.parseInt(params[0]) throws NumberFormatException.
         if (!TryParseInt(paramsArr[0], out int quality))

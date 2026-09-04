@@ -286,7 +286,7 @@ public class Quest : AdminCommand
         SendInfo(admin, "Quest not implemented or player level doesn't match.");
     }
 
-    private void DeleteQuest(Player admin, Player target, int questId)
+    public void DeleteQuest(Player admin, Player target, int questId)
     {
         if (!admin.HasAccess(AdminConfig.CMD_QUEST_ADV_PARAMS))
         {
@@ -296,7 +296,7 @@ public class Quest : AdminCommand
         QuestState qs = target.GetQuestStateList().DeleteQuest(questId);
         if (qs == null)
         {
-            SendInfo(admin, "Player " + target.GetName() + " does not have that quest.");
+            SendInfo(admin, target.GetName() + " does not have that quest.");
             return;
         }
         if (qs.GetStatus() == QuestStatus.COMPLETE)
@@ -304,7 +304,8 @@ public class Quest : AdminCommand
         else
             PacketSendUtility.SendPacket(target, new SM_QUEST_ACTION(SM_QUEST_ACTION.ActionType.ABANDON, qs));
         target.GetController().UpdateNearbyQuests();
-        SendInfo(admin, "Deleted " + ChatUtil.Quest(questId) + " for player " + target.GetName() + ".");
+        if (!admin.Equals(target))
+            SendInfo(admin, "Deleted " + ChatUtil.Quest(questId) + " for player " + target.GetName() + ".");
     }
 
     private void ShowQuestStatus(Player admin, Player target, int questId)

@@ -25,20 +25,7 @@ public class Combineskill : ConsoleCommand
             return;
         }
 
-        VisibleObject target = admin.GetTarget();
-        if (target == null)
-        {
-            PacketSendUtility.SendMessage(admin, "No target selected.");
-            return;
-        }
-
-        if (!(target is Player))
-        {
-            PacketSendUtility.SendMessage(admin, "This command can only be used on a player!");
-            return;
-        }
-
-        Player player = (Player)target;
+        Player player = admin.GetTarget() is Player target ? target : admin;
 
         string skillName = paramsArr[0];
         int skillId = 0;
