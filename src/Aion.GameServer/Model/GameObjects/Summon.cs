@@ -13,8 +13,9 @@ public class Summon : Creature
 {
     private readonly Player master;
     private SummonMode mode = SummonMode.GUARD;
+    private SummonMode modeBeforeRelease = SummonMode.GUARD;
     private readonly ConcurrentQueue<SkillOrder> skillOrders = new ConcurrentQueue<SkillOrder>();
-    private ScheduledTask releaseTask;
+    private Aion.GameServer.Model.Summons.SummonRelease pendingRelease;
     private SkillElement alwaysResistElement = SkillElement.NONE;
     private int summonedBySkillId, liveTime;
 
@@ -102,10 +103,21 @@ public class Summon : Creature
         return mode;
     }
 
+    /// <summary>
+    /// The mode to report to the master's client, hiding a pending release the master was never told about (see
+    /// SummonsService's handling of UnsummonType.IsCancelableByMaster()).
+    /// </summary>
+    public SummonMode GetVisibleMode()
+    {
+        return IsReleaseUncancelable() ? modeBeforeRelease : mode;
+    }
+
     public void SetMode(SummonMode mode)
     {
         if (mode != SummonMode.ATTACK)
             ClearSkillOrders();
+        if (this.mode != SummonMode.RELEASE)
+            modeBeforeRelease = this.mode;
         this.mode = mode;
     }
 
@@ -185,17 +197,46 @@ public class Summon : Creature
         this.summonedBySkillId = summonedBySkillId;
     }
 
-    public void SetReleaseTask(ScheduledTask task)
+    /// <summary>
+    /// An instant release supersedes a scheduled one, a release which already started can never be superseded.
+    /// </summary>
+    /// <returns>True if the caller may go on releasing this summon.</returns>
+    public bool RegisterRelease(Aion.GameServer.Model.Summons.SummonRelease release)
     {
-        releaseTask = task;
+        if (pendingRelease != null)
+        {
+            if (pendingRelease.HasStarted() || !Aion.GameServer.Model.Summons.UnsummonTypeExtensions.IsInstant(release.GetUnsummonType()))
+                return false;
+            pendingRelease.Cancel();
+        }
+        pendingRelease = release;
+        return true;
     }
 
-    public void CancelReleaseTask()
+    /// <returns>True if the given release is still the pending one, meaning the caller may go on despawning this summon.</returns>
+    public bool StartRelease(Aion.GameServer.Model.Summons.SummonRelease release)
     {
-        if (releaseTask != null && !releaseTask.Completion.IsCompleted)
-        {
-            releaseTask.Cancel();
-        }
+        if (pendingRelease != release)
+            return false;
+        release.MarkStarted();
+        return true;
+    }
+
+    public void CancelReleaseByMaster()
+    {
+        if (pendingRelease != null && pendingRelease.IsCancelableByMaster() && pendingRelease.Cancel())
+            pendingRelease = null;
+    }
+
+    public bool IsReleaseUncancelable()
+    {
+        Aion.GameServer.Model.Summons.SummonRelease release = pendingRelease;
+        return release != null && !release.IsCancelableByMaster();
+    }
+
+    public bool IsBeingReleased()
+    {
+        return pendingRelease != null;
     }
 
     public void AddSkillOrder(int skillId, int skillLvl, Creature target, int hate, bool release)

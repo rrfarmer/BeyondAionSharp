@@ -275,7 +275,7 @@ public class PlayerController : CreatureController<Player>
         // Release summon
         Summon summon = player.GetSummon();
         if (summon != null)
-            Aion.GameServer.Services.Summons.SummonsService.DoMode(Aion.GameServer.Model.Summons.SummonMode.RELEASE, summon, Aion.GameServer.Model.Summons.UnsummonType.UNSPECIFIED);
+            Aion.GameServer.Services.Summons.SummonsService.Release(summon, Aion.GameServer.Model.Summons.UnsummonType.MASTER_DEATH);
 
         if (player.IsInState(CreatureState.FLYING))
             player.SetIsFlyingBeforeDeath(true);

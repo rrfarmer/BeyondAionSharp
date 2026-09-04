@@ -20,7 +20,7 @@ public class PetOrderUseUltraSkillEffect : EffectTemplate
     {
         Player effector = (Player)effect.GetEffector();
 
-        if (effector.GetSummon() == null)
+        if (effector.GetSummon() == null || effector.GetSummon().IsBeingReleased())
         {
             return;
         }

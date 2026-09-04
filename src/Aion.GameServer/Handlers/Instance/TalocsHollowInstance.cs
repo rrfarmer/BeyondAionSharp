@@ -110,7 +110,7 @@ public class TalocsHollowInstance : GeneralInstanceHandler
                         {
                             if (summon.GetNpcId() == 799500 || summon.GetNpcId() == 799501)
                             {
-                                SummonsService.DoMode(SummonMode.RELEASE, summon, UnsummonType.UNSPECIFIED);
+                                SummonsService.Release(summon, UnsummonType.UNSPECIFIED);
                                 PacketSendUtility.SendPacket(player, new SM_PLAY_MOVIE(false, 0, 0, 435, true));
                             }
                         }

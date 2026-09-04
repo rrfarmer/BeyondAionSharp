@@ -48,11 +48,13 @@ public class SummonController : CreatureController<Summon>
     /// <summary>Change to attackMode.</summary>
     public virtual void AttackMode(int targetObjId)
     {
-        VisibleObject obj = GetOwner().GetKnownList().GetObject(targetObjId);
-        if (obj is Creature)
-        {
+        if (CanAttack(targetObjId))
             Aion.GameServer.Services.Summons.SummonsService.AttackMode(GetOwner());
-        }
+    }
+
+    public bool CanAttack(int targetObjId)
+    {
+        return GetOwner().GetKnownList().GetObject(targetObjId) is Creature creature && GetOwner().IsEnemy(creature);
     }
 
     public override void AttackTarget(Creature target, int time, bool skipChecks)
@@ -81,8 +83,7 @@ public class SummonController : CreatureController<Summon>
         if (GetOwner().IsDead())
             return;
 
-        // temp
-        if (GetOwner().GetMode() == SummonMode.RELEASE)
+        if (GetOwner().IsReleaseUncancelable())
             return;
 
         base.OnAttack(creature, effect, type, damage, notifyAttack, log, attackStatus, hopType);
@@ -105,7 +106,7 @@ public class SummonController : CreatureController<Summon>
     public override void OnDie(Creature lastAttacker)
     {
         base.OnDie(lastAttacker);
-        Aion.GameServer.Services.Summons.SummonsService.Release(GetOwner(), UnsummonType.UNSPECIFIED);
+        Aion.GameServer.Services.Summons.SummonsService.Release(GetOwner(), UnsummonType.SUMMON_DEATH);
     }
 
     public void UseSkill(SkillOrder order)
@@ -120,7 +121,7 @@ public class SummonController : CreatureController<Summon>
         skill.SetHate(order.GetHate());
         if (skill.UseSkill() && order.IsRelease())
         {
-            Aion.GameServer.Services.Summons.SummonsService.Release(GetOwner(), UnsummonType.UNSPECIFIED);
+            Aion.GameServer.Services.Summons.SummonsService.Release(GetOwner(), UnsummonType.SKILL_ORDER);
         }
     }
 

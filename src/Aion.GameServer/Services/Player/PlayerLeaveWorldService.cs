@@ -92,7 +92,6 @@ public class PlayerLeaveWorldService
         }
         player.GetEffectController().RemoveNonStorableEffectsForLogout();
         PlayerEffectsDAO.StorePlayerEffects(player);
-        PlayerCooldownsDAO.StorePlayerCooldowns(player);
         ItemCooldownsDAO.StoreItemCooldowns(player);
         PlayerLifeStatsDAO.UpdatePlayerLifeStat(player);
 
@@ -105,7 +104,8 @@ public class PlayerLeaveWorldService
 
         Summon summon = player.GetSummon();
         if (summon != null)
-            SummonsService.DoMode(SummonMode.RELEASE, summon, UnsummonType.LOGOUT);
+            SummonsService.Release(summon, UnsummonType.LOGOUT); // puts the summoning skill on cooldown, so store cooldowns afterwards
+        PlayerCooldownsDAO.StorePlayerCooldowns(player);
         if (player.GetPet() != null)
             player.GetPet().GetController().Delete();
         if (player.GetPostman() != null)

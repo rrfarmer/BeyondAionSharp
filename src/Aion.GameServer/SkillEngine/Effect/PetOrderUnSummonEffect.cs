@@ -19,7 +19,7 @@ public class PetOrderUnSummonEffect : EffectTemplate
             Summon summon = ((Player)effected).GetSummon();
             if (summon != null)
             {
-                SummonsService.DoMode(SummonMode.RELEASE, summon, UnsummonType.UNSPECIFIED);
+                SummonsService.Release(summon, UnsummonType.PET_ORDER_UNSUMMON_EFFECT);
             }
         }
     }

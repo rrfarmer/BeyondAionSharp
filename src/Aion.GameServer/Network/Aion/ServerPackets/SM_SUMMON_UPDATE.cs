@@ -19,7 +19,7 @@ public class SM_SUMMON_UPDATE : AionServerPacket
     protected override void WriteImpl(AionConnection con)
     {
         WriteC(summon.GetLevel());
-        WriteH(summon.GetMode().GetId());
+        WriteH(summon.GetVisibleMode().GetId());
         WriteD(0);// unk
         WriteD(0);// unk
         WriteD(summon.GetLifeStats().GetCurrentHp());

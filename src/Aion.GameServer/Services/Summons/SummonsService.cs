@@ -31,91 +31,82 @@ public class SummonsService
         return summon;
     }
 
-    /// <summary>Release summon</summary>
+    /// <summary>
+    /// Releases the summon after UnsummonType.GetDelayMillis(), see Summon.RegisterRelease(SummonRelease) for competing releases.
+    /// </summary>
     public static void Release(Summon summon, UnsummonType unsummonType)
     {
-        if (summon.GetMode() == SummonMode.RELEASE)
+        SummonRelease release = new SummonRelease(unsummonType);
+        if (!summon.RegisterRelease(release))
             return;
         summon.GetController().CancelCurrentSkill((Creature)null);
         summon.SetMode(SummonMode.RELEASE);
         summon.GetObserveController().NotifySummonReleaseObservers();
-        new ReleaseSummonTask(summon, unsummonType).ScheduleOrRun();
+        new ReleaseSummonTask(summon, release).ScheduleOrRun();
     }
 
     private class ReleaseSummonTask
     {
         private readonly Summon summon;
+        private readonly SummonRelease release;
         private readonly UnsummonType unsummonType;
         private bool addedMasterHate;
 
-        public ReleaseSummonTask(Summon owner, UnsummonType unsummonType)
+        public ReleaseSummonTask(Summon owner, SummonRelease release)
         {
             this.summon = owner;
-            this.unsummonType = unsummonType;
+            this.release = release;
+            this.unsummonType = release.GetUnsummonType();
         }
 
         public void Run()
         {
+            if (!summon.StartRelease(release))
+                return;
             Aion.GameServer.Model.GameObjects.Players.Player master = summon.GetMaster();
             VisibleObject summonObj = Aion.GameServer.World.World.GetInstance().FindVisibleObject(summon.GetObjectId());
             // transformed npc via SM_TRANSFORM_IN_SUMMON
-            if (summonObj != null && summonObj is Npc npc)
+            if (summonObj is Npc npc)
                 npc.GetController().Delete();
             else
-                summon.GetController().Delete();
+                summon.GetController().Delete(); // triggers SummonController.notKnow(master), the resulting DISTANCE release is ignored
 
             if (summon.Equals(master.GetSummon()))
                 master.SetSummon(null);
 
-            switch (unsummonType)
-            {
-                case UnsummonType.COMMAND:
-                case UnsummonType.DISTANCE:
-                case UnsummonType.UNSPECIFIED:
-                {
-                    SkillTemplate summoningSkill = DataManager.SKILL_DATA.GetSkillTemplate(summon.GetSummonedBySkillId());
-                    if (summoningSkill != null && summoningSkill.GetCooldown() > 0)
-                        master.SetSkillCoolDown(summoningSkill.GetCooldownId(), summoningSkill.GetCooldown() * 100 + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+            SkillTemplate summoningSkill = DataManager.SKILL_DATA.GetSkillTemplate(summon.GetSummonedBySkillId());
+            if (summoningSkill != null && summoningSkill.GetCooldown() > 0)
+                master.SetSkillCoolDown(summoningSkill.GetCooldownId(), summoningSkill.GetCooldown() * 100 + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
 
-                    if (unsummonType == UnsummonType.DISTANCE)
-                        PacketSendUtility.SendPacket(master, SM_SYSTEM_MESSAGE.STR_SKILL_SUMMON_UNSUMMON_BY_TOO_DISTANCE());
-                    else
-                        PacketSendUtility.SendPacket(master, SM_SYSTEM_MESSAGE.STR_SKILL_SUMMON_UNSUMMONED(summon.GetL10n()));
-                    PacketSendUtility.SendPacket(master, new SM_SUMMON_PANEL_REMOVE(summon.GetSummonedBySkillId()));
-                    PacketSendUtility.SendPacket(master, new SM_SUMMON_OWNER_REMOVE(summon.GetObjectId()));
-                    if (!addedMasterHate)
-                        ScheduleAddMasterHate(summon);
-                    break;
-                }
-                case UnsummonType.LOGOUT:
-                    break;
-            }
+            if (unsummonType == UnsummonType.DISTANCE)
+                PacketSendUtility.SendPacket(master, SM_SYSTEM_MESSAGE.STR_SKILL_SUMMON_UNSUMMON_BY_TOO_DISTANCE());
+            else
+                PacketSendUtility.SendPacket(master, SM_SYSTEM_MESSAGE.STR_SKILL_SUMMON_UNSUMMONED(summon.GetL10n()));
+            PacketSendUtility.SendPacket(master, new SM_SUMMON_PANEL_REMOVE(summon.GetSummonedBySkillId()));
+            PacketSendUtility.SendPacket(master, new SM_SUMMON_OWNER_REMOVE(summon.GetObjectId()));
+            if (!addedMasterHate)
+                ScheduleAddMasterHate(summon);
         }
 
         public void ScheduleOrRun()
         {
-            switch (unsummonType)
+            if (UnsummonTypeExtensions.IsInstant(unsummonType))
             {
-                case UnsummonType.DISTANCE:
-                case UnsummonType.LOGOUT:
-                    Run();
-                    break;
-                default:
-                    ScheduledTask releaseTask = ThreadPoolManager.GetInstance().Schedule(ct =>
-                    {
-                        Run();
-                        return ValueTask.CompletedTask;
-                    }, TimeSpan.FromMilliseconds(5000));
-                    if (unsummonType == UnsummonType.COMMAND) // make it cancelable if released by master, master hate will be added delayed
-                    {
-                        PacketSendUtility.SendPacket(summon.GetMaster(), SM_SYSTEM_MESSAGE.STR_SKILL_SUMMON_UNSUMMON_FOLLOWER(summon.GetL10n()));
-                        PacketSendUtility.SendPacket(summon.GetMaster(), new SM_SUMMON_UPDATE(summon));
-                        summon.SetReleaseTask(releaseTask);
-                    }
-                    else
-                        ScheduleAddMasterHate(summon);
-                    break;
+                Run();
+                return;
             }
+            release.SetTask(ThreadPoolManager.GetInstance().Schedule(ct =>
+            {
+                Run();
+                return ValueTask.CompletedTask;
+            }, TimeSpan.FromMilliseconds(UnsummonTypeExtensions.GetDelayMillis(unsummonType))));
+            if (UnsummonTypeExtensions.IsCancelableByMaster(unsummonType)) // master hate is added delayed, he may still take the order back
+            {
+                PacketSendUtility.SendPacket(summon.GetMaster(), SM_SYSTEM_MESSAGE.STR_SKILL_SUMMON_UNSUMMON_FOLLOWER(summon.GetL10n()));
+                PacketSendUtility.SendPacket(summon.GetMaster(), new SM_SUMMON_UPDATE(summon));
+            }
+            else
+                ScheduleAddMasterHate(summon);
         }
 
         private void ScheduleAddMasterHate(Summon summon)
@@ -207,8 +198,16 @@ public class SummonsService
         if (summon.GetMaster() == null)
             return;
 
-        if (unsummonType == UnsummonType.COMMAND && summonMode != SummonMode.RELEASE)
-            summon.CancelReleaseTask();
+        if (unsummonType == UnsummonType.COMMAND)
+        {
+            if (summon.IsReleaseUncancelable())
+                return;
+            if (summonMode == SummonMode.ATTACK && !summon.GetController().CanAttack(targetObjId))
+                return; // don't cancel a pending release for an order that won't be carried out
+            // UNK leaves the summons mode untouched, so it must not take back a pending release either
+            if (summonMode == SummonMode.ATTACK || summonMode == SummonMode.GUARD || summonMode == SummonMode.REST)
+                summon.CancelReleaseByMaster();
+        }
 
         switch (summonMode)
         {
