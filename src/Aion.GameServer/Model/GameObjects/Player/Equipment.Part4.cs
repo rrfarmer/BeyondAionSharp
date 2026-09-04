@@ -20,37 +20,37 @@ public partial class Equipment
             return false;
         if (player.IsDead())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Utils.ChatUtil.L10n(1400059)));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Model.ActionState.DEAD.GetL10n()));
             return false;
         }
         else if (player.IsInPlayerMode(Aion.GameServer.Model.Actions.PlayerMode.RIDE))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Utils.ChatUtil.L10n(1400056)));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Model.ActionState.RIDING.GetL10n()));
             return false;
         }
         else if (player.IsInState(CreatureState.CHAIR))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Utils.ChatUtil.L10n(1400058)));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Model.ActionState.SITTING.GetL10n()));
             return false;
         }
         else if (player.IsInState(CreatureState.RESTING))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Utils.ChatUtil.L10n(1400057)));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Model.ActionState.RESTING.GetL10n()));
             return false;
         }
         else if (player.IsInState(CreatureState.GLIDING))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Utils.ChatUtil.L10n(1400082)));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Model.ActionState.GLIDING.GetL10n()));
             return false;
         }
         else if (player.IsInState(CreatureState.FLYING))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Utils.ChatUtil.L10n(1400055)));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Model.ActionState.FREE_FLYING.GetL10n()));
             return false;
         }
         else if (player.IsInState(CreatureState.WEAPON_EQUIPPED))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Utils.ChatUtil.L10n(1400079)));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Model.ActionState.COMBAT.GetL10n()));
             return false;
         }
 

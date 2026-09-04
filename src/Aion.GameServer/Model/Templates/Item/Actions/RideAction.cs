@@ -37,7 +37,7 @@ public class RideAction : AbstractItemAction
             }
             if (player.IsInState(CreatureState.RESTING))
             {
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_CANT_RIDE(Aion.GameServer.Utils.ChatUtil.L10n(1400057)));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_CANT_RIDE(Aion.GameServer.Model.ActionState.RESTING.GetL10n()));
                 return false;
             }
             if (player.GetEffectController().IsInAnyAbnormalState(AbnormalState.DISMOUNT_RIDE))

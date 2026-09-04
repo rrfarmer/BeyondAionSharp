@@ -32,16 +32,11 @@ namespace Aion.GameServer.Restrictions;
 /// </summary>
 public class PlayerRestrictions
 {
-    private static bool CheckFly(Player player, VisibleObject target)
+    private static bool CheckFly(Player player)
     {
         if (player.IsUsingFlightTransporterOrWindstream())
         {
-            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_SKILL_RESTRICTION_NO_FLY());
-            return false;
-        }
-
-        if (target is Player playerTarget && playerTarget.IsUsingFlightTransporterOrWindstream())
-        {
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_SKILL_CANT_CAST(ActionState.PATH_FLYING.GetL10n()));
             return false;
         }
         return true;
@@ -57,9 +52,14 @@ public class PlayerRestrictions
         VisibleObject target = player.GetTarget();
         SkillTemplate template = skill.GetSkillTemplate();
 
-        // TODO check if its ok
-        if (!CheckFly(player, target) || player.GetLifeStats().IsAboutToDie() || player.IsDead())
+        if (!CheckFly(player) || player.GetLifeStats().IsAboutToDie() || player.IsDead())
         {
+            return false;
+        }
+
+        if (player.GetStore() != null) // You cannot do that while you are running a Private Store.
+        {
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_SKILL_CANT_CAST(ActionState.PERSONAL_SHOP.GetL10n()));
             return false;
         }
         // item casts are interruptible (PlayerController cancels them), skill casts are not
@@ -250,7 +250,10 @@ public class PlayerRestrictions
             return false;
         }
 
-        if (!player.IsSpawned() || target == null || !CheckFly(player, target) || player.GetLifeStats().IsAboutToDie() || player.IsDead())
+        if (!player.IsSpawned() || target == null || !CheckFly(player) || player.GetLifeStats().IsAboutToDie() || player.IsDead())
+            return false;
+
+        if (target is Player targetPlayer && targetPlayer.IsUsingFlightTransporterOrWindstream())
             return false;
 
         if (!player.CanAttack())
@@ -356,7 +359,7 @@ public class PlayerRestrictions
 
         if (player.GetStore() != null) // You cannot use an item while running a Private Store.
         {
-            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_CANNOT_USE_ITEM_DURING_PATH_FLYING(ChatUtil.L10n(1400061)));
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_CANNOT_USE_ITEM_DURING_PATH_FLYING(ActionState.PERSONAL_SHOP.GetL10n()));
             return false;
         }
 

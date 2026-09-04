@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
@@ -74,7 +75,7 @@ public class CM_CASTSPELL : AionClientPacket
 
         if (player.IsDead())
         {
-            SendPacket(SM_SYSTEM_MESSAGE.STR_SKILL_CANT_CAST(ChatUtil.L10n(1400059)));
+            SendPacket(SM_SYSTEM_MESSAGE.STR_SKILL_CANT_CAST(ActionState.DEAD.GetL10n()));
             return;
         }
 
