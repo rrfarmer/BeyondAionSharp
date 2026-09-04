@@ -123,8 +123,8 @@ public class CM_MOVE : AionClientPacket
             {
                 if ((type & MovementMask.ABSOLUTE) == 0)
                 {
-                    float speed = player.GetGameStats().GetMovementSpeedFloat();
-                    m.SetNewDirection(x + m.vectorX * speed, y + m.vectorY * speed, player.IsFlying() ? z + m.vectorZ * speed : z + m.vectorZ, heading);
+                    // The movement vector from the client already accounts for movement speed, so multiplying it by speed again overestimates the distance several times.
+                    m.SetNewDirection(x + m.vectorX, y + m.vectorY, z + m.vectorZ, heading);
                 }
                 else if (heading != player.GetHeading())
                     m.SetNewDirection(m.GetTargetX2(), m.GetTargetY2(), m.GetTargetZ2(), heading);
