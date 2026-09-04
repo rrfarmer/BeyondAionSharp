@@ -251,6 +251,7 @@ public class PlayerController : CreatureController<Player>
     {
         Player player = GetOwner();
         player.GetController().CancelCurrentSkill(null);
+        Aion.GameServer.Services.RecallService.GetInstance().Cancel(player, Aion.GameServer.Services.RecallService.CancelReason.CANCELLED);
         SetRebirthReviveInfo();
         Creature master = lastAttacker.GetMaster();
 
@@ -509,16 +510,6 @@ public class PlayerController : CreatureController<Player>
 
     public override void CancelCurrentSkill(Creature lastAttacker)
     {
-        Skill playerCastingSkill = GetOwner().GetCastingSkill();
-        // RecallInstantEffect sends its own cast cancellation message.
-        if (playerCastingSkill != null && playerCastingSkill.GetSkillTemplate().HasRecallInstant())
-        {
-            Creature recallTarget = playerCastingSkill.GetFirstTarget();
-            string targetName = recallTarget != null ? recallTarget.GetName() : "";
-            // Summoning of %0 is cancelled.
-            CancelCurrentSkill(lastAttacker, SM_SYSTEM_MESSAGE.STR_MSG_Recall_CANCEL_EFFECT(targetName));
-            return;
-        }
         CancelCurrentSkill(lastAttacker, SM_SYSTEM_MESSAGE.STR_SKILL_CANCELED());
     }
 
@@ -786,7 +777,7 @@ public class PlayerController : CreatureController<Player>
     }
 
     /// <summary>
-    /// Refreshes the combat timer, see <see cref="IsInCombat"/>.
+    /// Refreshes the combat timer (see <see cref="IsInCombat"/>) and cancels a pending summon request, which combat invalidates.
     /// </summary>
     /// <param name="attacking">True, if the player attacked someone, false if he was attacked</param>
     public void EnterCombat(bool attacking)
@@ -795,5 +786,6 @@ public class PlayerController : CreatureController<Player>
             lastAttackMillis = CurrentTimeMillis();
         else
             lastAttackedMillis = CurrentTimeMillis();
+        Aion.GameServer.Services.RecallService.GetInstance().Cancel(GetOwner(), Aion.GameServer.Services.RecallService.CancelReason.CANCELLED);
     }
 }

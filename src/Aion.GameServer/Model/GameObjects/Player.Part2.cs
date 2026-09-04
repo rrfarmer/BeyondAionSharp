@@ -296,14 +296,14 @@ public partial class Player
         this.flyController = flyController;
     }
 
-    public void SetCraftingTask(Aion.GameServer.SkillEngine.Task.CraftingTask craftingTask)
+    public void SetInteractionTask(Aion.GameServer.SkillEngine.Task.AbstractInteractionTask interactionTask)
     {
-        this.craftingTask = craftingTask;
+        this.interactionTask = interactionTask;
     }
 
-    public Aion.GameServer.SkillEngine.Task.CraftingTask GetCraftingTask()
+    public Aion.GameServer.SkillEngine.Task.AbstractInteractionTask GetInteractionTask()
     {
-        return craftingTask;
+        return interactionTask;
     }
 
     public void SetFlightTeleportId(int flightTeleportId)

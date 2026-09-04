@@ -39,6 +39,11 @@ public abstract class AbstractInteractionTask
     /// <summary>Interaction scheduling method.</summary>
     public void Start()
     {
+        AbstractInteractionTask oldTask = requester.GetInteractionTask();
+        if (oldTask != null)
+            oldTask.Abort();
+        requester.SetInteractionTask(this);
+        Aion.GameServer.Services.RecallService.GetInstance().Cancel(requester, Aion.GameServer.Services.RecallService.CancelReason.CANCELLED);
         OnInteractionStart();
 
         task = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(ct =>
@@ -53,6 +58,8 @@ public abstract class AbstractInteractionTask
     /// <summary>Stop current interaction.</summary>
     public void Stop()
     {
+        if (requester.GetInteractionTask() == this)
+            requester.SetInteractionTask(null);
         OnInteractionFinish();
 
         if (task != null && !task.IsCancelled)

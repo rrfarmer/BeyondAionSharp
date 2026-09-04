@@ -131,7 +131,10 @@ public class TransformModel
     // Java parity: setTribe(TribeClass)
     public void SetTribe(TribeClass? transformTribe)
     {
+        bool tribeChanged = _transformTribe != transformTribe;
         _transformTribe = transformTribe;
+        if (tribeChanged && _owner is Player player)
+            Aion.GameServer.Services.RecallService.GetInstance().Cancel(player, Aion.GameServer.Services.RecallService.CancelReason.CANCELLED);
         UpdateTribeVisually();
     }
 

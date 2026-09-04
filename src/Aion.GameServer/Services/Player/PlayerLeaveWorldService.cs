@@ -66,6 +66,7 @@ public class PlayerLeaveWorldService
         }
 
         FindGroupService.GetInstance().OnLogout(player);
+        RecallService.GetInstance().Cancel(player, RecallService.CancelReason.CANCELLED);
         player.GetResponseRequester().DenyAll();
         player.GetFriendList().SetStatus(FriendList.Status.OFFLINE, player.GetCommonData());
         BrokerService.GetInstance().RemovePlayerCache(player);
@@ -112,8 +113,8 @@ public class PlayerLeaveWorldService
             player.GetPostman().GetController().Delete();
 
         ExpireTimerTask.GetInstance().UnregisterExpirables(player);
-        if (player.GetCraftingTask() != null)
-            player.GetCraftingTask().Stop();
+        if (player.GetInteractionTask() != null)
+            player.GetInteractionTask().Abort();
 
         Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnLogOut(new QuestEnv(null, player, 0));
         DateTime lastOnline = DateTimeOffset.FromUnixTimeMilliseconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()).UtcDateTime;

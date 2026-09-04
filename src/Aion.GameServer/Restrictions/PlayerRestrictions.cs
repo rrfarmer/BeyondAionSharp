@@ -108,22 +108,6 @@ public class PlayerRestrictions
             }
         }
 
-        if (skill.GetSkillTemplate().HasRecallInstant())
-        {
-            if (!(target is Player))
-                return false;
-            if (player.GetController().IsInCombat()
-                || ((Player)target).GetController().IsInCombat()
-                || ((Player)target).GetTransformModel().CantRecall()
-                || target.GetWorldId() != player.GetWorldId()
-                || !Aion.GameServer.SkillEngine.Effects.RecallInstantEffect.CanRecallTo(player))
-            {
-                // %0 cannot be summoned right now.
-                PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_Recall_CANNOT_ACCEPT_EFFECT(target.GetName()));
-                return false;
-            }
-        }
-
         if (template.HasResurrectEffect())
         {
             if (!(target is Player))

@@ -152,8 +152,11 @@ public class FirstTargetProperty
                 break;
             case FirstTargetAttribute.TARGET_MYPARTY_NONVISIBLE: // Summon Group Member
                 if (!IsTargetTeamMember(skill, true))
+                {
+                    if (effector is Player playerEffector)
+                        PacketSendUtility.SendPacket(playerEffector, SM_SYSTEM_MESSAGE.STR_SKILL_TARGET_IS_NOT_VALID());
                     return false;
-
+                }
                 skill.SetFirstTargetRangeCheck(false);
                 break;
             case FirstTargetAttribute.POINT:

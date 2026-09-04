@@ -104,12 +104,10 @@ public class CraftingTask : AbstractCraftTask
     {
         PacketSendUtility.SendPacket(requester, new SM_CRAFT_UPDATE(recipeTemplate.GetSkillId(), itemTemplate, 0, 0, 4, 0, 0));
         PacketSendUtility.BroadcastPacket(requester, new SM_CRAFT_ANIMATION(requester.GetObjectId(), responder.GetObjectId(), 0, 2), true);
-        requester.SetCraftingTask(null);
     }
 
     protected override void OnInteractionFinish()
     {
-        requester.SetCraftingTask(null);
     }
 
     protected override void OnInteractionStart()

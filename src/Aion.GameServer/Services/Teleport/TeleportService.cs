@@ -301,6 +301,7 @@ public class TeleportService
     public static void TeleportTo(Player player, int worldId, int instanceId, float x, float y, float z,
         byte heading, Aion.GameServer.Model.Animations.TeleportAnimation animation)
     {
+        Aion.GameServer.Services.RecallService.GetInstance().Cancel(player, Aion.GameServer.Services.RecallService.CancelReason.CANCELLED);
         if (player.IsDead())
         {
             PlayerReviveService.Revive(player, 20, 20, true, 0);

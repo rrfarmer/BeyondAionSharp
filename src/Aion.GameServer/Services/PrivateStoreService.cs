@@ -36,6 +36,7 @@ public class PrivateStoreService
         }
         player.SetStore(store);
         player.SetState(CreatureState.PRIVATE_SHOP, true);
+        RecallService.GetInstance().Cancel(player, RecallService.CancelReason.CANCELLED);
         PacketSendUtility.BroadcastPacket(player, new SM_EMOTION(player, EmotionType.OPEN_PRIVATESHOP, 0, 0), true);
     }
 

@@ -107,18 +107,18 @@ public class CraftService
                 break;
         }
         int skillLvlDiff = player.GetSkillList().GetSkillLevel(skillId) - recipeTemplate.GetSkillpoint();
-        player.SetCraftingTask(new CraftingTask(player, (StaticObject)target, recipeTemplate, skillLvlDiff, craftType == 1 ? 15 : 0));
+        CraftingTask craftingTask = new CraftingTask(player, (StaticObject)target, recipeTemplate, skillLvlDiff, craftType == 1 ? 15 : 0);
 
         if (skillId == 40009)
         {
-            player.GetCraftingTask().SetInterval(200);
+            craftingTask.SetInterval(200);
         }
         else
         {
             int interval = 2500 - (skillLvlDiff * 60);
-            player.GetCraftingTask().SetInterval(interval < intervalCap ? intervalCap : interval);
+            craftingTask.SetInterval(interval < intervalCap ? intervalCap : interval);
         }
-        player.GetCraftingTask().Start();
+        craftingTask.Start();
     }
 
     private static bool CheckCraft(Player player, RecipeTemplate recipeTemplate, int skillId, VisibleObject target, ItemTemplate itemTemplate,
@@ -134,7 +134,7 @@ public class CraftService
             return false;
         }
 
-        if (player.GetCraftingTask() != null && player.GetCraftingTask().IsInProgress())
+        if (player.GetInteractionTask() is CraftingTask craftingTask && craftingTask.IsInProgress())
         {
             return false;
         }

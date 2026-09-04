@@ -2,26 +2,39 @@ using Aion.GameServer.Network.Aion;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
-/// <summary>Java parity: network/aion/serverpackets/SM_RECALLED_BY_OTHER (SVDNESS). Summon-by-other confirmation window.</summary>
+/// <summary>
+/// Java parity: network/aion/serverpackets/SM_RECALLED_BY_OTHER (SVDNESS). Opens the window which asks a player whether he wants to be teleported
+/// to the caster of a summon skill, and closes it again when the request is no longer valid. The client answers with CM_RECALLED_BY_OTHER_ANSWER.
+/// </summary>
 public class SM_RECALLED_BY_OTHER : AionServerPacket
 {
-    public const int RECALL_REQUEST_ID = 0x0F44;
     private readonly string casterName;
     private readonly int skillId;
-    private readonly int timeSeconds;
+    private readonly int seconds;
 
-    public SM_RECALLED_BY_OTHER(string casterName, int skillId, int timeSeconds)
+    /// <summary>
+    /// Closes the window on the client.
+    /// </summary>
+    public SM_RECALLED_BY_OTHER()
+        : this(null, 0, 0)
+    {
+    }
+
+    /// <param name="casterName">name of the summoning player</param>
+    /// <param name="skillId">skill he used, its name is displayed in the window</param>
+    /// <param name="seconds">time the player has to answer</param>
+    public SM_RECALLED_BY_OTHER(string casterName, int skillId, int seconds)
     {
         this.casterName = casterName;
         this.skillId = skillId;
-        this.timeSeconds = timeSeconds;
+        this.seconds = seconds;
     }
 
     protected override void WriteImpl(AionConnection con)
     {
-        WriteC(0); // Retail always sends 0.
-        WriteS(casterName);
+        WriteC(casterName == null ? 1 : 0); // 0 = open the window, 1 = close it
+        WriteS(casterName!); // WriteS handles null (writes an empty string)
         WriteH(skillId);
-        WriteH(timeSeconds);
+        WriteH(seconds);
     }
 }

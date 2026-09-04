@@ -85,7 +85,7 @@ public partial class Player : Creature
 
     private int flyState = 0;
     private Aion.GameServer.Controllers.FlyController flyController;
-    private Aion.GameServer.SkillEngine.Task.CraftingTask craftingTask;
+    private volatile Aion.GameServer.SkillEngine.Task.AbstractInteractionTask interactionTask;
     private Aion.GameServer.Model.Templates.Flypath.FlightPath flightPath;
     private Summon summon;
     private Pet pet;

@@ -53,17 +53,7 @@ public class CM_GATHER : AionClientPacket
 
     private void CancelGathering(Player player)
     {
-        // player can switch targets during gathering, so the target is not guaranteed to be the correct gatherable
-        Gatherable gatherable = player.GetTarget() is Gatherable g && g.GetController().GetGatheringPlayerId() == player.GetObjectId() ? g : null;
-        if (gatherable == null)
-        {
-            gatherable = player.GetKnownList()
-                .Stream()
-                .Where(o => o.Get() is Gatherable gg && gg.GetController().GetGatheringPlayerId() == player.GetObjectId())
-                .Select(o => (Gatherable)o.Get())
-                .FirstOrDefault();
-        }
-        if (gatherable != null)
-            gatherable.GetController().CancelGathering();
+        if (player.GetInteractionTask() is global::Aion.GameServer.SkillEngine.Task.GatheringTask gatheringTask)
+            gatheringTask.Abort();
     }
 }

@@ -148,6 +148,9 @@ public class Skill
             }
         }
 
+        if (castState == CastState.CAST_START && IsInvalidRecall())
+            return false;
+
         if (castState == CastState.CAST_START && !CanPayCastCosts())
             return false;
 
@@ -606,6 +609,11 @@ public class Skill
             effector.GetController().CancelCurrentSkill(null); // calls effector.setCasting(null) and sends skill cancel packet
             return;
         }
+        if (IsInvalidRecall())
+        {
+            effector.GetController().CancelCurrentSkill(null!, null!); // the validation already told the caster why the recall failed
+            return;
+        }
         if (!PayCastCosts())
         {
             effector.GetController().CancelCurrentSkill(null!, null!); // the unpaid cost already told the player what is missing
@@ -793,6 +801,16 @@ public class Skill
         }
 
         AddResistedEffectHateAndNotifyFriends(effects);
+    }
+
+    /// <summary>
+    /// Recall skills (Summon Group Member, example skillId: 3777) validate their target when the cast starts and again when it ends. The caster is
+    /// told why it failed.
+    /// </summary>
+    /// <returns>True, if this is a recall skill whose target may not be recalled</returns>
+    private bool IsInvalidRecall()
+    {
+        return skillTemplate.HasRecallInstant() && effector is Player recallCaster && !Aion.GameServer.Services.RecallService.ValidateCast(recallCaster, firstTarget);
     }
 
     /// <summary>
