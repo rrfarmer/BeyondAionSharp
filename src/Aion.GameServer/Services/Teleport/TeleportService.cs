@@ -100,7 +100,7 @@ public class TeleportService
 
                 player.SetCurrentFlypath(flypath);
             }
-            player.UnsetPlayerMode(PlayerMode.RIDE);
+            AbortPlayerActions(player);
             player.SetState(CreatureState.FLYING);
             player.UnsetState(CreatureState.ACTIVE);
             player.SetFlightTeleportId(location.GetTeleportId());
@@ -198,6 +198,7 @@ public class TeleportService
     {
         if (player.HasStore())
             PrivateStoreService.ClosePrivateStore(player);
+        Aion.GameServer.Services.RecallService.GetInstance().Cancel(player, Aion.GameServer.Services.RecallService.CancelReason.CANCELLED);
         player.GetController().CancelCurrentSkill(null);
         player.SetTarget(null);
         player.UnsetPlayerMode(PlayerMode.RIDE);
@@ -221,6 +222,7 @@ public class TeleportService
     {
         if (player.GetWorldId() == pos.GetMapId())
         {
+            AbortPlayerActions(player);
             World.World.GetInstance().SetPosition(player.GetPet(), pos.GetMapId(), pos.GetInstanceId(), pos.GetX(), pos.GetY(), pos.GetZ(), pos.GetHeading());
             World.World.GetInstance().SetPosition(player, pos.GetMapId(), pos.GetInstanceId(), pos.GetX(), pos.GetY(), pos.GetZ(), pos.GetHeading());
             SpawnOnSameMap(player);
@@ -301,7 +303,6 @@ public class TeleportService
     public static void TeleportTo(Player player, int worldId, int instanceId, float x, float y, float z,
         byte heading, Aion.GameServer.Model.Animations.TeleportAnimation animation)
     {
-        Aion.GameServer.Services.RecallService.GetInstance().Cancel(player, Aion.GameServer.Services.RecallService.CancelReason.CANCELLED);
         if (player.IsDead())
         {
             PlayerReviveService.Revive(player, 20, 20, true, 0);
