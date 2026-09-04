@@ -142,6 +142,11 @@ public abstract class Creature : VisibleObject
         return castingSkill;
     }
 
+    public bool IsCastingItemSkill()
+    {
+        return castingSkill != null && castingSkill.GetItemTemplate() != null;
+    }
+
     /// <summary>
     /// The factor (in percent) scaling the chance to have the current cast interrupted by incoming damage. Players are
     /// always at 100, npcs take it from their template.

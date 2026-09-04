@@ -109,12 +109,18 @@ public class CM_EMOTION : AionClientPacket
             && (emotionType == EmotionType.CHAIR_SIT || emotionType == EmotionType.JUMP))
             return;
 
-        Item usingItem = player.GetUsingItem();
-        if (usingItem == null || !HasRideAction(usingItem)) // don't cancel getting on mount
-            player.GetController().CancelUseItem();
         if (emotionType == EmotionType.SELECT_TARGET)
+        {
+            if (global::Aion.GameServer.Configs.Main.CustomConfig.CANCEL_ITEM_USE_ON_TARGET_CHANGE)
+            {
+                player.GetController().CancelUseItem();
+                if (player.IsCastingItemSkill()) // selecting a target interrupts item casts, but not skill casts
+                    player.GetController().CancelCurrentSkill(null);
+            }
             return;
+        }
 
+        player.GetController().CancelUseItem();
         player.GetController().CancelCurrentSkill(null);
 
         // check for stance
@@ -223,12 +229,6 @@ public class CM_EMOTION : AionClientPacket
 
         if (player.IsProtectionActive())
             player.GetController().StopProtectionActiveTask();
-    }
-
-    private bool HasRideAction(Item item)
-    {
-        ItemActions actions = item.GetItemTemplate().GetActions();
-        return actions != null && actions.GetRideAction() != null;
     }
 
     private int GetTargetObjectId(Player player)

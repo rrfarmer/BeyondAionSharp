@@ -131,7 +131,7 @@ public partial class Equipment
 
         public override void Abort()
         {
-            responder.GetController().CancelUseItem(false);
+            responder.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(responder, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_ITEM_CANCELED(item.GetL10n()));
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(responder,
                 new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(responder.GetObjectId(), item.GetObjectId(), item.GetItemId(), 0, 8), true);

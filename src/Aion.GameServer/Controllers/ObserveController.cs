@@ -213,6 +213,33 @@ public class ObserveController
         NotifyObservers(ObserverType.UNEQUIP, item, owner);
     }
 
+    /// <summary>
+    /// Aborts every attached <see cref="ItemUseObserver"/>, so each of them cancels its own item use and tells the player about it.
+    /// </summary>
+    public void AbortItemUseObservers()
+    {
+        List<ItemUseObserver> itemUseObservers = new List<ItemUseObserver>();
+        lock (observers)
+        {
+            for (int i = observers.Count - 1; i >= 0; i--)
+            {
+                if (observers[i] is ItemUseObserver itemUseObserver)
+                {
+                    itemUseObservers.Add(itemUseObserver);
+                    observers.RemoveAt(i);
+                }
+            }
+        }
+
+        // Java iterates in insertion order; the reverse collection loop above gathered them backwards
+        itemUseObservers.Reverse();
+        foreach (ItemUseObserver itemUseObserver in itemUseObservers)
+        {
+            itemUseObserver.OnRemoved();
+            itemUseObserver.Abort();
+        }
+    }
+
     public void NotifyItemuseObservers(Item item)
     {
         NotifyObservers(ObserverType.ITEMUSE, item);

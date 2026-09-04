@@ -161,8 +161,10 @@ public class TamperingAction : AbstractItemAction
 
         public override void Abort()
         {
-            player.GetController().CancelUseItem();
+            player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_ITEM_AUTHORIZE_CANCEL(targetItem.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(player,
+                new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parntObjectId, parentItemId, 0, 3, 0));
             player.GetObserveController().RemoveObserver(this);
         }
     }

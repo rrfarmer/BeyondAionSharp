@@ -43,7 +43,7 @@ public class AnimationAddAction : AbstractItemAction
             FinishUse(player, parentItem);
             return;
         }
-        var observer = new AnimationAddObserver(player);
+        var observer = new AnimationAddObserver(player, parentItem);
 
         player.GetObserveController().Attach(observer);
         Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,
@@ -60,16 +60,20 @@ public class AnimationAddAction : AbstractItemAction
     private sealed class AnimationAddObserver : Aion.GameServer.Controllers.Observer.ItemUseObserver
     {
         private readonly Aion.GameServer.Model.GameObjects.Players.Player player;
+        private readonly Item parentItem;
 
-        public AnimationAddObserver(Aion.GameServer.Model.GameObjects.Players.Player player)
+        public AnimationAddObserver(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem)
         {
             this.player = player;
+            this.parentItem = parentItem;
         }
 
         public override void Abort()
         {
-            player.GetController().CancelUseItem();
+            player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ITEM_CANCELED());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,
+                new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 3, 0));
             player.GetObserveController().RemoveObserver(this);
         }
     }

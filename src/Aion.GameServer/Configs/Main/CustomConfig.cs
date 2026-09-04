@@ -241,6 +241,10 @@ public static class CustomConfig
     [Property(key: "gameserver.items.ignore_potions_at_full_health", defaultValue: "false")]
     public static bool IGNORE_POTIONS_AT_FULL_HEALTH = false;
 
+    /// <summary>Cancel a running item use when the player selects another target, as the retail server does. Key: gameserver.items.cancel_use_on_target_change</summary>
+    [Property(key: "gameserver.items.cancel_use_on_target_change", defaultValue: "true")]
+    public static bool CANCEL_ITEM_USE_ON_TARGET_CHANGE = true;
+
     /// <summary>Custom Reward Packages. Key: gameserver.custom.starter_kit.enable</summary>
     [Property(key: "gameserver.custom.starter_kit.enable", defaultValue: "false")]
     public static bool ENABLE_STARTER_KIT = false;

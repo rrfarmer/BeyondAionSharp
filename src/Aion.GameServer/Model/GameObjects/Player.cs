@@ -73,7 +73,6 @@ public partial class Player : Creature
     private readonly Aion.GameServer.Model.Items.Storage.Storage regularWarehouse;
     private readonly Aion.GameServer.Model.Items.Storage.Storage[] petBags = new Aion.GameServer.Model.Items.Storage.Storage[Aion.GameServer.Model.Items.Storage.StorageType.PET_BAG_MAX - Aion.GameServer.Model.Items.Storage.StorageType.PET_BAG_MIN + 1];
     private readonly Aion.GameServer.Model.Items.Storage.Storage[] cabinets = new Aion.GameServer.Model.Items.Storage.Storage[Aion.GameServer.Model.Items.Storage.StorageType.HOUSE_WH_MAX - Aion.GameServer.Model.Items.Storage.StorageType.HOUSE_WH_MIN + 1];
-    private Item usingItem;
 
     private Aion.GameServer.Model.GameObjects.Players.PlayerSettings playerSettings;
 
@@ -426,16 +425,6 @@ public partial class Player : Creature
     public Aion.GameServer.Model.GameObjects.Players.Equipment GetEquipment()
     {
         return equipment;
-    }
-
-    public Item GetUsingItem()
-    {
-        return usingItem;
-    }
-
-    public void SetUsingItem(Item usingItem)
-    {
-        this.usingItem = usingItem;
     }
 
     public Aion.GameServer.Model.GameObjects.Players.PrivateStore GetStore()

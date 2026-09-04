@@ -181,10 +181,6 @@ public class ItemSocketService
             return;
         }
 
-        ItemUseObserver observer = new GodstoneUseObserver(player, weapon);
-
-        player.GetObserveController().Attach(observer);
-
         Item godstone = player.GetInventory().GetItemByObjId(stoneId);
         if (godstone == null)
         {
@@ -198,6 +194,10 @@ public class ItemSocketService
             PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_GIVE_ITEM_PROC_NO_PROC_GIVE_ITEM());
             return;
         }
+
+        ItemUseObserver observer = new GodstoneUseObserver(player, weapon, stoneId, itemTemplate.GetTemplateId());
+
+        player.GetObserveController().Attach(observer);
 
         PacketSendUtility.BroadcastPacketAndReceive(player,
             new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), stoneId, itemTemplate.GetTemplateId(), 2000, 0, 0));
@@ -224,18 +224,24 @@ public class ItemSocketService
     {
         private readonly Player player;
         private readonly Item weapon;
+        private readonly int stoneId;
+        private readonly int godstoneTemplateId;
 
-        public GodstoneUseObserver(Player player, Item weapon)
+        public GodstoneUseObserver(Player player, Item weapon, int stoneId, int godstoneTemplateId)
         {
             this.player = player;
             this.weapon = weapon;
+            this.stoneId = stoneId;
+            this.godstoneTemplateId = godstoneTemplateId;
         }
 
         public override void Abort()
         {
             player.GetObserveController().RemoveObserver(this);
-            player.GetController().CancelUseItem();
+            player.GetController().CancelTask(TaskId.ITEM_USE);
             PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_GIVE_PROC_CANCEL(weapon.GetL10n()));
+            PacketSendUtility.BroadcastPacketAndReceive(player,
+                new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), stoneId, godstoneTemplateId, 0, 3, 0));
         }
     }
 }

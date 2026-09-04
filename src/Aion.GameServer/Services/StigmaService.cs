@@ -483,7 +483,7 @@ public class StigmaService
 
         public override void Abort()
         {
-            player.GetController().CancelUseItem(false);
+            player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
             PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_ITEM_CANCELED());
             PacketSendUtility.BroadcastPacket(player,
                 new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentObjectId, chargeStone.GetObjectId(), parentItemId, 0, 2, 0), true);

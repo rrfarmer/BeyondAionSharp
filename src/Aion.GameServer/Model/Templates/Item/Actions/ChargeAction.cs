@@ -114,7 +114,7 @@ public class ChargeAction : AbstractItemAction
 
         public override void Abort()
         {
-            player.GetController().CancelUseItem(false);
+            player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
             if (chargeWay == 1)
                 Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_ITEM_CHARGE_CANCELED());
             else

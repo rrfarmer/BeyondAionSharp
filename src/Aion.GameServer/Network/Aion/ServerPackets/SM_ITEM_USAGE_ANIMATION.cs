@@ -78,13 +78,6 @@ public class SM_ITEM_USAGE_ANIMATION : AionServerPacket
 
     protected override void WriteImpl(AionConnection con)
     {
-        if (time > 0)
-        {
-            Player player = global::Aion.GameServer.World.World.GetInstance().GetPlayer(playerObjId);
-            Item item = player.GetInventory().GetItemByObjId(itemObjId);
-            player.SetUsingItem(item);
-        }
-
         WriteD(playerObjId); // player obj id
         WriteD(targetObjId); // target obj id
 

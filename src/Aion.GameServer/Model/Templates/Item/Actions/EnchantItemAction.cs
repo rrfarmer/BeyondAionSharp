@@ -77,7 +77,7 @@ public class EnchantItemAction : AbstractItemAction
         bool isEnchantmentStone = parentItem.GetItemTemplate().GetItemGroup() == ItemGroup.ENCHANTMENT;
         int enchantDurationMillis = isEnchantmentStone ? 4000 : 2000;
 
-        var observer = new EnchantItemUseObserver(player, targetItem, isEnchantmentStone);
+        var observer = new EnchantItemUseObserver(player, parentItem, targetItem, isEnchantmentStone);
         player.GetObserveController().Attach(observer);
 
         // Current enchant level
@@ -199,20 +199,24 @@ public class EnchantItemAction : AbstractItemAction
     private sealed class EnchantItemUseObserver : Aion.GameServer.Controllers.Observer.ItemUseObserver
     {
         private readonly Aion.GameServer.Model.GameObjects.Players.Player player;
+        private readonly Item parentItem;
         private readonly Item targetItem;
         private readonly bool isEnchantmentStone;
 
-        public EnchantItemUseObserver(Aion.GameServer.Model.GameObjects.Players.Player player, Item targetItem, bool isEnchantmentStone)
+        public EnchantItemUseObserver(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, bool isEnchantmentStone)
         {
             this.player = player;
+            this.parentItem = parentItem;
             this.targetItem = targetItem;
             this.isEnchantmentStone = isEnchantmentStone;
         }
 
         public override void Abort()
         {
-            player.GetController().CancelUseItem();
+            player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, isEnchantmentStone ? Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ENCHANT_ITEM_CANCELED(targetItem.GetL10n()) : Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GIVE_ITEM_OPTION_CANCELED(targetItem.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(player,
+                new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 3, 0));
             player.GetObserveController().RemoveObserver(this);
         }
     }

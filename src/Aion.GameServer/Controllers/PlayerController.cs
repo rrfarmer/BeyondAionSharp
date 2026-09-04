@@ -549,19 +549,7 @@ public class PlayerController : CreatureController<Player>
 
     public override void CancelUseItem()
     {
-        CancelUseItem(true);
-    }
-
-    public void CancelUseItem(bool sendCancelAnimation)
-    {
-        Player player = GetOwner();
-        Item usingItem = player.GetUsingItem();
-        player.SetUsingItem(null);
-        if (CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE) != null && sendCancelAnimation)
-        {
-            PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), usingItem == null ? 0 : usingItem.GetObjectId(),
-                usingItem == null ? 0 : usingItem.GetItemTemplate().GetTemplateId(), 0, 3, 0), true);
-        }
+        GetOwner().GetObserveController().AbortItemUseObservers(); // each observer knows its item and cancels its own task, message and animation
     }
 
     public override void OnDialogSelect(int dialogActionId, int prevDialogId, Player player, int questId, int extendedRewardIndex)

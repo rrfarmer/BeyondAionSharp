@@ -95,7 +95,7 @@ public class PolishAction : AbstractItemAction
 
         public override void Abort()
         {
-            player.GetController().CancelUseItem(false);
+            player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_POLISH_CANCELED(targetItem.GetL10n()));
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
                 new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 0, 2, 0), true);
