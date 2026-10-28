@@ -166,7 +166,7 @@ internal static class RetailNpcNormalDamageStages
         return TruncateInt32(Add(Multiply(Divide(percent, 100f), defenseFloat), defenseFloat));
     }
 
-    private static int TruncateInt32(float value)
+    internal static int TruncateInt32(float value)
     {
         // CVTTSS2SI's indefinite/out-of-range behavior is outside this supported domain.
         // int.MaxValue rounds to 2^31 as float, so comparison must use the exclusive bound.
@@ -208,7 +208,7 @@ internal static class RetailNpcNormalDamageStages
     [MethodImpl(MethodImplOptions.NoInlining)]
     internal static float Add(float left, float right) => FiniteResult(left + right);
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static float Subtract(float left, float right) => FiniteResult(left - right);
+    internal static float Subtract(float left, float right) => FiniteResult(left - right);
     [MethodImpl(MethodImplOptions.NoInlining)]
     internal static float Multiply(float left, float right) => FiniteResult(left * right);
     [MethodImpl(MethodImplOptions.NoInlining)]

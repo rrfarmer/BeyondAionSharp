@@ -1,4 +1,5 @@
 using System;
+using Aion.GameServer.Controllers.Attack.RetailNpc;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Logging;
@@ -30,6 +31,7 @@ public class AttackUtil
     /// </summary>
     public static List<AttackResult> CalculatePhysAttackResult(Creature attacker, Creature attacked, ISet<CalculationType> calculationTypes)
     {
+        if (SkyTempleNpcCombat.TryCalculateNormal(attacker, attacked, out var retail, out _, calculationTypes)) return retail;
         AttackStatus attackStatus = CalculatePhysicalStatus(attacker, attacked, true, 0, 100, false, false);
         List<AttackResult> attackResultList = StatFunctions.CalculateAttackDamage(attacker, SkillElement.NONE, attackStatus, calculationTypes);
         AdjustDamageByStatModifiers(attacker, attacked, attackStatus, attackResultList, SkillElement.NONE);
@@ -482,6 +484,7 @@ public class AttackUtil
     /// </summary>
     public static List<AttackResult> CalculateMagAttackResult(Creature attacker, Creature attacked, SkillElement element, ISet<CalculationType> calculationTypes)
     {
+        if (SkyTempleNpcCombat.TryCalculateNormal(attacker, attacked, out var retail, out _, calculationTypes)) return retail;
         AttackStatus attackStatus = CalculateMagicalStatus(attacker, attacked, 100, false);
         List<AttackResult> attackResultList = StatFunctions.CalculateAttackDamage(attacker, element, attackStatus, calculationTypes);
         AdjustDamageByStatModifiers(attacker, attacked, attackStatus, attackResultList, element);

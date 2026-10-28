@@ -1,4 +1,5 @@
 using System;
+using Aion.GameServer.Controllers.Attack.RetailNpc;
 using Aion.GameServer.Model.Templates.Items;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
@@ -311,7 +312,13 @@ public abstract class CreatureController : VisibleObjectController
         ISet<CalculationType> calculationTypes = new HashSet<CalculationType> { CalculationType.APPLY_POWER_SHARD_DAMAGE, CalculationType.REMOVE_POWER_SHARD };
         if (GetOwner() is Player p && p.GetEquipment().IsDualWeaponEquipped())
             calculationTypes.Add(CalculationType.DUAL_WIELD);
-        if (GetOwner().GetAttackType() == Aion.GameServer.Model.Templates.Items.ItemAttackType.PHYSICAL)
+        if (SkyTempleNpcCombat.TryCalculateNormal(GetOwner(), target, out var retailNormal, out var retailElement, calculationTypes))
+        {
+            attackResult = retailNormal;
+            if (retailElement != SkillElement.NONE)
+                attackHandAnimation = Aion.GameServer.Model.Animations.AttackHandAnimation.OFF_HAND;
+        }
+        else if (GetOwner().GetAttackType() == Aion.GameServer.Model.Templates.Items.ItemAttackType.PHYSICAL)
             attackResult = AttackUtil.CalculatePhysAttackResult(GetOwner(), target, calculationTypes);
         else
         {

@@ -102,5 +102,48 @@ owned/scaled construction, not a substitute calculation for those units.
 
 Offline getter gates construct real NPCs without spawning, applying passive
 skills or running AI. They verify base consumption separately from spawn-time
-effects and encounter behavior. Normal attack application and runtime publication
-remain pending; this integration alone is not a completed cohort rollout.
+effects and encounter behavior. The ordinary normal/publication integration below
+has a separate gate; the getter test alone does not establish attack parity.
+
+## Ordinary normal consumer and package publication
+
+The existing attack controller and physical/magical result entry points select
+the retail normal adapter for matched ownerless NPC-to-player attacks. An ordered
+source attack supplies the element and modifier. Multiple entries use the native
+minimum-reach weighted pool; this changes combat-entry choice, not movement or
+pathfinding. The calculation uses source min/max endpoints, late dual splitting,
+current NPC modifiers, native active-defense/critical arithmetic and the selected
+map/NPC PvE channels. Raw source physical/magical attack fields remain excluded.
+
+Each hand enters the existing host protection owner once. The normal controller
+then delivers its result through the existing HP-loss path. Pilot scheduling,
+special skills, player-memory reconstruction and navigation are separate partials;
+the ordinary consumer compiles and runs its tests without them. Historical
+`SkyTemple` type names remain to preserve existing callers, not to limit membership.
+
+Configured startup requires both the manifest and its separate SHA256. Before
+publication it verifies selected sources, loaded 4.8 template identities, supported
+map PvE inputs and reviewed owner-family exclusions. Optional full-pilot validation
+checks source agreement through its existing interop. No source-only publication
+or second active catalog is introduced. Both variables absent retains legacy
+behavior. This code change neither selects a machine's runtime package nor deploys it.
+
+Native calculations are source-backed; current 4.8 player item/effect getters,
+observers and packet/HP ownership are explicit compatibility mappings. They are
+not a reconstruction of every 5.8 player state. The ordinary adapter covers
+NPC-to-player normal attacks. NPC-to-NPC and player-to-NPC attack algorithms retain
+their host paths unless an existing separately reviewed full adapter applies;
+selected NPC defensive getters still supply the corrected defensive values.
+
+Profiles with special exclusive equipment responses remain visible exceptions
+when the separately reviewed response consumer is absent. Unsupported normal
+shapes also emit a specific compatibility warning. They retain host normal attack
+operands, never a made-up retail damage value. Owned/scaled construction and the
+bounded complex-skill list remain separate exceptions. These exceptions and the
+controlled normal coverage are recorded per map/NPC outside Git.
+
+Per-hit calculation traces are debug-only, and JSON operands are serialized only
+when that logger enables debug. Missing-data warnings remain visible. The managed
+retail RNG retains the recovered engine and inclusive mapping; a cryptographic
+host seed is an infrastructure choice, not a claim to reproduce a captured retail
+global seed or interleaving.

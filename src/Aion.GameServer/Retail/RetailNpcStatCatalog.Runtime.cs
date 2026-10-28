@@ -55,10 +55,12 @@ internal static partial class RetailNpcStatCatalog
             identities = RetailNpcReviewedIdentityBindings.Admit(ReadAsset(review, directory), review.GetProperty("sha256").GetString()!);
         var (profiles, maps) = ReadProfiles(root, expected, directory, identities);
         var package = new Package(profiles.ToFrozenDictionary(), maps.ToFrozenSet());
+        ReadNormalPackage(root, directory, ref package);
         ReadAdditionalPackage(root, expected, directory, ref package);
         return package;
     }
 
+    static partial void ReadNormalPackage(System.Text.Json.JsonElement root, string directory, ref Package package);
     static partial void ReadAdditionalPackage(JsonElement root, string expected, string directory, ref Package package);
     static partial void ValidateRuntimePublication(Package package, ref bool ready);
 
@@ -66,6 +68,7 @@ internal static partial class RetailNpcStatCatalog
     {
         var previous = active; active = Parse(bytes, hash, directory); return new Restore(previous);
     }
+    internal static IDisposable PreservePublicationForTests() => new Restore(Volatile.Read(ref active));
     private sealed class Restore(Package? previous) : IDisposable
     {
         public void Dispose() => Volatile.Write(ref active, previous);

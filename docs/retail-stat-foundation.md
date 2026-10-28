@@ -114,6 +114,34 @@ The latter two classes run without private data except for the explicitly marked
 profile-only publication integration test.
 
 Use the existing manifest and SHA256 fixture variables documented above. These
-tests do not select the runtime manifest or launch a server. Package selection
-and the complete normal-attack consumer must pass their own integration gate
-before the ordinary adapter can be enabled.
+tests do not select the runtime manifest or launch a server. The complete
+normal-attack consumer has the separate integration gate below.
+
+## Ordinary attack and publication gate
+
+`RetailNpcNormalRuntimeTests` uses the same pinned source package with only its
+ordinary `combat_stats` context retained. Its controlled fleet check exercises
+selected ranges/elements/PvE inputs across non-global map memberships. NPCs are
+fresh, AI is neutral, critical modifiers and target defenses are controlled, and
+special exclusive equipment responses are reported separately. Native status,
+critical, minimum-reach, dual and PvE unit vectors cover those arithmetic branches
+independently of that ordinary fleet state.
+
+The controller test verifies actual HP loss for all 25 Three Keys profiles and
+checks one protection pass per normal. The publication test validates the complete
+package against loaded host templates without bootstrapping a server. It verifies
+that an admitted package publishes once and rejects reload. Profile-only inputs
+continue to fail the publication test.
+
+The optional `AION_RETAIL_NORMAL_TEST_REPORT` fixture variable writes a private
+per-map/NPC coverage report to the supplied external path. It distinguishes
+controlled normal consumption, no authored normal and bounded exceptions; it is
+not natural-play, spawn-effect or runtime instrumentation evidence.
+
+Startup reads `AION_RETAIL_STATS_MANIFEST` and
+`AION_RETAIL_STATS_MANIFEST_SHA256`. Supply a reviewed compatible package and its
+separately recorded digest together. Unknown or changed configured inputs fail
+explicitly. Leave both unset to retain the legacy path. To roll back selection,
+unset both at a separately authorized restart; do not edit extracted values or
+reset the dirty checkout. Detailed per-hit diagnostics require debug logging for
+`SkyTempleNpcCombat`; ordinary operation does not serialize every hit as JSON.

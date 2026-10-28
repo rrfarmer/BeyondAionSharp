@@ -222,6 +222,12 @@ public sealed class GameServerBootstrapService : IHostedService
 		if (shouldInitFaithfulEngines)
 			_faithfulEnginesInitialized = true;
 
+		await Aion.GameServer.Retail.RetailNpcStatCatalog.InitializeAsync(
+			Environment.GetEnvironmentVariable(Aion.GameServer.Retail.RetailNpcStatCatalog.ManifestEnvironment),
+			Environment.GetEnvironmentVariable(Aion.GameServer.Retail.RetailNpcStatCatalog.HashEnvironment), cancellationToken);
+		_logger.LogInformation("Retail statistics-only memberships: {Count}",
+			Aion.GameServer.Retail.RetailNpcStatCatalog.Members.Count);
+
 		return dataManager;
 	}
 
