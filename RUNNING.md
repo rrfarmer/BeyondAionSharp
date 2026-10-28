@@ -63,7 +63,15 @@ dotnet run --project src/Aion.GameServer
 
 If the GameServer logs `NOT_AUTHED` or keeps retrying: missing `gameservers` seed row, or a DB port/credential mismatch.
 
-## 6. Companion bots
+## 6. Private test hosts
+
+The separate private test hosts use their own ports, copied databases and a pinned
+retail statistics package. Package13 is selected for those hosts only; see
+[Private test server retail package](docs/private-test-retail-package.md) for
+startup, verification and rollback. Ordinary host and live Docker defaults are
+unchanged.
+
+## 7. Companion bots
 
 `.companion <class>` brings a player a companion that follows and plays its role (D41, `docs/companion-bots.md`).
 It needs a game server started with companions on, and the host program beside it (`docs/companion-live-host.md`).
