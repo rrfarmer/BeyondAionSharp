@@ -5,6 +5,8 @@ using Aion.Bots.Scenarios;
 using Aion.Bots.Scenarios.Classes;
 using Aion.Bots.World;
 using Aion.GameServer.Controllers.Attack.RetailNpc;
+using Aion.GameServer.Controllers.Attack;
+using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
@@ -151,13 +153,17 @@ public sealed partial class SimulationFastScenarioTests
                     int start = fixture.LogCapture.Entries.Count, npcBefore = npc.GetLifeStats().GetCurrentHp();
                     // Reverse-direction source defense through the same damage
                     // calculator and standard HP owner; no faction/quest edit.
-                    Assert.True(SkyTemplePlayerCombat.TryNormal(player, npc,
-                        new HashSet<CalculationType>(), out var outgoing, out _));
+                    // Exercise the production dispatcher, including its selected
+                    // NPC receiver branch, rather than a calculator-only helper.
+                    var outgoing = player.GetAttackType() == ItemAttackType.PHYSICAL
+                        ? AttackUtil.CalculatePhysAttackResult(player, npc, new HashSet<CalculationType>())
+                        : AttackUtil.CalculateMagAttackResult(player, npc, player.GetAttackType().GetMagicalElement(), new HashSet<CalculationType>());
                     bool incomingPhysical=player.GetAttackType()==Aion.GameServer.Model.Templates.Items.ItemAttackType.PHYSICAL;
                     if((incomingPhysical?p.PhysicalDamageTrim:p.MagicalDamageTrim)==1)
                         Assert.All(outgoing,r=>Assert.InRange(r.GetDamage(),0,1));
                     npc.GetController().OnAttack(player, outgoing.Sum(x => x.GetDamage()), outgoing[0].GetAttackStatus());
                     int npcAfter = npc.GetLifeStats().GetCurrentHp();
+                    Assert.Equal(Math.Min(npcBefore, outgoing.Sum(x => x.GetDamage())), npcBefore - npcAfter);
                     // Use a separate fresh attacker. Even a one-shot NPC must
                     // exercise the reverse defense calculation while the player
                     // is alive, and a killed defender cannot perform its auto.
@@ -165,12 +171,18 @@ public sealed partial class SimulationFastScenarioTests
                     npc = Assert.IsAssignableFrom<Npc>(Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(spawn, instance.GetInstanceId()));
                     npc.UnsetState(CreatureState.RESTING);
                     int playerBefore = player.GetLifeStats().GetCurrentHp();
-                    npc.GetController().AttackTarget(player, 0, false);
+                    int attempts = 0;
+                    do
+                    {
+                        npc.GetController().AttackTarget(player, 0, false);
+                        attempts++;
+                    } while (p.HasNormalAttackCorrection && player.GetLifeStats().GetCurrentHp() == playerBefore && attempts < 64);
                     int playerAfter = player.GetLifeStats().GetCurrentHp(); if (player.IsDead()) deaths++;
                     var events = fixture.LogCapture.Entries.Skip(start).Select(e => e.Message)
                         .Where(m => m.StartsWith("RETAIL_SKYTEMPLE_CALC ") || m.StartsWith("RETAIL_SKYTEMPLE_HP ") || m.StartsWith("RETAIL_STAT_DUAL_OFFHAND ") || m.StartsWith("RETAIL_STAT_NORMAL_INPUT ")).ToArray();
                     if (p.HasNormalAttackCorrection)
                     {
+                        Assert.True(playerAfter < playerBefore, $"NPC {p.NpcId} produced no final HP loss in {attempts} normal attacks");
                         Assert.Contains(events, m => m.StartsWith("RETAIL_SKYTEMPLE_CALC ") && m.Contains("npc=" + p.NpcId + " "));
                         foreach (var message in events.Where(m => m.StartsWith("RETAIL_SKYTEMPLE_HP ")))
                         {
@@ -187,10 +199,11 @@ public sealed partial class SimulationFastScenarioTests
                     }
                     if(p.HasNormalAttackCorrection)
                     {
-                        var main=events.Single(m=>m.StartsWith("RETAIL_SKYTEMPLE_CALC "));
-                        bool terminal=main.Contains("status=DODGE ")||main.Contains("status=RESIST ");
+                        var mains=events.Where(m=>m.StartsWith("RETAIL_SKYTEMPLE_CALC ")).ToArray();
+                        Assert.Equal(attempts, mains.Length);
                         bool dual=p.Source.Integers["dual"].ParsedValue is not (null or 0);
-                        Assert.Equal(dual&&!terminal?1:0,events.Count(m=>m.StartsWith("RETAIL_STAT_DUAL_OFFHAND ")));
+                        Assert.Equal(dual ? mains.Count(m=>!m.Contains("status=DODGE ")&&!m.Contains("status=RESIST ")) : 0,
+                            events.Count(m=>m.StartsWith("RETAIL_STAT_DUAL_OFFHAND ")));
                     }
                     var outcome = new { map = group.Key, fixtureMap, syntheticAnchor, npc = p.NpcId, p.MaxHp, p.MinDamage, p.MaxDamage,
                         p.PhysicalDefense, p.MagicalDefense, p.MagicalResist, p.Attacks, p.SourceRecordSha256,
@@ -199,7 +212,7 @@ public sealed partial class SimulationFastScenarioTests
                         materializedHp,hpRoundingDelta=materializedHp-p.MaxHp,
                         physicalCriticalResist=s.GetPCR().GetCurrent(),magicalCriticalResist=s.GetMCR().GetCurrent(),
                         omittedFixturePostSpawnSkills=npc.GetSkillList().GetPostSpawnSkills().Select(x=>new {id=x.GetSkillId(),level=x.GetSkillLevel()}).ToArray(),
-                        normalCorrection = p.HasNormalAttackCorrection, playerBefore, playerAfter,
+                        normalCorrection = p.HasNormalAttackCorrection, attempts, playerBefore, playerAfter,
                         npcBefore, npcAfter, fixtureWokeSittingActor = seated, events };
                     outcomes.Add(outcome);
                     await progress.WriteLineAsync(JsonSerializer.Serialize(outcome)); await progress.FlushAsync(token);
