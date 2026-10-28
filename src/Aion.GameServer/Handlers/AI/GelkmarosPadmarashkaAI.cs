@@ -204,7 +204,10 @@ public class GelkmarosPadmarashkaAI : PatternAi, HpPhases.PhaseHandler
         switch (stat.GetStat())
         { // Tweak for 12p (600 s | 3000 dps)
             case StatEnum.MAXHP:
-                stat.SetBase(20_880_000);
+                // The selected retail profile owns HP. Keep the Java 12-player
+                // tuning only on the unselected compatibility path.
+                if (GetOwner().GetGameStats()?.StatisticsProfile is null)
+                    stat.SetBase(20_880_000);
                 break;
             case StatEnum.PHYSICAL_ATTACK:
                 stat.SetBase(2200);

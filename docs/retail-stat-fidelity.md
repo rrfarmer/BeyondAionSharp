@@ -187,3 +187,19 @@ One historical comparison used absent XML `lv`=1; Java/C# actually default the i
 to0. The corrected external comparison changes one row's host-level metadata and
 preserves all293 source numeric vectors. Tests use loaded host levels, not that old
 default. Source reports and the erratum remain outside Git.
+
+## Actual world-boss HP overrides
+
+Java Sematariux and world Padmarashka explicitly replace HP with20,880,000 as a
+"Tweak for12p". The selected 5.8 profiles for216520 and216580 instead calculate
+86,954,218. Their C# AI hooks now retain that selected integer HP; the unselected
+Java compatibility path still uses its existing value. Legacy skill attack2200
+remains a separately identified compatibility operand. No cast, phase, timing,
+damage-skill or movement behavior is changed by this HP correction.
+
+The offline actual-AI gate first reproduced both20,880,000 overrides despite the
+selected86,954,218 profile. It then checks those same AI classes, exact current/max
+HP and an additional2000-HP modifier/removal. It also checks unselected behavior
+and the three Altgard one-damage AI base defenses, which already agree with their
+selected zero evasion/resistance values. Neutral-AI getter coverage alone did not
+prove these actual-AI results.
