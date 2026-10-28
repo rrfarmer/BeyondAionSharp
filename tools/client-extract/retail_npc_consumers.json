@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "scope": "Static extraction evidence only; no runtime equivalence or activation claim",
+  "builds": {
+    "main": {
+      "sha256": "da1ee5633d65a7ebb436b29d15ca24e46ab4f267449384d177bf20d2d26eb8f1",
+      "array_va": "0x1427284e0",
+      "note": "Supplied patched MainServer; licence/eleven-player patches; no unpatched comparison"
+    },
+    "npc": {
+      "sha256": "c24e600107352268d377c9a7361e52d848e96af8deff61259e031b98b7130350",
+      "array_va": "0x141773270",
+      "note": "Supplied recovered NPCServer"
+    },
+    "script": {
+      "sha256": "99b87b9b291bcee4c01a9658784f9ca3e7751806dbffe9c9225ceb8f25f5d779",
+      "note": "Build identity only; this extractor does not execute or translate script code"
+    }
+  },
+  "divided_files": [
+    "npcs_npcs.xml",
+    "npcs_monsters.xml",
+    "npcs_std_monsters.xml",
+    "npcs_abyss_monsters.xml",
+    "npcs_abyss_std_monsters.xml",
+    "npcs_test.xml",
+    "npcs_housing.xml"
+  ],
+  "region": {
+    "name": "USA",
+    "country_code": 1,
+    "prefix": "USA",
+    "evidence": "Main 0x140d9d030 switch; 0x140d9d7e0 divided loader; pinned PE array bytes independently checked"
+  },
+  "selection_policy": "Try configured USA file per divided filename, otherwise base. A present malformed regional candidate is blocked, not treated as clean missing-file fallback; native partial-tree state is not reproduced by this static tool.",
+  "aggregate_policy": "npcs.xml is a complete-record crosscheck; selected divided records remain authoritative",
+  "root_integer_lexemes": [
+    "id",
+    "level",
+    "max_hp",
+    "max_mp",
+    "hp_regen",
+    "physical_attack",
+    "physical_defend",
+    "magical_attack",
+    "magical_defend",
+    "magical_resist",
+    "min_damage",
+    "max_damage",
+    "hit_accuracy",
+    "magical_hit_accuracy",
+    "critical",
+    "magical_critical",
+    "dodge",
+    "parry",
+    "block",
+    "magical_skill_boost",
+    "magical_skill_boost_resist",
+    "physical_critical_reduce_rate",
+    "physical_critical_damage_reduce",
+    "magical_critical_reduce_rate",
+    "magical_critical_damage_reduce",
+    "attack_delay",
+    "hit_count",
+    "cancel_level",
+    "hpgauge_level",
+    "unattackable"
+  ],
+  "root_decimal_lexemes": [
+    "move_speed_normal_walk",
+    "move_speed_normal_run",
+    "move_speed_combat_run",
+    "altitude",
+    "pushed_range",
+    "scale"
+  ],
+  "root_string_fields": [
+    "name",
+    "desc",
+    "ai_name",
+    "npc_type",
+    "tribe",
+    "race_type",
+    "disk_type",
+    "mesh",
+    "dir",
+    "__spawn_zonename__"
+  ],
+  "ignored_by_main_auto_base": [
+    "physical_attack",
+    "magical_attack"
+  ],
+  "field_evidence": {
+    "min_damage": {
+      "consumer": "Main NPCDB node parser 0x14027e090 case0x6fd -> +0x1e8; Npc.CalcSecondLevelAttr 0x1403580f0 -> current +0x14dc",
+      "source": "Aion58Sharp/re/out/main/src/unnamed/140270000.c:2634",
+      "storage_width_bits": null,
+      "units": "native_damage_input;not_final_HP_loss",
+      "status": "static_consumer_trace;runtime_fixture_missing"
+    },
+    "max_damage": {
+      "consumer": "Main NPCDB node parser 0x14027e090 case0x6d4 -> +0x1ec; current +0x14e0",
+      "source": "Aion58Sharp/re/out/main/src/unnamed/140270000.c:2583",
+      "storage_width_bits": null,
+      "units": "native_damage_input;not_final_HP_loss",
+      "status": "static_consumer_trace;runtime_fixture_missing"
+    },
+    "physical_attack": {
+      "consumer": "Main NPCDB parser case0x807 accepts without store",
+      "source": "Aion58Sharp/re/out/main/src/unnamed/140270000.c:3630",
+      "status": "provenance_only_for_Main_normal_damage;other_consumers_not_ruled_out"
+    },
+    "magical_attack": {
+      "consumer": "Main NPCDB parser case0x636 ignored",
+      "source": "Aion58Sharp/re/out/main/src/unnamed/140270000.c:3948",
+      "status": "provenance_only_for_Main_normal_damage;other_consumers_not_ruled_out"
+    },
+    "hp_regen": {
+      "consumer": "Main NPCDB parser case0x5be -> +0x1cc",
+      "source": "Aion58Sharp/re/out/main/src/unnamed/140270000.c:3879",
+      "storage_width_bits": null,
+      "units": "unresolved_native_regen_input;cadence_and_state_not_inferred",
+      "status": "static_consumer_trace;runtime_fixture_missing"
+    }
+  },
+  "attack_fields": {
+    "attack_rate": {
+      "projection": "integer_lexeme",
+      "storage_width_bits": 32,
+      "signedness": "unverified",
+      "units": "native_selection_weight;normalization_not_applied",
+      "static_default": "1000",
+      "evidence": "NpcClassAttr::ParseNPCAttackList 0x140283c50 +0x00 constructor store; node parser0x140dae510 case0xfe; main/src/unnamed/140da0000.c:9521",
+      "status": "static_store_and_consumer_trace;runtime_fixture_missing"
+    },
+    "attack_range": {
+      "projection": "float32",
+      "storage_width_bits": 32,
+      "units": "native_distance;coordinate_contract_not_runtime_verified",
+      "static_default": "1.0",
+      "evidence": "0x140283c50 +0x04=0x3f800000; 0x140dae510 case0xfd converts double to float at+0x04; main/src/unnamed/140da0000.c:9511",
+      "status": "static_store_and_consumer_trace;runtime_fixture_missing"
+    },
+    "attack_mod": {
+      "projection": "integer_lexeme",
+      "storage_width_bits": 32,
+      "signedness": "unverified",
+      "units": "native_modifier;normalization_not_applied",
+      "static_default": "100",
+      "evidence": "0x140283c50 +0x14=100; 0x140dae510 case0xfc ->+0x14; main/src/unnamed/140da0000.c:9497",
+      "status": "static_store_and_consumer_trace;runtime_fixture_missing"
+    },
+    "attack_type": {
+      "projection": "string",
+      "storage_width_bits": null,
+      "units": null,
+      "evidence": "0x140dae510 case0xff -> XML_ParseAttackType at+0x10; main/src/unnamed/140da0000.c:9534",
+      "status": "raw_enum_lexeme;enum_translation_not_applied"
+    }
+  },
+  "defaults_policy": "Static defaults are reported as evidence but never substituted into absent source values by this extractor. Root-field widths/defaults remain unknown unless separately evidenced.",
+  "identity_policy": "Exact NPC ID AND independent4.8 client devname. Changed or absent identities are individually blocked. Auxiliary client goods/UI/tribe XML is not an NPC identity table.",
+  "client_identity_members": [
+    "client_npcs_monster.xml",
+    "client_npcs_npc.xml"
+  ],
+  "skill_policy": "Keep each NPC's source order. Compare skill_base exact-name ID with supported4.8 uppercased stack candidates. Ambiguity, disagreement, unsupported IDs and effect semantics remain explicit blockers; no arbitrary first-match overwrite.",
+  "raw_policy": "Ordered XML attributes/content/text/comments/PI retained; raw source byte span+SHA retained for lexical audit. Strict XML admission is not a claim of equivalence with the retail permissive reader. Strict client used-string UTF16 decoding; duplicate attributes and duplicate/missing/nested identity fields rejected. No replacement decoding.",
+  "activation_policy": "fixture_verified=false;activation_ready=false;no runtime loader or legacy templates changed"
+}

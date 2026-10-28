@@ -62,14 +62,21 @@ class _Reader:
             shift += 7
 
 
-def decode(buf: bytes) -> ET.Element:
-    """Decode a binary XML buffer into an ElementTree element."""
+def decode(buf: bytes, *, strict: bool = False) -> ET.Element:
+    """Decode binary XML; opt-in strict admission preserves legacy caller behavior."""
     if not is_binary_xml(buf):
         raise BinaryXmlError("missing 0x80 magic byte")
 
     r = _Reader(buf)
-    r.u8()
-    table_size = r.varint()
+    try:
+        r.u8()
+        table_size = r.varint()
+    except IndexError as error:
+        if not strict:
+            raise
+        raise BinaryXmlError("truncated string-table header") from error
+    if strict and (table_size % 2 or table_size > len(buf) - r.p):
+        raise BinaryXmlError("invalid or truncated UTF-16 string table")
     table = r.b[r.p:r.p + table_size]
     r.p += table_size
 
@@ -80,27 +87,46 @@ def decode(buf: bytes) -> ET.Element:
         if cached is not None:
             return cached
         start = end = index * 2
+        if strict and (index < 0 or start >= len(table)):
+            raise BinaryXmlError(f"string index outside table: {index}")
         while end + 1 < len(table) and table[end:end + 2] != b"\x00\x00":
             end += 2
-        value = table[start:end].decode("utf-16-le", "replace")
+        if strict and end + 1 >= len(table):
+            raise BinaryXmlError(f"unterminated string at index: {index}")
+        try:
+            value = table[start:end].decode("utf-16-le", "strict" if strict else "replace")
+        except UnicodeDecodeError as error:
+            raise BinaryXmlError(f"invalid UTF-16 at string index: {index}") from error
         cache[index] = value
         return value
 
     def node() -> ET.Element:
         el = ET.Element(string(r.varint()))
         flags = r.u8()
+        if strict and flags & ~7:
+            raise BinaryXmlError(f"unknown node flag bits: {flags:#x}")
         if flags & 1:
             el.text = string(r.varint())
         if flags & 2:
             for _ in range(r.varint()):
                 key = string(r.varint())
+                if strict and key in el.attrib:
+                    raise BinaryXmlError(f"duplicate attribute: {key}")
                 el.set(key, string(r.varint()))
         if flags & 4:
             for _ in range(r.varint()):
                 el.append(node())
         return el
 
-    return node()
+    try:
+        result = node()
+    except (IndexError, RecursionError) as error:
+        if not strict:
+            raise
+        raise BinaryXmlError("truncated node stream or excessive node depth") from error
+    if strict and r.p != len(buf):
+        raise BinaryXmlError("trailing bytes after binary XML root")
+    return result
 
 
 def decode_file(path: str | pathlib.Path) -> ET.Element:

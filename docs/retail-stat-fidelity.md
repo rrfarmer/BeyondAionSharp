@@ -216,3 +216,20 @@ The full selected export preserves all11,517 earlier profile/normal rows and buf
 source records. Required evidence hash failures remain errors. Reports and receipts
 are external/private; generated source records are not committed. The coverage CSV
 now keeps its unassessed-skill column even when the first membership has no profile.
+
+## Extraction version and private evidence
+
+The committed [source/index/package workflow](mob-stat-extraction.md) is read-only.
+The selected historical generation used an earlier extractor revision. Its scalar
+projection and raw-record selection remain unchanged; the later extractor adds
+the already-reviewed native ASCII case-insensitive skill-name join. The external
+130-binding reindex receipt records that metadata correction. Fresh generations
+therefore have their own source/dataset identities; do not rewrite the historical
+receipt or change a runtime trust anchor merely to accept a new generation.
+
+The original90-row identity review remains a pinned external test input. Its
+224,987 bytes were preserved with the original SHA256 before removing the opaque
+compressed source fixture. Public checks visibly skip private cases when the
+fixture is absent; changed bytes fail. Package assembly rejects duplicate rows
+and overlapping memberships, rebases relative assets, preserves known context
+pins and rehashes all inputs before atomic publication. It performs no activation.

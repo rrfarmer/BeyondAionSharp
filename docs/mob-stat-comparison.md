@@ -31,8 +31,8 @@ with `primary_skill_audit` explaining the scope. It must not be treated as suppo
 as a discovered damage defect. Buff programs retain their own supported/compatibility
 reasons. Missing required profile data remains a failure.
 
-The C# `--request` bridge remains available to the existing Python indexing/comparison
-driver. That driver and its optional equipment/curse commands are separate work.
-The committed stats command builds without those experiments. To aggregate the export against an external
+The C# `--request` bridge also serves the committed [Python extraction/index/batch
+workflow](mob-stat-extraction.md). Optional equipment/curse experiments remain
+separate from the committed mob-stat commands. To aggregate the export against an external
 scope/census, use `tools/npc-audit/summarize_mob_stats.py --help`. That summary preserves
 unassessed skills separately from confirmed exceptions and missing base evidence.

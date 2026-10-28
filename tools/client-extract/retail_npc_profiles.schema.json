@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:beyondaion:retail-npc-profile:1",
+  "title": "Source-bound retail NPC profile extraction, schema1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "dataset_id", "npc_id", "devname", "binding48", "source", "raw_record", "scalar_fields", "ordered_lists", "skill_bindings", "aggregate_crosscheck", "blockers", "verification"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "dataset_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "npc_id": {"type": "integer", "minimum": 1},
+    "devname": {"type": "string"},
+    "binding48": {"type": "object"},
+    "source": {"type": "object", "required": ["path", "record_index", "line", "byte_start", "byte_end_exclusive", "raw_sha256", "semantic_sha256"]},
+    "raw_record": {"$ref": "#/$defs/node"},
+    "scalar_fields": {"type": "object", "additionalProperties": {"$ref": "#/$defs/field"}},
+    "ordered_lists": {"type": "object"},
+    "skill_bindings": {"type": "array", "items": {"type": "object"}},
+    "aggregate_crosscheck": {"type": "object"},
+    "blockers": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "verification": {"type": "object", "additionalProperties": false, "required": ["stage", "fixture_verified", "activation_ready"], "properties": {"stage": {"const": "static_source_extracted"}, "fixture_verified": {"const": false}, "activation_ready": {"const": false}}}
+  },
+  "$defs": {
+    "node": {"type": "array", "minItems": 3, "maxItems": 3, "prefixItems": [{"type": "string"}, {"type": "array", "items": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "string"}}}, {"type": "array", "items": {"oneOf": [{"type": "string"}, {"$ref": "#/$defs/node"}]}}], "items": false},
+    "field": {"type": "object", "required": ["presence", "raw_values", "projection", "default_applied"], "properties": {"presence": {"enum": ["absent", "explicit_zero", "explicit_value", "ambiguous_duplicate"]}, "raw_values": {"type": "array", "items": {"type": "string"}}, "projection": {"type": "string"}, "default_applied": {"const": false}}, "additionalProperties": true}
+  }
+}
