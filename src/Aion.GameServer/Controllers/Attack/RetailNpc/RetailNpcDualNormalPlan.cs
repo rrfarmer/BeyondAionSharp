@@ -62,7 +62,7 @@ internal static partial class RetailNpcDualNormalPlan
     /// defense. Supply actual current shield/critical-reduction values. PvE, final
     /// flooring/truncation and protections remain with the existing per-hand owner.</summary>
     internal static float ApplySharedOffhand(float afterDefense, SharedOutcome main, bool physical,
-        uint attackerStatRatio, int criticalDamageReduction, int shieldRemainingPercent, int shieldMaximumAbsorbed)
+        uint attackerStatRatio, int criticalDamageReduction, int shieldRemainingPercent, int shieldMaximumAbsorbed, bool npcDefender = false)
     {
         ArgumentNullException.ThrowIfNull(main);
         if (main.MainTerminal) throw new InvalidOperationException("Terminal main normal has no offhand record");
@@ -70,7 +70,8 @@ internal static partial class RetailNpcDualNormalPlan
             || attackerStatRatio is < 1000 or > 65000 || shieldMaximumAbsorbed < 0)
             throw new ArgumentOutOfRangeException(nameof(afterDefense));
         float value = afterDefense;
-        if (main.SharedActiveDefense == 3)
+        if (npcDefender && main.SharedActiveDefense is 2 or 3) value = F.Multiply(value, .9f);
+        else if (main.SharedActiveDefense == 3)
             value = SkyTempleNpcCombat.BlockDamage(value, shieldRemainingPercent, shieldMaximumAbsorbed);
         else if (main.SharedActiveDefense == 2) value = F.Multiply(value, .6f);
         if (main.Critical)

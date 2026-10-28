@@ -53,7 +53,7 @@ internal static class SkyTempleCombatInputs
         : level is >= 51 and <= 100 ? -500 - 10 * level
         : throw new ArgumentOutOfRangeException(nameof(level));
 
-    internal static int ElementalDefense(Player target, SkillElement element)
+    internal static int ElementalDefense(Creature target, SkillElement element)
     {
         StatEnum stat = element.GetStatForElement() ?? throw new ArgumentException("Physical attack has no element");
         return Moved(target, stat, target.GetGameStats().GetResistance(stat).GetCurrent());

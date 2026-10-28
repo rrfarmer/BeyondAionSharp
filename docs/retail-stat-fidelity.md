@@ -268,10 +268,9 @@ compatibility exceptions. 111 attacking memberships declare a damage-owner overr
 36 are fortress guards whose player-target normal callback is an identity.
 
 This is template binding and ordinary getter/calculation evidence, not proof of
-active spawn overrides, phases or every custom script. NPC-to-NPC normal attacks
-still use the legacy attack branch with selected defensive getters; retail parity
-for that target branch is unverified. The exact per-NPC boundaries and source pins
-remain in the external reconciled coverage table.
+active spawn overrides, phases or every custom script. Ordinary matched NPC-to-NPC
+normal damage is covered by the receiver integration below. The exact per-NPC
+boundaries and source pins remain in the external reconciled coverage table.
 
 ## Selected rift-protector and thunder-shield HP
 
@@ -282,3 +281,42 @@ These AI hooks now retain the complete selected profile HP. Unselected or owned
 actors retain their existing Java rate; no phase, damage or lifecycle code changes.
 The actual-AI offline gate checks all seven max/current HP values and retirement
 back to the captured unselected result. No new per-NPC HP literal is introduced.
+
+## Ordinary NPC normal-attack receivers
+
+Statistics-only, matched ownerless NPC pairs now use the existing retail normal
+calculator. Physical armor uses the receiver's stat ratio; elemental resistance
+uses the attacker's ratio and the explicit NPC -1300 floor. Active defense retains
+the native NPC level adjustment and dodge/block/parry order. NPC block requires a
+nonzero current block word, without a player shield. Forced block/parry precede
+random eligibility. Both NPC block and parry multiply post-defense damage by0.9,
+then apply the NPC attacker's critical multiplier. Offhand shares these outcomes
+and retains its separate sample, current defense/reduction reads and protection.
+
+Main0x14036c490 and the common block/parry branches0x14036cc09/0x14036ce39
+establish these rules. The receiver slot129 helper0x1400bc8a0 returns the block
+word. Main0x14036a5b0, NPC classifier0x140b221f0 and the constructor's zero owner
+reference establish that ordinary NPC pairs skip both PvE and PvP scaling. The
+adapter therefore supplies identity scaling and does not read legacy NPC PvE
+programs. Existing player-facing behavior and optional pilot lifecycle gates retain
+their original domain.
+
+Ordinary stance0 eligibility is a documented static-default reconstruction:
+Creature::Init0x14034f050 clears stance, the readonly parry entry0 permits parry,
+and the dodge entry0 is loader-zero-filled with no recovered initializer/store.
+This does not certify native runtime stance overrides. The managed pose/abnormal
+state and effect-observer mappings remain explicit host compatibility assumptions.
+The saved PE checks, constructor/table inventory and classifier ledger are under
+external `mob-stats-focus-20261028/npc-receiver-01`. They pin Main SHA256
+`da1ee5633d65a7ebb436b29d15ca24e46ab4f267449384d177bf20d2d26eb8f1`.
+
+Receiver scripts with an unknown `ModifyDamage` owner and source damage overrides
+outside the verified numeric/one-damage owners retain a visible compatibility
+reason and the legacy calculation. This includes the fortress protector's separate
+NPC-only fivefold boost, unverified phase boosts and custom PvP-map scripts.
+Existing one-damage source/receiver mechanics
+remain explicit compatibility exceptions before protection; arbitrary Java damage
+boosts are not replayed. Unmatched, owned/scaled and full-behavior NPC receiver
+packages are not admitted through this statistics-only branch. Offline cohort
+checks use neutral AI and ordinary states; they do not certify active scripts,
+player weapon calculations or gameplay.

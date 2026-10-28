@@ -26,11 +26,18 @@ internal static partial class SkyTempleNpcCombat
     internal static int Draw(int first,int second) => Random.Range(first,second);
     internal static int DrawNpc(int first,int second) => NpcRandom.Range(first,second);
 
-    internal static bool Applies(Creature source, Creature target) =>
-        source is Npc npc && target is Player && source.GetWorldId() == target.GetWorldId() && source.GetInstanceId()==target.GetInstanceId() &&
-        RetailNpcStatCatalog.TryGetCombatProfile(npc, out _);
+    internal static bool Applies(Creature source, Creature target)
+    {
+        if (source is not Npc npc || source.GetWorldId() != target.GetWorldId()
+            || source.GetInstanceId() != target.GetInstanceId()
+            || !RetailNpcStatCatalog.TryGetCombatProfile(npc, out var profile)) return false;
+        return target is Player || profile.StatisticsOnly && target is Npc receiver
+            && RetailNpcStatCatalog.TryGet(receiver, out _);
+    }
 
-    internal static bool IsCohortCombat(Creature source, Creature target) => Applies(source,target) || Applies(target,source);
+    // Optional pilot protection/lifecycle consumers retain their existing player-facing domain.
+    internal static bool IsCohortCombat(Creature source, Creature target) => target is Player && Applies(source,target)
+        || source is Player && Applies(target,source);
 
     internal static bool TryCalculateNormal(Creature source, Creature target, out List<AttackResult> results,
         out SkillElement element,ISet<CalculationType>? calculationTypes=null)
@@ -39,12 +46,44 @@ internal static partial class SkyTempleNpcCombat
         bool handled = false;
         TryAdditionalNormal(source, target, calculationTypes, ref results, ref element, ref handled);
         if (handled) return true;
-        if (!Applies(source,target)) return false;
-        var npc = (Npc)source; var player = (Player)target;
+        if (!Applies(source,target))
+        {
+            if (source is Npc unsupportedSource && target is Npc
+                && RetailNpcStatCatalog.TryGet(unsupportedSource, out _))
+                WarnNormalCompatibility(unsupportedSource, "npc-receiver-source-or-ownership-unverified");
+            return false;
+        }
+        var npc = (Npc)source;
+        var defender = target;
         if (!RetailNpcStatCatalog.TryGetCombatProfile(npc,out var profile))
-            throw new InvalidOperationException("Published SkyTemple profile disappeared");
+            throw new InvalidOperationException("Published retail profile disappeared");
         if (profile.StatisticsOnly && profile.Attacks.IsEmpty)
         { results = [new AttackResult(0,AttackStatus.NORMALHIT)]; return true; }
+        SkyTempleNpcProfile? receiverProfile = null;
+        if (defender is Npc receiver)
+        {
+            if (!RetailNpcStatCatalog.TryGet(receiver, out receiverProfile))
+                throw new InvalidOperationException("Admitted NPC receiver profile disappeared");
+            var sourceOwner = npc.GetAi().GetType().GetMethod(nameof(Aion.GameServer.Ai.AbstractAI.ModifyOwnerDamage))?.DeclaringType;
+            if (npc.GetAi() is not OneDmgAI && !HasVerifiedNumericNormalOwner(sourceOwner))
+            {
+                WarnNormalCompatibility(npc, "npc-source-script-unverified:" + sourceOwner?.FullName);
+                return false;
+            }
+            var damageOwner = receiver.GetAi();
+            var ownerType = damageOwner.GetType().GetMethod(nameof(Aion.GameServer.Ai.AbstractAI.ModifyDamage))?.DeclaringType;
+            if (ownerType != typeof(Aion.GameServer.Ai.AbstractAI)
+                && damageOwner is not (OneDmgAI or OneDmgNoActionAI))
+            {
+                WarnNormalCompatibility(npc, "npc-receiver-script-unverified:" + ownerType?.FullName);
+                return false;
+            }
+        }
+        uint defenderRatio = receiverProfile is null ? SkyTempleCombatInputs.PlayerStatRatio : (uint)receiverProfile.StatRatio;
+        var scope = receiverProfile is null ? SkyTempleCombatInputs.Scope(profile.NpcId)
+            : RetailNpcNormalScope.Create(RetailNpcNormalScope.MainBinarySha256,
+                RetailNpcNormalActorKind.OrdinaryOwnerlessNpc, RetailNpcNormalActorKind.OrdinaryOwnerlessNpc,
+                profile.NpcId, receiverProfile.NpcId);
         if (profile.StatisticsOnly && !profile.HasNormalAttackCorrection)
         {
             var warnings = ResponseWarnings.GetValue(npc, _ => []);
@@ -56,7 +95,7 @@ internal static partial class SkyTempleNpcCombat
         Func<float, string, float>? equipmentResponse = null;
         string? responseReason = profile.StatisticsOnly && RequiresEquipmentResponse(profile)
             ? "source-offensive-exclusive-attribute-unverified" : null;
-        PrepareAdditionalNormalResponse(profile, player, ref equipmentResponse, ref responseReason);
+        if (defender is Player player) PrepareAdditionalNormalResponse(profile, player, ref equipmentResponse, ref responseReason);
         if (responseReason is not null)
         {
             var warnings = ResponseWarnings.GetValue(npc, _ => []);
@@ -70,10 +109,10 @@ internal static partial class SkyTempleNpcCombat
         var selected = profile.Attacks[0];
         if (profile.StatisticsOnly && profile.Attacks.Length > 1)
         {
-            var pool = RetailNpcMinimumReachPool.Prepare(SkyTempleCombatInputs.Scope(profile.NpcId),
+            var pool = RetailNpcMinimumReachPool.Prepare(scope,
                 RetailNpcMinimumReachPool.NpcServerBinarySha256, "source-ordered statistics-only normal request",
-                new(player.GetObjectTemplate().GetBoundRadius().GetMaxOfFrontAndSide(), profile.Bounds.HorizontalRadius,
-                    DistanceSquared(npc.GetX(),npc.GetY(),npc.GetZ(),player.GetX(),player.GetY(),player.GetZ()), false),
+                new(receiverProfile?.Bounds.HorizontalRadius ?? defender.GetObjectTemplate().GetBoundRadius().GetMaxOfFrontAndSide(), profile.Bounds.HorizontalRadius,
+                    DistanceSquared(npc.GetX(),npc.GetY(),npc.GetZ(),defender.GetX(),defender.GetY(),defender.GetZ()), false),
                 profile.Attacks.Select(a => new RetailNpcMinimumReachPool.EligibleAttack(a.Ordinal,a.Range,a.Weight,profile.SourceRecordSha256)).ToArray());
             if (pool.TotalWeight == 0)
             {
@@ -85,7 +124,6 @@ internal static partial class SkyTempleNpcCombat
         }
         element = SkyTempleCombatInputs.Element(selected.Type);
         bool physical = element == SkillElement.NONE;
-        var scope = SkyTempleCombatInputs.Scope(profile.NpcId);
         bool dual = profile.StatisticsOnly && profile.Source.Integers["dual"].ParsedValue is not (null or 0);
         var dualRanges = dual ? RetailNpcDualNormalPlan.Split(profile.MinDamage,profile.MaxDamage,profile.HitCount) : null;
         var range = RetailNpcNormalRange.Create(scope,dualRanges?.Main.Minimum ?? checked((ushort)profile.MinDamage),
@@ -99,42 +137,45 @@ internal static partial class SkyTempleNpcCombat
                 sample * (selected.Modifier / 100f)).GetExactCurrent();
         damage = Math.Max(1f,damage);
         float baseDamage = damage;
-        var defense = player.GetGameStats();
+        var defense = defender.GetGameStats();
         uint consumedDefense = SkyTempleCombatInputs.Unsigned(physical
-            ? SkyTempleCombatInputs.Moved(player,StatEnum.PHYSICAL_DEFENSE,defense.GetPDef().GetCurrent())
-            : SkyTempleCombatInputs.Moved(player,StatEnum.MAGICAL_DEFEND,defense.GetMDef().GetCurrent()),"defense");
-        short consumedElement = physical ? (short)0 : SkyTempleCombatInputs.SignedWord(SkyTempleCombatInputs.ElementalDefense(player,element),"element");
-        int elementFloor = physical ? 0 : SkyTempleCombatInputs.ElementalFloor(player.GetLevel());
+            ? SkyTempleCombatInputs.Moved(defender,StatEnum.PHYSICAL_DEFENSE,defense.GetPDef().GetCurrent())
+            : SkyTempleCombatInputs.Moved(defender,StatEnum.MAGICAL_DEFEND,defense.GetMDef().GetCurrent()),"defense");
+        short consumedElement = physical ? (short)0 : SkyTempleCombatInputs.SignedWord(SkyTempleCombatInputs.ElementalDefense(defender,element),"element");
+        int elementFloor = physical ? 0 : receiverProfile is null ? SkyTempleCombatInputs.ElementalFloor(defender.GetLevel()) : -1300;
         if (physical)
-            damage = RetailNpcNormalDamageStages.CalculatePhysicalDefense(scope,damage,profile.Level,player.GetLevel(),false,
+            damage = RetailNpcNormalDamageStages.CalculatePhysicalDefense(scope,damage,profile.Level,defender.GetLevel(),false,
                 consumedDefense,
-                0,SkyTempleCombatInputs.PlayerStatRatio).Damage;
+                0,defenderRatio).Damage;
         else
-            damage = RetailNpcNormalDamageStages.CalculateElementalDefense(scope,damage,profile.Level,player.GetLevel(),false,
+            damage = RetailNpcNormalDamageStages.CalculateElementalDefense(scope,damage,profile.Level,defender.GetLevel(),false,
                 consumedDefense,0,consumedElement,0,(uint)profile.StatRatio,elementFloor).Damage;
 
         float defenseDamage = damage;
         int blockRemainingPercent = 100, blockMaximum = 0, criticalReduction = 0;
         (int Attack,int Defense) consumedPve = default;
         float statusDamage = 0;
-        AttackStatus status = SelectNormalDefense(npc,player,profile,scope);
+        AttackStatus status = SelectNormalDefense(npc,defender,profile,scope,receiverProfile);
         if (status == AttackStatus.DODGE) damage = 0;
         else
         {
             if (status == AttackStatus.BLOCK)
             {
-                var shield = player.GetEquipment().GetEquippedShield();
-                if (shield is null) throw new InvalidOperationException("Block selected after shield disappeared");
-                int remainingPercent = defense.GetReverseStat(StatEnum.DAMAGE_REDUCE,100).GetCurrent();
-                blockRemainingPercent = remainingPercent;
-                blockMaximum = shield.GetItemTemplate().GetWeaponStats().GetReduceMax();
-                damage = BlockDamage(damage,remainingPercent,blockMaximum);
+                if (defender is Player blockedPlayer)
+                {
+                    var shield = blockedPlayer.GetEquipment().GetEquippedShield();
+                    if (shield is null) throw new InvalidOperationException("Block selected after shield disappeared");
+                    blockRemainingPercent = defense.GetReverseStat(StatEnum.DAMAGE_REDUCE,100).GetCurrent();
+                    blockMaximum = shield.GetItemTemplate().GetWeaponStats().GetReduceMax();
+                    damage = BlockDamage(damage,blockRemainingPercent,blockMaximum);
+                }
+                else damage = RetailNpcNormalDamageStages.Multiply(damage,0.9f);
             }
-            else if (status == AttackStatus.PARRY) damage *= 0.6f;
-            bool critical = SelectNormalCritical(npc,player,profile,scope,physical);
+            else if (status == AttackStatus.PARRY) damage *= receiverProfile is null ? 0.6f : 0.9f;
+            bool critical = SelectNormalCritical(npc,defender,profile,scope,physical,defenderRatio);
             if (critical)
             {
-                int reduction = SkyTempleCombatInputs.CriticalReduction(player,physical);
+                int reduction = SkyTempleCombatInputs.CriticalReduction(defender,physical);
                 criticalReduction = reduction;
                 // Player override width is32. Preserve it here rather than narrowing it to the
                 // scalar helper's NPC unsigned-word input domain.
@@ -142,7 +183,7 @@ internal static partial class SkyTempleNpcCombat
                 damage *= coefficient;
                 status = AttackStatusExtensions.GetCriticalStatusFor(status);
             }
-            consumedPve = SkyTempleCombatInputs.Pve(npc,player,physical);
+            consumedPve = receiverProfile is null ? SkyTempleCombatInputs.Pve(npc,defender,physical) : (0,0);
             statusDamage = damage;
             damage *= RetailNpcNormalDamageStages.CalculatePveRatio(scope,consumedPve.Attack,consumedPve.Defense);
             damage = Math.Max(1f,damage);
@@ -153,15 +194,15 @@ internal static partial class SkyTempleNpcCombat
         if (!float.IsFinite(damage) || damage < 0 || damage >= 2147483648f)
             throw new InvalidOperationException("SkyTemple normal damage is outside int32");
         results = [new AttackResult((int)damage,status,physical ? HitType.PHHIT : HitType.MAHIT)];
-        int afterAi = profile.StatisticsOnly && npc.GetAi() is OneDmgAI ? ApplyOneDamageOwner(npc, player, results) : results[0].GetDamage();
+        int afterAi = profile.StatisticsOnly && HasOneDamageMechanic(npc,defender) ? ApplyOneDamageOwner(npc, defender, results) : results[0].GetDamage();
         // Current host protection/effect owner executes exactly once; never run it for diagnostics.
-        player.GetObserveController().CheckShieldStatus(results,null!,npc);
+        defender.GetObserveController().CheckShieldStatus(results,null!,npc);
         Log.LogDebug("RETAIL_SKYTEMPLE_CALC npc={Npc} source={Source} target={Target} element={Element} sample={Sample} range={Min}..{Max} status={Status} damage={Damage} generation={Generation}",
-            profile.NpcId,npc.GetObjectId(),player.GetObjectId(),element,sample,range.Minimum,range.Maximum,status,results[0].GetDamage(),profile.Generation);
+            profile.NpcId,npc.GetObjectId(),defender.GetObjectId(),element,sample,range.Minimum,range.Maximum,status,results[0].GetDamage(),profile.Generation);
         if (statNormalModifiers is not null)
-            LogNormalInputs(profile,npc,player,selected.Ordinal,"main",sample,selected.Modifier,statNormalModifiers[physical],physical,
+            LogNormalInputs(profile,npc,defender,selected.Ordinal,"main",sample,selected.Modifier,statNormalModifiers[physical],physical,
                 consumedDefense,consumedElement,elementFloor,status,criticalReduction,blockRemainingPercent,blockMaximum,consumedPve,
-                baseDamage,defenseDamage,statusDamage,pveDamage,damage,afterAi,results[0].GetDamage(),range.Minimum,range.Maximum);
+                baseDamage,defenseDamage,statusDamage,pveDamage,damage,afterAi,results[0].GetDamage(),range.Minimum,range.Maximum,defenderRatio);
         if (dualRanges is not null)
         {
             var shared = RetailNpcDualNormalPlan.Share(status);
@@ -173,46 +214,46 @@ internal static partial class SkyTempleNpcCombat
                 float offDamage = Math.Max(1f,RetailNpcStatNormalInputs.CalculateBase(offSample,selected.Modifier,statNormalModifiers![physical]));
                 float offBase = offDamage;
                 uint offDefense = SkyTempleCombatInputs.Unsigned(physical
-                    ? SkyTempleCombatInputs.Moved(player,StatEnum.PHYSICAL_DEFENSE,defense.GetPDef().GetCurrent())
-                    : SkyTempleCombatInputs.Moved(player,StatEnum.MAGICAL_DEFEND,defense.GetMDef().GetCurrent()),"defense");
-                short offElement = physical ? (short)0 : SkyTempleCombatInputs.SignedWord(SkyTempleCombatInputs.ElementalDefense(player,element),"element");
+                    ? SkyTempleCombatInputs.Moved(defender,StatEnum.PHYSICAL_DEFENSE,defense.GetPDef().GetCurrent())
+                    : SkyTempleCombatInputs.Moved(defender,StatEnum.MAGICAL_DEFEND,defense.GetMDef().GetCurrent()),"defense");
+                short offElement = physical ? (short)0 : SkyTempleCombatInputs.SignedWord(SkyTempleCombatInputs.ElementalDefense(defender,element),"element");
                 if (physical)
-                    offDamage = RetailNpcNormalDamageStages.CalculatePhysicalDefense(scope,offDamage,profile.Level,player.GetLevel(),false,
+                    offDamage = RetailNpcNormalDamageStages.CalculatePhysicalDefense(scope,offDamage,profile.Level,defender.GetLevel(),false,
                         offDefense,
-                        0,SkyTempleCombatInputs.PlayerStatRatio).Damage;
+                        0,defenderRatio).Damage;
                 else
-                    offDamage = RetailNpcNormalDamageStages.CalculateElementalDefense(scope,offDamage,profile.Level,player.GetLevel(),false,
+                    offDamage = RetailNpcNormalDamageStages.CalculateElementalDefense(scope,offDamage,profile.Level,defender.GetLevel(),false,
                         offDefense,0,offElement,0,
-                        (uint)profile.StatRatio,SkyTempleCombatInputs.ElementalFloor(player.GetLevel())).Damage;
+                        (uint)profile.StatRatio,(receiverProfile is null ? SkyTempleCombatInputs.ElementalFloor(defender.GetLevel()) : -1300)).Damage;
                 float offAfterDefense = offDamage;
                 int shieldPercent = 100, shieldMaximum = 0;
-                if (shared.SharedActiveDefense == 3)
+                if (shared.SharedActiveDefense == 3 && defender is Player offBlockedPlayer)
                 {
-                    var shield = player.GetEquipment().GetEquippedShield()
+                    var shield = offBlockedPlayer.GetEquipment().GetEquippedShield()
                         ?? throw new InvalidOperationException("Shared block selected after shield disappeared");
                     shieldPercent = defense.GetReverseStat(StatEnum.DAMAGE_REDUCE,100).GetCurrent();
                     shieldMaximum = shield.GetItemTemplate().GetWeaponStats().GetReduceMax();
                 }
-                int offCriticalReduction = SkyTempleCombatInputs.CriticalReduction(player,physical);
+                int offCriticalReduction = SkyTempleCombatInputs.CriticalReduction(defender,physical);
                 offDamage = RetailNpcDualNormalPlan.ApplySharedOffhand(offDamage,shared,physical,(uint)profile.StatRatio,
-                    offCriticalReduction,shieldPercent,shieldMaximum);
+                    offCriticalReduction,shieldPercent,shieldMaximum,receiverProfile is not null);
                 float offAfterStatus = offDamage;
-                var pve = SkyTempleCombatInputs.Pve(npc,player,physical);
+                (int Attack,int Defense) pve = receiverProfile is null ? SkyTempleCombatInputs.Pve(npc,defender,physical) : (0,0);
                 offDamage = Math.Max(1f,offDamage * RetailNpcNormalDamageStages.CalculatePveRatio(scope,pve.Attack,pve.Defense));
                 float offPve=offDamage;
                 if(equipmentResponse is not null)offDamage=equipmentResponse(offDamage,"off");
                 if (!float.IsFinite(offDamage) || offDamage < 0 || offDamage >= 2147483648f)
                     throw new InvalidOperationException("Retail offhand damage is outside int32");
                 var off = new List<AttackResult> { new((int)offDamage,shared.OffhandStatus!.Value,physical ? HitType.PHHIT : HitType.MAHIT) };
-                int offAfterAi = profile.StatisticsOnly && npc.GetAi() is OneDmgAI ? ApplyOneDamageOwner(npc, player, off) : off[0].GetDamage();
-                player.GetObserveController().CheckShieldStatus(off,null!,npc);
+                int offAfterAi = profile.StatisticsOnly && HasOneDamageMechanic(npc,defender) ? ApplyOneDamageOwner(npc, defender, off) : off[0].GetDamage();
+                defender.GetObserveController().CheckShieldStatus(off,null!,npc);
                 results.AddRange(off);
                 Log.LogDebug("RETAIL_STAT_DUAL_OFFHAND npc={Npc} source={Source} target={Target} element={Element} sample={Sample} range={Min}..{Max} status={Status} damage={Damage} generation={Generation}",
-                    profile.NpcId,npc.GetObjectId(),player.GetObjectId(),element,offSample,dualRanges.Offhand.Minimum,dualRanges.Offhand.Maximum,
+                    profile.NpcId,npc.GetObjectId(),defender.GetObjectId(),element,offSample,dualRanges.Offhand.Minimum,dualRanges.Offhand.Maximum,
                     shared.OffhandStatus.Value,off[0].GetDamage(),profile.Generation);
-                LogNormalInputs(profile,npc,player,selected.Ordinal,"off",offSample,selected.Modifier,statNormalModifiers![physical],physical,
+                LogNormalInputs(profile,npc,defender,selected.Ordinal,"off",offSample,selected.Modifier,statNormalModifiers![physical],physical,
                     offDefense,offElement,elementFloor,shared.OffhandStatus.Value,offCriticalReduction,shieldPercent,shieldMaximum,pve,
-                    offBase,offAfterDefense,offAfterStatus,offPve,offDamage,offAfterAi,off[0].GetDamage(),dualRanges.Offhand.Minimum,dualRanges.Offhand.Maximum);
+                    offBase,offAfterDefense,offAfterStatus,offPve,offDamage,offAfterAi,off[0].GetDamage(),dualRanges.Offhand.Minimum,dualRanges.Offhand.Maximum,defenderRatio);
             }
         }
         return true;
@@ -222,10 +263,14 @@ internal static partial class SkyTempleNpcCombat
     // before protection. Other Java numeric/distance overrides must not replace
     // or multiply the verified source ranges and ordered attack modifiers.
     // This mechanic remains a visible script-compatibility boundary.
-    private static int ApplyOneDamageOwner(Npc npc, Player target, List<AttackResult> attacks)
+    private static int ApplyOneDamageOwner(Npc npc, Creature target, List<AttackResult> attacks)
     {
         int before = attacks[0].GetDamage();
-        AttackUtil.ModifyDamageByNpcAi(npc, target, attacks);
+        float value = before;
+        if (npc.GetAi() is OneDmgAI) value = npc.GetAi().ModifyOwnerDamage(value, target, null!);
+        if (target is Npc receiver && receiver.GetAi() is (OneDmgAI or OneDmgNoActionAI))
+            value = receiver.GetAi().ModifyDamage(npc, value, null!);
+        attacks[0].SetDamage(value);
         int after = attacks[0].GetDamage();
         if (before != after)
         {
@@ -237,18 +282,35 @@ internal static partial class SkyTempleNpcCombat
         return after;
     }
 
+    private static bool HasOneDamageMechanic(Npc source, Creature target) => source.GetAi() is OneDmgAI
+        || target is Npc npc && npc.GetAi() is (OneDmgAI or OneDmgNoActionAI);
+
+    // These Java numeric owners are superseded by the verified retail ranges and
+    // ordered attack modifiers. Other NPC-specific/phase boosts need their own
+    // evidence: notably FortressProtectorNpcAI's NPC-only fivefold multiplier.
+    private static bool HasVerifiedNumericNormalOwner(Type? owner) => owner == typeof(Aion.GameServer.Ai.AbstractAI)
+        || owner == typeof(EternalBastionCommanderPashidAI) || owner == typeof(EternalBastionDragonAI)
+        || owner == typeof(HyperionAI) || owner == typeof(IDSweep_Shugos);
+
+    private static void WarnNormalCompatibility(Npc source, string reason)
+    {
+        var warnings = ResponseWarnings.GetValue(source, _ => []);
+        lock (warnings) if (warnings.Add(reason))
+            Log.LogWarning("RETAIL_STAT_NORMAL_COMPAT npc={Npc} reason={Reason}; existing4.8 calculation retained", source.GetNpcId(), reason);
+    }
+
     // Consumed operands only: never re-evaluate effects, protections or RNG for
     // diagnostics. This lets a separately implemented native arithmetic oracle
     // inspect the consumed operands, including independent dual-hand samples.
-    private static void LogNormalInputs(SkyTempleNpcProfile profile,Npc source,Player target,int ordinal,string hand,
+    private static void LogNormalInputs(SkyTempleNpcProfile profile,Npc source,Creature target,int ordinal,string hand,
         int sample,int modifier,RetailNpcStatNormalInputs.Modifiers modifiers,bool physical,uint targetDefense,short elementDefense,
         int elementFloor,AttackStatus status,int criticalReduction,int blockRemainingPercent,int blockMax,
-        (int Attack,int Defense) pve,float basis,float afterDefense,float afterStatus,float afterPve,float afterEquipment,int aiDamage,int protectedDamage,int rangeMin,int rangeMax)
+        (int Attack,int Defense) pve,float basis,float afterDefense,float afterStatus,float afterPve,float afterEquipment,int aiDamage,int protectedDamage,int rangeMin,int rangeMax,uint defenderRatio = SkyTempleCombatInputs.PlayerStatRatio)
     {
         if (!Log.IsEnabled(LogLevel.Debug)) return;
         var payload=new {npc=profile.NpcId,source=source.GetObjectId(),target=target.GetObjectId(),ordinal,hand,sample,modifier,
             percent=modifiers.Percent,flat=modifiers.Flat,physical,sourceLevel=profile.Level,targetLevel=(int)target.GetLevel(),
-            profileRatio=profile.StatRatio,defenseRatio=SkyTempleCombatInputs.PlayerStatRatio,targetDefense,elementDefense,elementFloor,
+            profileRatio=profile.StatRatio,defenseRatio=defenderRatio,targetDefense,elementDefense,elementFloor,
             status=status.ToString(),criticalReduction,blockRemainingPercent,blockMax,pveAttack=pve.Attack,pveDefense=pve.Defense,
             baseBits=BitConverter.SingleToUInt32Bits(basis),defenseBits=BitConverter.SingleToUInt32Bits(afterDefense),
             statusBits=BitConverter.SingleToUInt32Bits(afterStatus),pveBits=BitConverter.SingleToUInt32Bits(afterPve),
@@ -256,8 +318,9 @@ internal static partial class SkyTempleNpcCombat
         Log.LogDebug("RETAIL_STAT_NORMAL_INPUT {Payload}",System.Text.Json.JsonSerializer.Serialize(payload));
     }
 
-    private static AttackStatus SelectNormalDefense(Npc source,Player target,SkyTempleNpcProfile p,RetailNpcNormalScope scope)
+    private static AttackStatus SelectNormalDefense(Npc source,Creature target,SkyTempleNpcProfile p,RetailNpcNormalScope scope,SkyTempleNpcProfile? receiverProfile)
     {
+        if (receiverProfile is not null) return SelectNpcNormalDefense(source,(Npc)target,p,scope);
         if(SkyTempleCombatInputs.Pose(target)==5||source.GetEffectController().IsInAnyAbnormalState(
             Aion.GameServer.SkillEngine.Effects.AbnormalState.CANT_ATTACK_STATE))return AttackStatus.NORMALHIT;
         var context = RetailNpcNormalStatusMath.Context.Create(scope,RetailNpcNormalScope.MainBinarySha256,
@@ -270,7 +333,7 @@ internal static partial class SkyTempleNpcCombat
         int threshold = RetailNpcNormalStatusMath.CalculatePhysicalThreshold(context,RetailNpcNormalStatusMath.ChanceStage.Dodge,
             new(SkyTempleCombatInputs.Moved(target,StatEnum.EVASION,target.GetGameStats().GetEvasion().GetCurrent()),accuracy,0,(uint)p.StatRatio));
         if (Random.Range(1,1000) <= threshold) return AttackStatus.DODGE;
-        if (target.GetEquipment().IsShieldEquipped())
+        if (target is Player player && player.GetEquipment().IsShieldEquipped())
         {
             if (target.GetObserveController().CheckAttackStatus(AttackStatus.BLOCK)) return AttackStatus.BLOCK;
             threshold = RetailNpcNormalStatusMath.CalculatePhysicalThreshold(context,RetailNpcNormalStatusMath.ChanceStage.Block,
@@ -283,7 +346,39 @@ internal static partial class SkyTempleNpcCombat
         return Random.Range(1,1000) <= threshold ? AttackStatus.PARRY : AttackStatus.NORMALHIT;
     }
 
-    private static bool SelectNormalCritical(Npc source,Player target,SkyTempleNpcProfile p,RetailNpcNormalScope scope,bool physical)
+    private static AttackStatus SelectNpcNormalDefense(Npc source,Npc target,SkyTempleNpcProfile p,RetailNpcNormalScope scope)
+    {
+        // Forced outcomes precede the random-defense gate in Main 0x14036c490.
+        // These host observers retain effect ownership and must execute only once.
+        if (target.GetObserveController().CheckAttackStatus(AttackStatus.PARRY)) return AttackStatus.PARRY;
+        if (target.GetObserveController().CheckAttackStatus(AttackStatus.BLOCK)) return AttackStatus.BLOCK;
+        if (SkyTempleCombatInputs.Pose(target)==5 || source.GetEffectController().IsInAnyAbnormalState(
+            Aion.GameServer.SkillEngine.Effects.AbnormalState.CANT_ATTACK_STATE)) return AttackStatus.NORMALHIT;
+        var context = RetailNpcNormalStatusMath.Context.Create(scope,RetailNpcNormalScope.MainBinarySha256,
+            "ordinary NPC constructor stance0/static defense tables; managed current stats and effect owners",false);
+        if (source.GetObserveController().CheckAttackerStatus(AttackStatus.DODGE)
+            || target.GetObserveController().CheckAttackStatus(AttackStatus.DODGE)) return AttackStatus.DODGE;
+        // Ordinary NPC stance0 permits dodge and parry. This is a static-default
+        // reconstruction, not a claim about native runtime stance overrides.
+        int Threshold(RetailNpcNormalStatusMath.ChanceStage stage,StatEnum stat,int current)
+        {
+            int adjusted = RetailNpcNormalStatusMath.AdjustOwnerlessNpcDefense(context,stage,
+                SkyTempleCombatInputs.Word(current,"NPC active defense"),p.Level,target.GetLevel());
+            int movement = SkyTempleCombatInputs.Moved(target,stat,adjusted)-adjusted;
+            return RetailNpcNormalStatusMath.CalculatePhysicalThreshold(context,stage,
+                new(adjusted,source.GetGameStats().GetMainHandPAccuracy().GetCurrent(),movement,(uint)p.StatRatio));
+        }
+        var stats = target.GetGameStats();
+        if (Random.Range(1,1000) <= Threshold(RetailNpcNormalStatusMath.ChanceStage.Dodge,StatEnum.EVASION,stats.GetEvasion().GetCurrent()))
+            return AttackStatus.DODGE;
+        int block = stats.GetBlock().GetCurrent();
+        if (block != 0 && Random.Range(1,1000) <= Threshold(RetailNpcNormalStatusMath.ChanceStage.Block,StatEnum.BLOCK,block))
+            return AttackStatus.BLOCK;
+        return Random.Range(1,1000) <= Threshold(RetailNpcNormalStatusMath.ChanceStage.Parry,StatEnum.PARRY,stats.GetParry().GetCurrent())
+            ? AttackStatus.PARRY : AttackStatus.NORMALHIT;
+    }
+
+    private static bool SelectNormalCritical(Npc source,Creature target,SkyTempleNpcProfile p,RetailNpcNormalScope scope,bool physical,uint defenderRatio)
     {
         int critical = physical ? source.GetGameStats().GetMainHandPCritical().GetCurrent() : source.GetGameStats().GetMCritical().GetCurrent();
         var forced = source.GetObserveController().CheckAttackerCriticalStatus(AttackStatus.CRITICAL,false);
@@ -295,7 +390,7 @@ internal static partial class SkyTempleNpcCombat
         var context = RetailNpcNormalStatusMath.Context.Create(scope,RetailNpcNormalScope.MainBinarySha256,
             "managed4.8 current critical mapping",false);
         int threshold = RetailNpcNormalStatusMath.CalculateMainCriticalThreshold(context,new(critical,
-            physical ? target.GetGameStats().GetPCR().GetCurrent() : target.GetGameStats().GetMCR().GetCurrent(),0,1000,SkyTempleCombatInputs.Pose(target)));
+            physical ? target.GetGameStats().GetPCR().GetCurrent() : target.GetGameStats().GetMCR().GetCurrent(),0,defenderRatio,SkyTempleCombatInputs.Pose(target)));
         return Random.Range(1,1000) <= threshold;
     }
 
