@@ -217,6 +217,11 @@ public class StatFunctions
         return (int)((long)value * (1000 + boostHate) / 1000);
     }
 
+    // Java StatFunctions.calculateAttackDamage: preserve signed-int multiply,
+    // then binary32 division. Shared with the detached NPC comparison tool.
+    internal static float CalculateNpcNormalSample(int currentAttack, int percent)
+        => currentAttack * percent / 100f;
+
     public static List<AttackResult> CalculateAttackDamage(Creature attacker,
         SkillElement element, AttackStatus status, ISet<CalculationType> calculationTypes)
     {
@@ -293,7 +298,7 @@ public class StatFunctions
         else
         {
             int val = attacker is Homing ? 100 : Rnd.Get(80, 120);
-            attackResultList.Add(new AttackResult(mainHandAttack.GetCurrent() * val / 100f, status, hitType));
+            attackResultList.Add(new AttackResult(CalculateNpcNormalSample(mainHandAttack.GetCurrent(), val), status, hitType));
         }
         return attackResultList;
     }

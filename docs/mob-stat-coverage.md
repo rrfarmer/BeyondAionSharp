@@ -44,8 +44,15 @@ It does not mean activation, deployed behavior or verified current effects.
 Missing ordinary profiles and missing owned/scaled profiles have different
 blockers. Special skill boundaries are reported separately and do not erase
 working base HP/attribute/normal-attack coverage. A missing baseline is never a
-match. In particular, the current export does not provide an equivalent 4.8
-normal-attack interval; the tool makes no invented damage-percentage comparison.
+match. Older exports omit a 4.8 normal-attack baseline and remain readable.
+
+New exports provide the ordinary physical 4.8 base interval using the production
+`Stat2`/cap path and `StatFunctions.CalculateNpcNormalSample`, shared with the
+normal combat branch. The reference supplies each ordered 5.8 entry's main/off-hand
+interval using the production dual split and normal modifier calculation. Both
+exclude effects, AI overrides, status and target mitigation. The summary compares
+those intervals, reports element and dual-record changes separately, and makes no
+claim about final HP loss. A custom AI can change this ordinary baseline.
 
 The report preserves the two authored damage endpoints and the ordered interval.
 Six records in the reviewed corpus have reversed endpoints. Native

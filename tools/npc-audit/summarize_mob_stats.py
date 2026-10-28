@@ -98,6 +98,7 @@ def summarize(profiles, census, scope):
                       normal_endpoint_min_field58=None, normal_endpoint_max_field58=None,
                       normal_interval58=None, normal_endpoint_order='unavailable', ordered_attacks=[],
                       normal_status='unavailable', normal_baseline_status='not_exported',
+                      normal_before_target48=None, normal_before_target58=None, normal_comparisons=[],
                       attributes={}, defenses={}, evidence_blockers=[], special_skill_boundaries=[])
         if row is None:
             reason = ('owned_or_scaled_context_requires_separate_source_projection'
@@ -137,6 +138,28 @@ def summarize(profiles, census, scope):
                           normal_endpoint_order='reversed' if minimum > maximum else 'ordered',
                           ordered_attacks=attacks,
                           normal_status='calculated_pre_effect_pre_target' if supported else 'no_source_normal')
+            if 'normal_before_target48' in row:
+                baseline = row['normal_before_target48']
+                reference = row['normal_before_target58']
+                need(baseline['context'] == 'initialized-template-before-effects-ai-status-target'
+                     and baseline['element'] == 'physical', 'Unknown normal baseline context')
+                need(len(reference) == len(attacks), 'Calculated normal list differs')
+                comparisons = []
+                for attack, calculated in zip(attacks, reference):
+                    need(all(calculated[k] == attack[k] for k in ('ordinal', 'type', 'weight', 'modifier')),
+                         'Calculated normal entry identity differs')
+                    if calculated['type'].lower() != 'physical':
+                        status = 'attack_element_changed'
+                    elif calculated['off'] is not None:
+                        status = 'attack_record_shape_changed'
+                    elif all(calculated['main'][k] == baseline[k] for k in ('minimum', 'maximum')):
+                        status = 'matches'
+                    else:
+                        status = 'differs'
+                    comparisons.append(dict(ordinal=attack['ordinal'], status=status))
+                record.update(normal_baseline_status='calculated_before_effects_ai_status_target',
+                              normal_before_target48=baseline, normal_before_target58=reference,
+                              normal_comparisons=comparisons)
             # Skill mechanics do not block base HP/attributes or normal-attack accounting.
             record['special_skill_boundaries'] = sorted({
                 f"{s['skill_id']}:{s['level']}:{s['primary_boundary']}"
@@ -152,6 +175,7 @@ def summarize(profiles, census, scope):
             selected=len(selected_rows), missing=len(these)-len(selected_rows),
             hp=dict(collections.Counter(r['hp_status'] for r in these)),
             normal=dict(collections.Counter(r['normal_status'] for r in these)),
+            normal_comparisons=dict(collections.Counter(c['status'] for r in these for c in r['normal_comparisons'])),
             attributes_differ=sum(any(f['status'] == 'differs' for f in r['attributes'].values()) for r in these),
             defenses_differ=sum(any(f['status'] == 'differs' for f in r['defenses'].values()) for r in these),
             evidence_blocked=sum(bool(r['evidence_blockers']) for r in these),
@@ -160,8 +184,10 @@ def summarize(profiles, census, scope):
                 scope_policy=scope['policy'], scope_limitations=scope['scope_limitations'],
                 selected_memberships=len(selected), expected_memberships=len(expected),
                 selected_unique_npcs=len({n for _, n in selected}), maps=map_summaries,
-                normal_comparison='Calculated 5.8 pre-effect/pre-target ranges and ordered attacks; '
-                                  'equivalent 4.8 normal-damage baseline is not exported. No percentage comparison.',
+                normal_comparison='Where exported, compare calculated ordinary physical 4.8 and per-entry 5.8 '
+                                  'main/off-hand base ranges before effects, AI, status and target mitigation. '
+                                  'Element and record-shape changes are separate; older exports have no baseline. '
+                                  'No final HP-loss or percentage comparison.',
                 exception_counts=dict(collections.Counter(b for r in rows for b in r['evidence_blockers'])),
                 rows=rows)
 

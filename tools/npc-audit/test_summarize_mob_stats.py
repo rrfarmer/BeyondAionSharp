@@ -114,6 +114,24 @@ class MobStatCoverageTests(unittest.TestCase):
         self.assertEqual('conditional_global_supplement', supplement['membership_basis'])
         self.assertEqual(1, report['selected_memberships'])
 
+    def test_calculated_baseline_compares_same_stage_without_masking_elements_or_dual(self):
+        self.row['normal_before_target48'] = dict(context='initialized-template-before-effects-ai-status-target',
+                                                  element='physical', minimum=8.8, maximum=13.2)
+        calculated = dict(ordinal=0, type='physical', weight=1000, modifier=100,
+                          main=dict(minimum=7, maximum=9), off=None)
+        self.row['ordered_attacks'][0]['type'] = 'physical'
+        self.row['normal_before_target58'] = [calculated]
+        self.assertEqual('differs', self.report()['rows'][0]['normal_comparisons'][0]['status'])
+        calculated['main'] = dict(minimum=8.8, maximum=13.2)
+        self.assertEqual('matches', self.report()['rows'][0]['normal_comparisons'][0]['status'])
+        calculated['off'] = dict(minimum=7, maximum=9)
+        self.assertEqual('attack_record_shape_changed', self.report()['rows'][0]['normal_comparisons'][0]['status'])
+        calculated['type'] = self.row['ordered_attacks'][0]['type'] = 'magical_Fire'
+        self.assertEqual('attack_element_changed', self.report()['rows'][0]['normal_comparisons'][0]['status'])
+        calculated['ordinal'] = 2
+        with self.assertRaisesRegex(ValueError, 'identity differs'):
+            self.report()
+
     def test_pinned_inputs_and_new_external_output(self):
         with tempfile.TemporaryDirectory() as directory:
             base = Path(directory)
