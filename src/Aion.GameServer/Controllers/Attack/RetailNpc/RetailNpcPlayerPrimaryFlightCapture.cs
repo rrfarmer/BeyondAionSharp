@@ -122,9 +122,9 @@ internal static class RetailNpcPlayerPrimaryFlightCapture
             ||first.Effectid!=source.FirstEffect ||second.Effectid!=source.SecondEffect ||third.Effectid!=source.ThirdEffect
             ||!first.NoResist ||!second.NoResist ||!third.NoResist ||third.BasicLvl!=source.ThirdBasicLevel
             ||templates.Any(t=>t.EffectConditions is not null ||t.EffectSubConditions is not null ||t.change is not {Count:1})
-            ||!IsOnFlyChange(first.change[0],source.First,ChangeFunc.ADD,10)
-            ||!IsOnFlyChange(second.change[0],source.Second,ChangeFunc.ADD,10)
-            ||!IsOnFlyChange(third.change[0],StatEnum.FLY_SPEED,ChangeFunc.PERCENT,33))return false;
+            ||!IsOnFlyChange(first.change![0],source.First,ChangeFunc.ADD,10)
+            ||!IsOnFlyChange(second.change![0],source.Second,ChangeFunc.ADD,10)
+            ||!IsOnFlyChange(third.change![0],StatEnum.FLY_SPEED,ChangeFunc.PERCENT,33))return false;
         StatFunctionProxy? FindOwned(StatEnum stat)
         {
             var found=stats.GetStatsSorted(stat).OfType<StatFunctionProxy>().Where(x=>ReferenceEquals(x.GetOwner(),effect)).ToArray();

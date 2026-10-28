@@ -258,7 +258,7 @@ public class PlayerController : CreatureController<Player>
                     player.GetLifeStats().SetCurrentHpPercent(33);
                 if (player.GetLifeStats().GetMpPercentage() < 33)
                     player.GetLifeStats().SetCurrentMpPercent(33);
-                if (master.GetLifeStats().GetHpPercentage() < 33)
+                if (master!.GetLifeStats().GetHpPercentage() < 33)
                     master.GetLifeStats().SetCurrentHpPercent(33);
                 if (master.GetLifeStats().GetMpPercentage() < 33)
                     master.GetLifeStats().SetCurrentMpPercent(33);
@@ -284,15 +284,15 @@ public class PlayerController : CreatureController<Player>
         player.UnsetFlyState(Aion.GameServer.Model.GameObjects.State.FlyState.GLIDING);
 
         // Effects removed with base.OnDie()
-        base.OnDie(lastAttacker);
+        base.OnDie(lastAttacker!);
 
         ScheduleShowResurrectionOptions();
 
-        if (player.GetPosition().GetWorldMapInstance().GetInstanceHandler().OnDie(player, lastAttacker))
+        if (player.GetPosition().GetWorldMapInstance().GetInstanceHandler().OnDie(player, lastAttacker!))
             return;
 
-        Aion.GameServer.World.MapRegion mapRegion = player.GetPosition().GetMapRegion();
-        if (mapRegion != null && mapRegion.OnDie(lastAttacker, player))
+        Aion.GameServer.World.MapRegion? mapRegion = player.GetPosition().GetMapRegion();
+        if (mapRegion != null && mapRegion.OnDie(lastAttacker!, player))
             return;
 
         DoReward();

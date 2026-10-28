@@ -59,6 +59,7 @@ public sealed class RetailNpcCurseResourcePlanBuilderTests
         const uint nativeState=0x203;
         bool captured=RetailNpcPlayerPrimaryFlightCapture.TryCaptureForOfflineFixture(player,passive,flightSource,_=>nativeState,out var flight);
         var firstTemplate=passiveTemplate.GetEffectTemplate(1);var secondTemplate=passiveTemplate.GetEffectTemplate(2);var thirdTemplate=passiveTemplate.GetEffectTemplate(3);
+        Assert.NotNull(firstTemplate);Assert.NotNull(secondTemplate);Assert.NotNull(thirdTemplate);
         string Details(StatEnum stat)=>string.Join(";",player.GetGameStats().GetStatsSorted(stat).Select(f=>$"{f.GetType().Name}/{f.GetValue()}/owner={ReferenceEquals(f.GetOwner(),passive)}/conditional={f.HasConditions()}"));
         Assert.True(captured,$"id={passiveId} active={player.GetEffectController().GetAllEffects().Contains(passive)} success={passive.IsInSuccessEffects(1)},{passive.IsInSuccessEffects(2)},{passive.IsInSuccessEffects(3)} noresist={firstTemplate.NoResist},{secondTemplate.NoResist},{thirdTemplate.NoResist} basic={firstTemplate.BasicLvl},{secondTemplate.BasicLvl},{thirdTemplate.BasicLvl} health=[{Details(StatEnum.HEALTH)}] will=[{Details(StatEnum.WILL)}] knowledge=[{Details(StatEnum.KNOWLEDGE)}]");Assert.NotNull(flight);
         var otherSource=File.ReadAllBytes(Path.Combine(root!, $"skill-{(passiveId==362?340:362)}.utf16le.xml"));

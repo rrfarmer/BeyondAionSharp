@@ -211,6 +211,14 @@
       "reason": "The shared clock seam owns the real production fallback beneath scoped and process simulation overrides."
     },
     {
+      "path": "src/Aion.GameServer/Utils/SystemClock.cs",
+      "member": "Aion.GameServer.Utils.SystemClock.RetailTick32()",
+      "api": "System.Environment.TickCount64",
+      "context": "=> unchecked ( ( uint ) ( Source . Value ? . Invoke ( ) ?? Volatile . Read ( ref _processSource ) ? . Invoke ( ) ?? Environment . TickCount64 ) )",
+      "count": 1,
+      "reason": "The selected retail NPC clock seam reproduces GetTickCount unsigned32 monotonic semantics and retains the same scoped/process deterministic overrides. Legacy wall-clock gameplay and player/PvP reads are unchanged."
+    },
+    {
       "path": "src/Aion.GameServer/Utils/ThreadPoolManager.cs",
       "member": "Aion.GameServer.Utils.ThreadPoolManager.ShutdownAsync(System.TimeSpan)",
       "api": "System.Diagnostics.Stopwatch.StartNew",

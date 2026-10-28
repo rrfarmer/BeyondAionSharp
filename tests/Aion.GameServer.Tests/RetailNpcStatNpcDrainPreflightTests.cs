@@ -18,6 +18,30 @@ namespace Aion.GameServer.Tests;
 [Collection("GoldenDataManager")]
 public sealed class RetailNpcStatNpcDrainPreflightTests
 {
+    // These tests must hold a Monitor while another execution context blocks
+    // on it. Dedicated threads preserve that contention without blocking work
+    // queued through xUnit's limited Task scheduler.
+    private sealed class LockProbe<T>
+    {
+        private readonly Thread thread;
+        private T result=default!;
+        private Exception? failure;
+        internal LockProbe(Func<T> action)
+        {
+            thread=new Thread(()=> {try {result=action();}catch(Exception error) {failure=error;}}) {IsBackground=true};
+            thread.Start();
+        }
+        internal bool Join(TimeSpan timeout)
+        {
+            bool completed=thread.Join(timeout);
+            if(completed)Assert.Null(failure);
+            return completed;
+        }
+        internal T Result
+        {
+            get {Assert.True(Join(TimeSpan.FromSeconds(5)));return result;}
+        }
+    }
     private sealed class Owner:IStatOwner;
     private sealed class Protection:AttackCalcObserver
     {
@@ -34,15 +58,15 @@ public sealed class RetailNpcStatNpcDrainPreflightTests
         var observer=target.GetObserveController();var protection=new Protection();
         var gate=typeof(Aion.GameServer.Controllers.ObserveController).GetField("_attackCalcLock",
             System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance)!.GetValue(observer)!;
-        using var started=new ManualResetEventSlim();Task<bool> attempt;
+        using var started=new ManualResetEventSlim();LockProbe<bool> attempt;
         lock(gate)
         {
-            attempt=Task.Run(()=> {started.Set();return observer.TryCalculateUnprotectedNpcDrainForOfflineFixture(effect,target,500,1);});
+            attempt=new LockProbe<bool>(()=> {started.Set();return observer.TryCalculateUnprotectedNpcDrainForOfflineFixture(effect,target,500,1);});
             Assert.True(started.Wait(TimeSpan.FromSeconds(5)));
             observer.AddAttackCalcObserver(protection);
-            Assert.False(attempt.Wait(TimeSpan.FromMilliseconds(100)));
+            Assert.False(attempt.Join(TimeSpan.FromMilliseconds(100)));
         }
-        Assert.False(attempt.GetAwaiter().GetResult());Assert.Equal(0,protection.Calls);
+        Assert.False(attempt.Result);Assert.Equal(0,protection.Calls);
         Assert.Empty(effect.GetSuccessEffects());
         observer.RemoveAttackCalcObserver(protection);
         Assert.True(observer.TryCalculateUnprotectedNpcDrainForOfflineFixture(effect,target,500,1));
@@ -61,15 +85,15 @@ public sealed class RetailNpcStatNpcDrainPreflightTests
         var observer=target.GetObserveController();var protection=new Protection();
         var gate=typeof(Aion.GameServer.Controllers.ObserveController).GetField("_attackCalcLock",
             System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance)!.GetValue(observer)!;
-        using var started=new ManualResetEventSlim();Task<bool> attempt;
+        using var started=new ManualResetEventSlim();LockProbe<bool> attempt;
         lock(gate)
         {
-            attempt=Task.Run(()=> {started.Set();return observer.TryCheckUnprotectedNpcDrainTickForOfflineFixture([attack],effect,missingCaster?null:caster);});
+            attempt=new LockProbe<bool>(()=> {started.Set();return observer.TryCheckUnprotectedNpcDrainTickForOfflineFixture([attack],effect,missingCaster?null:caster);});
             Assert.True(started.Wait(TimeSpan.FromSeconds(5)));
             observer.AddAttackCalcObserver(protection);
-            Assert.False(attempt.Wait(TimeSpan.FromMilliseconds(100)));
+            Assert.False(attempt.Join(TimeSpan.FromMilliseconds(100)));
         }
-        Assert.False(attempt.GetAwaiter().GetResult());Assert.Equal(0,protection.Calls);Assert.Equal(500,attack.GetDamage());
+        Assert.False(attempt.Result);Assert.Equal(0,protection.Calls);Assert.Equal(500,attack.GetDamage());
         observer.RemoveAttackCalcObserver(protection);
         Assert.True(observer.TryCheckUnprotectedNpcDrainTickForOfflineFixture([attack],effect,missingCaster?null:caster));
         Assert.Equal(500,attack.GetDamage());Assert.Equal(0,protection.Calls);
@@ -92,17 +116,17 @@ public sealed class RetailNpcStatNpcDrainPreflightTests
                 ()=>observer.EnterNpcDrainTickHpForOfflineFixture(first,target));
         Assert.True(observer.TryCheckUnprotectedNpcDrainTickForOfflineFixture([attack],effect,caster,out var current));
         Assert.NotNull(current);
-        using var started=new ManualResetEventSlim();Task? writer=null;
+        using var started=new ManualResetEventSlim();LockProbe<bool>? writer=null;
         lock(target.GetLifeStats())
         {
             using(observer.EnterNpcDrainTickHpForOfflineFixture(current,target))
             {
-                writer=Task.Run(()=> {started.Set();observer.AddAttackCalcObserver(protection);});
+                writer=new LockProbe<bool>(()=> {started.Set();observer.AddAttackCalcObserver(protection);return true;});
                 Assert.True(started.Wait(TimeSpan.FromSeconds(5)));
-                Assert.False(writer.Wait(TimeSpan.FromMilliseconds(100)));
+                Assert.False(writer.Join(TimeSpan.FromMilliseconds(100)));
             }
         }
-        Assert.True(writer!.Wait(TimeSpan.FromSeconds(5)));Assert.True(observer.HasDrainProtectionObserver);
+        Assert.True(writer!.Join(TimeSpan.FromSeconds(5)));Assert.True(observer.HasDrainProtectionObserver);
         observer.RemoveAttackCalcObserver(protection);Assert.Equal(0,protection.Calls);
     }
 
@@ -122,7 +146,7 @@ public sealed class RetailNpcStatNpcDrainPreflightTests
             TargetLifeStats:targetLife,InitialProtection:protection,CasterLifeStats:casterLife);
         var dispatch=new RetailNpcStatSpellDrain.NpcInitialDispatch(effect,caster,target,500,program);dispatch.Claim(target);
         using var held=new ManualResetEventSlim();using var release=new ManualResetEventSlim();
-        var other=Task.Run(()=> {lock(casterLife) {held.Set();release.Wait(TimeSpan.FromSeconds(5));}});
+        var other=new LockProbe<bool>(()=> {lock(casterLife) {held.Set();release.Wait(TimeSpan.FromSeconds(5));}return true;});
         try
         {
             Assert.True(held.Wait(TimeSpan.FromSeconds(5)));
@@ -132,7 +156,7 @@ public sealed class RetailNpcStatNpcDrainPreflightTests
                 Assert.Contains("caster life busy",error.Message);
             }
         }
-        finally {release.Set();Assert.True(other.Wait(TimeSpan.FromSeconds(5)));}
+        finally {release.Set();Assert.True(other.Join(TimeSpan.FromSeconds(5)));}
     }
 
     [Theory]

@@ -358,3 +358,35 @@ the earlier explicit compatibility assumptions. Unknown incoming script owners,
 owned/scaled actors and player critical inputs outside the ordinary word domain
 remain visible compatibility boundaries. Skills, transformations, rare Player
 overrides and active script states are not certified by the normal-stat fixtures.
+
+## Ordinary runtime publication boundary
+
+`AION_RETAIL_STATS_MANIFEST` publishes the committed profile, normal-combat and
+numeric-buff consumers. It does not invoke optional skill, periodic/heal, player
+equipment, curse, timing or shield readers merely because their fields occur in
+a combined discovery manifest or their partials exist in the local checkout.
+Read-only/offline experimental parsers remain separate. Required ordinary assets,
+source/host identities and combat context still validate before atomic publication;
+failure leaves the previous state intact and reload remains prohibited.
+
+The full-working regression first reproduced publication entering an invalid
+optional player-shield context. The ordinary-only publication gate now ignores
+that candidate context while retaining all selected profiles, normal PvE inputs
+and524 numeric-buff programs. Local optional collection defaults are empty so
+their existing callers can decline absent experiments safely; those uncommitted
+modules are not imported into the ordinary runtime commit.
+
+Conditional global memberships additionally have an unowned projection gate in
+one supported fixture world:309 getter projections,40 authored normal profiles
+and269 absent normals. This tests the explicit map0 lookup fallback; it does not
+invent a spawn location or certify ownership/scaling and active script behavior.
+The full selected11517-row source/normal/buff export remains unchanged after the
+runtime isolation and consumer corrections. Per-membership exceptions and the
+original-goal audit remain in the external discovery handoff.
+
+The separate catch-up commit made previously local experiments part of the tracked
+build. Follow-up integration cleanup retains their behavior while clarifying
+guarded nullable inputs and using dedicated threads for monitor-contention tests.
+The existing `SystemClock.RetailTick32` monotonic-clock seam is explicitly reviewed
+in the clock allowlist; it preserves deterministic overrides and does not change
+the legacy wall-clock seam. The original warning baseline is retained.

@@ -141,7 +141,7 @@ public class NpcLifeStats : CreatureLifeStats<Npc>
                     else if (Interlocked.Read(ref retailLifetime) == lifetime)
                     {
                         retailHeartbeatRunning = false;
-                        lifeRestoreTask = null;
+                        lifeRestoreTask = null!;
                     }
                 }
             }

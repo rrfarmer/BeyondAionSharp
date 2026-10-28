@@ -62,7 +62,7 @@ public sealed class RetailNpc17860CastFixtureTests
         first.SetPosition(h.World.CreatePosition(220020000,985,135,242,0,1));
         var skill=Aion.GameServer.SkillEngine.SkillEngine.GetInstance().GetSkill(npc,17860,1,first);
         Assert.NotNull(skill);
-        var properties=skill.GetSkillTemplate().GetProperties();
+        var properties=skill.GetSkillTemplate().GetProperties();Assert.NotNull(properties);
         Assert.Equal(24,properties.GetTargetMaxCount());
         Assert.Equal(TargetRangeAttribute.AREA,properties.GetTargetType());
         var candidates=new List<Creature>();

@@ -122,7 +122,7 @@ public sealed class RetailNpcPeriodicNpcDrainReceiptTests
             if(CheckProtectionLock)
             {
                 var gate=typeof(Aion.GameServer.Controllers.ObserveController).GetField("_attackCalcLock",
-                    System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance)!.GetValue(npc.GetObserveController())!;
+                    System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance)!.GetValue(owner.GetObserveController())!;
                 Assert.False(Monitor.IsEntered(gate));
             }
             // The HP commit stays real; fixture isolation avoids external death,

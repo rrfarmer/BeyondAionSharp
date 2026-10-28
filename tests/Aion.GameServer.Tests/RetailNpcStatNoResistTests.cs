@@ -97,7 +97,7 @@ public sealed class RetailNpcStatNoResistTests
             var template=DataManager.SKILL_DATA.GetSkillTemplate(id);var part=template.GetEffectTemplate(1);
             var effect=new Effect(npc,player,template,level);
             Assert.Equal(AttackStatus.NORMALHIT,effect.GetAttackStatus());
-            Assert.True(RetailNpcStatSkillCombat.TryCalculate(effect,part,null,out bool success));Assert.True(success);
+            Assert.NotNull(part);Assert.True(RetailNpcStatSkillCombat.TryCalculate(effect,part,null,out bool success));Assert.True(success);
             Assert.True(effect.GetReserveds(1).GetValue()>0);Assert.Equal(0,attacker.Queries);Assert.Equal(0,defender.Queries);
             // Physical hit-state and magical periodic critical are separate native
             // caches. Only a spell primary may seed the magical cache for e2.

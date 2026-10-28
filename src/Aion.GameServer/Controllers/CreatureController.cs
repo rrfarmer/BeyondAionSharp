@@ -697,13 +697,13 @@ public abstract class CreatureController : VisibleObjectController
         private int finalDamage;
         private AttackStatus attackStatus;
         private Effect criticalProcEffect;
-        private SkyTempleNpcProtection.PendingReflection retailReflection;
+        private SkyTempleNpcProtection.PendingReflection? retailReflection;
         private readonly bool retail;
         private readonly long targetEpoch;
         private readonly int map, instance;
 
         public DelayedOnAttack(Creature target, Creature creature, int finalDamage, AttackStatus attackStatus, Effect criticalProcEffect,
-            SkyTempleNpcProtection.PendingReflection retailReflection = null)
+            SkyTempleNpcProtection.PendingReflection? retailReflection = null)
         {
             this.target = target;
             this.creature = creature;

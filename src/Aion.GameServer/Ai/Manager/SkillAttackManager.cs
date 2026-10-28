@@ -210,7 +210,7 @@ public class SkillAttackManager
         if (TargetTooFar(owner, entry))
         {
             owner.GetGameStats().SetNextSkillDelay(5000);
-            return null;
+            return null!; // Existing selection API uses null as its no-entry sentinel.
         }
         return entry;
     }

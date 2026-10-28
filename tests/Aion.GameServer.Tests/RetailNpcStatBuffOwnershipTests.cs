@@ -1,3 +1,4 @@
+using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.Controllers.Attack.RetailNpc;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Stats.Calc;
@@ -313,7 +314,7 @@ public sealed class RetailNpcStatBuffOwnershipTests
         using var h=BossAiHarness.For(member.MapId).Build();
         var npc=h.SpawnWithAi(npcId,"aggressive");var skill=DataManager.SKILL_DATA.GetSkillTemplate(id);
         var entry=Enumerable.Range(0,npc.GetSkillList().Size()).Select(i=>npc.GetSkillList().GetSkillOnPosition(i)).First(s=>s.GetSkillId()==id);
-        var effect=new Effect(npc,npc,skill,entry.GetSkillLevel());effect.AddSuccessEffect(skill.GetEffectTemplate(1));effect.ApplyEffect();
+        var effect=new Effect(npc,npc,skill,entry.GetSkillLevel());effect.AddSuccessEffect(Assert.IsAssignableFrom<EffectTemplate>(skill.GetEffectTemplate(1)));effect.ApplyEffect();
         Assert.True(RetailNpcStatBuffs.HasSelectedProgram(effect));
         Assert.NotEmpty(npc.GetGameStats().GetStatsSorted(StatEnum.LIGHT_RESISTANCE));
         var other=new OtherOwner();npc.GetGameStats().AddEffectOnly(other,[new StatAddFunction(StatEnum.PARRY,123,true)]);

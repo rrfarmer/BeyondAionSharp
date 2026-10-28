@@ -78,7 +78,7 @@ internal static class RetailNpcPlayerPrimaryAllStatdownCapture
             ||first.PreEffects is not null ||second.PreEffects is not [1] ||third.PreEffects is not [2]
             ||templates.Any(t=>t.Effectid!=10013 ||t.Duration1!=0 ||t.Duration2!=600000 ||!t.NoResist
                 ||t.EffectConditions is not null ||t.EffectSubConditions is not null ||t.change is not {Count:1}))return false;
-        var hp=first.change[0];var mp=second.change[0];var down=third.change[0];
+        var hp=first.change![0];var mp=second.change![0];var down=third.change![0];
         if(hp.Stat!=StatEnum.REGEN_HP ||hp.Func!=ChangeFunc.ADD ||hp.Value!=0 ||hp.Delta!=8 ||hp.Conditions is not null
             ||mp.Stat!=StatEnum.REGEN_MP ||mp.Func!=ChangeFunc.ADD ||mp.Value!=0 ||mp.Delta!=8 ||mp.Conditions is not null
             ||down.Stat!=StatEnum.ALLPARA ||down.Func!=ChangeFunc.ADD ||down.Value!=0 ||down.Delta!=-3 ||down.Conditions is not null)return false;

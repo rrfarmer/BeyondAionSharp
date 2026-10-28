@@ -115,7 +115,7 @@ public sealed class RetailNpcStatAerialTests
         Assert.Equal(0,player.GetEffectController().RetailNpcTargetConditionMask);Assert.Empty(h.Clock.Faults);
     }
 
-    private sealed class TimedSkill(SkillTemplate template,Creature caster,Creature target):Skill(template,caster,1,target,null)
+    private sealed class TimedSkill(SkillTemplate template,Creature caster,Creature target):Skill(template,caster,1,target,null!)
     {
         internal void SetWord(int word){SetClientHitTime(word);UpdateHitTime(false);}
     }

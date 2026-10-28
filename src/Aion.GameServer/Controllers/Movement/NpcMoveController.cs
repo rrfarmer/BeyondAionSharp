@@ -44,9 +44,9 @@ public class NpcMoveController : CreatureMoveController<Npc>
 
     private WalkerTemplate walkerTemplate;
     private RouteStep currentStep;
-    private SkyTempleNpcNavigation retailNavigation;
+    private SkyTempleNpcNavigation? retailNavigation;
     private SkyTempleMoveKind? retailLastMove;
-    private string retailLastDiagnostic;
+    private string? retailLastDiagnostic;
 
     internal SkyTempleNpcNavigation RetailNavigation => retailNavigation ??= new(Owner);
     internal bool UsesRetailNavigation => SkyTempleNpcNavigation.Enabled(Owner);
