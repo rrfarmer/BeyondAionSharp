@@ -34,9 +34,11 @@ public class PlayerEffectController : EffectController
 
     public override void AddEffect(Effect effect)
     {
+        if (effect.PreparedNpcDrainInitialAborted || Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatSpellDrain.InitialCommitPending(effect)) return;
         if (CheckDuelCondition(effect) && !effect.IsForcedEffect())
             return;
         base.AddEffect(effect);
+        if (effect.PreparedNpcDrainInitialAborted) return;
         UpdatePlayerIconsAndGroup(effect);
     }
 

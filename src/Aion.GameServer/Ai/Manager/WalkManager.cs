@@ -67,7 +67,7 @@ public class WalkManager
         if (template == null || step < 0 || step >= template.GetRouteSteps().Count)
             return false;
 
-        owner.GetMoveController().SetWalkerTemplate(template, step);
+        if(!owner.GetMoveController().SetWalkerTemplate(template, step))return false;
         if (!npcAI.SetStateIfNot(AIState.WALKING) || !npcAI.SetSubStateIfNot(AISubState.WALK_PATH))
             return false;
 
@@ -93,7 +93,7 @@ public class WalkManager
             WalkerTemplate template = DataManager.WALKER_DATA.GetWalkerTemplate(owner.GetSpawn().GetWalkerId());
             if (template == null)
                 return false;
-            owner.GetMoveController().SetWalkerTemplate(template, 0);
+            if(!owner.GetMoveController().SetWalkerTemplate(template, 0))return false;
         }
         if (!npcAI.SetStateIfNot(AIState.WALKING) || !npcAI.SetSubStateIfNot(AISubState.WALK_PATH))
             return false;

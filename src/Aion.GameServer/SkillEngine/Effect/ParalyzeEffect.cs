@@ -17,6 +17,7 @@ public class ParalyzeEffect : EffectTemplate
 
     public override void Calculate(Effect effect)
     {
+        if (Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatSpellDrain.TryCalculateParalyze(effect,this)) return;
         base.Calculate(effect, StatEnum.PARALYZE_RESISTANCE, null);
     }
 

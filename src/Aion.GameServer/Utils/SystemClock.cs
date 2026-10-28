@@ -59,6 +59,14 @@ public static class SystemClock
     /// <summary>Whole seconds since the epoch, matching Java's millisecond timestamp truncation.</summary>
     public static long CurrentSeconds() => CurrentMillis() / 1000;
 
+    /// <summary>Retail NPC GetTickCount's unsigned32 monotonic clock. Deterministic
+    /// hosts still supply their one scheduler clock; legacy wall-clock callers
+    /// and unrelated player/PvP behavior retain CurrentMillis.</summary>
+    public static uint RetailTick32() => unchecked((uint)(
+        Source.Value?.Invoke()
+        ?? Volatile.Read(ref _processSource)?.Invoke()
+        ?? Environment.TickCount64));
+
     /// <summary>Points the clock at another source, for this execution context. Tests only.</summary>
     public static void UseSource(Func<long> replacement)
     {

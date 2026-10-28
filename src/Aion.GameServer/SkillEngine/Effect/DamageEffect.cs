@@ -19,6 +19,7 @@ public abstract class DamageEffect : EffectTemplate
 
     public override void ApplyEffect(Effect effect)
     {
+        if (Aion.GameServer.Controllers.Attack.RetailNpc.SkyTempleNpcSkillTiming.TrySchedulePrimary(effect,this))return;
         if (effect.GetSkillTemplate().GetActivationAttribute() == ActivationAttribute.PROVOKED)
         {
             OnAttack(effect, SmAttackStatus.TYPE.DAMAGE, SmAttackStatus.LOG.PROCATKINSTANT);

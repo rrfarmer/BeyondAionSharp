@@ -1,5 +1,7 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Controllers.Attack;
+using Aion.GameServer.Controllers.Attack.RetailNpc;
+using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Model;
 using SM_ATTACK_STATUS = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
@@ -17,11 +19,43 @@ public class SpellAtkDrainEffect : AbstractOverTimeEffect
 
     protected override void ResolveMagicalCritical(Effect effect)
     {
+        if (RetailNpcStatSpellDrain.TryGetPreparedNpcPeriodicProgram(effect,out _))
+        {
+            var program=RetailNpcStatSpellDrain.RequireNpcPeriodicProgram(effect,this);
+            if (!RetailNpcStatPeriodicCombat.TryResolveCritical(effect,this)
+                || !RetailNpcStatPeriodicCombat.MatchesPreparedNpcDrainSource(effect,this,program.Operands!))
+                throw new InvalidOperationException("Selected NPC periodic drain source unavailable");
+            return;
+        }
         effect.RollMagicalCritical(Position, CalculateCritProbMod(effect)); // periodic damage ignores the apply_magical_critical flag
+    }
+
+    public override void StartEffect(Effect effect)
+    {
+        if (RetailNpcStatSpellDrain.TryGetPreparedNpcPeriodicProgram(effect,out _))
+        {
+            var program=RetailNpcStatSpellDrain.RequireNpcPeriodicProgram(effect,this);
+            if (!RetailNpcStatPeriodicCombat.MatchesPreparedNpcDrainSource(effect,this,program.Operands!)
+                || !RetailNpcStatPeriodicCombat.TryStart(effect,this))
+                throw new InvalidOperationException("Selected NPC periodic drain was not calculated");
+        }
+        base.StartEffect(effect);
     }
 
     public override void OnPeriodicAction(Effect effect)
     {
+        if (RetailNpcStatSpellDrain.TryGetPreparedNpcPeriodicProgram(effect,out _))
+        {
+            var program=RetailNpcStatSpellDrain.RequireNpcPeriodicProgram(effect,this);
+            if (!RetailNpcStatPeriodicCombat.MatchesPreparedNpcDrainSource(effect,this,program.Operands!)
+                || !RetailNpcStatPeriodicCombat.TryTick(effect,this,out int? loss))
+                throw new InvalidOperationException("Selected NPC periodic drain tick unavailable");
+            var caster=(Npc)effect.GetEffector();
+            var target=(Npc)effect.GetEffected();
+            RetailNpcStatSpellDrain.ApplyNpcPeriodicHpHeal(effect,caster,target,program.Operands!,program.SourceLevel,loss,
+                ()=>caster.GetController().RetailLifeEpoch==program.CasterLife && program.IsNativeEligible!(caster));
+            return;
+        }
         int valueWithDelta = CalculateBaseValue(effect);
         int damage = AttackUtil.CalculateMagicalOverTimeSkillResult(effect, valueWithDelta, this, effect.GetSkillTemplate().IsApplyMagicalSkillBoostBonus());
         effect.GetEffected().GetController().OnAttack(effect, SmAttackStatus.TYPE.DAMAGE, damage, true, SmAttackStatus.LOG.SPELLATKDRAIN, Hoptype, effect.IsMagicalCritical(Position));

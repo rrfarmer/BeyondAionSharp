@@ -17,6 +17,22 @@ namespace Aion.GameServer.Tests;
 [Collection("GoldenDataManager")]
 public sealed class SystemClockTests
 {
+    [Fact]
+    public void RetailTickUsesTheSameOverrideAndUnsigned32WrapWithoutChangingWallTime()
+    {
+        long time = uint.MaxValue;
+        SystemClock.UseSource(() => time);
+        try
+        {
+            Assert.Equal(uint.MaxValue, SystemClock.RetailTick32());
+            Assert.Equal(time, SystemClock.CurrentMillis());
+            time += 2;
+            Assert.Equal(1u, SystemClock.RetailTick32());
+            Assert.Equal(4_294_967_297L, SystemClock.CurrentMillis());
+        }
+        finally { SystemClock.UseSystemClock(); }
+    }
+
 	[Fact]
 	public async Task ScopedSourceWinsOverProcessSourceAndProcessSourceCrossesExecutionContexts()
 	{

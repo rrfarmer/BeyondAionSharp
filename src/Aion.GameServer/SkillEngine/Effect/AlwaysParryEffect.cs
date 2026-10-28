@@ -1,5 +1,6 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Controllers.Attack;
+using Aion.GameServer.Controllers.Attack.RetailNpc;
 using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.SkillEngine.Model;
 
@@ -16,28 +17,9 @@ public class AlwaysParryEffect : EffectTemplate
 
     public override void StartEffect(Effect effect)
     {
-        effect.AddObserver(effect.GetEffected(), new ParryObserver(Value, effect));
+        effect.AddObserver(effect.GetEffected(),RetailNpcStatPhysicalStatuses.BeginDefense(effect,this,RetailNpcStatStatusSources.StatusKind.Parry));
     }
 
-    private sealed class ParryObserver : AttackStatusObserver
-    {
-        private readonly Effect effect;
-
-        public ParryObserver(int value, Effect effect)
-            : base(value, AttackStatus.PARRY)
-        {
-            this.effect = effect;
-        }
-
-        public override bool CheckStatus(AttackStatus status)
-        {
-            if (status == AttackStatus.PARRY)
-            {
-                if (--Value <= 0)
-                    effect.EndEffect();
-                return true;
-            }
-            return false;
-        }
-    }
+    public override void EndEffect(Effect effect)
+        =>RetailNpcStatPhysicalStatuses.EndDefense(effect,this,RetailNpcStatStatusSources.StatusKind.Parry);
 }

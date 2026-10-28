@@ -173,6 +173,7 @@ public partial class Player : Creature
 
         SetGameStats(new PlayerGameStats(this));
         SetLifeStats(new Aion.GameServer.Model.Stats.Container.PlayerLifeStats(this));
+        Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatEquipmentResponses.BeginActor(this);
     }
 
     public bool IsInPlayerMode(Aion.GameServer.Model.Actions.PlayerMode mode)

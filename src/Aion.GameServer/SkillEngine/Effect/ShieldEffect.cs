@@ -27,6 +27,7 @@ public class ShieldEffect : EffectTemplate
 
     public override void StartEffect(Effect effect)
     {
+        if (Aion.GameServer.Controllers.Attack.RetailNpc.SkyTempleNpcProtection.TryStart(effect,false)) return;
         int valueWithDelta = CalculateBaseValue(effect);
         int hitValueWithDelta = hitvalue + hitdelta * effect.GetSkillLevel();
 
@@ -37,5 +38,11 @@ public class ShieldEffect : EffectTemplate
     public virtual ShieldType GetType_()
     {
         return ShieldType.NORMAL;
+    }
+
+    public override void EndEffect(Effect effect)
+    {
+        Aion.GameServer.Controllers.Attack.RetailNpc.SkyTempleNpcProtection.End(effect,false);
+        base.EndEffect(effect);
     }
 }

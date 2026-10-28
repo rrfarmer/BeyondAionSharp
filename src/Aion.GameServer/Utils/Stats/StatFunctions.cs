@@ -337,7 +337,11 @@ public class StatFunctions
             magicBoost -= tgs.GetMBResist().GetCurrent();
             magicBoost = (int)Math.Max(0, Limit(StatEnum.BOOST_MAGICAL_SKILL, magicBoost));
         }
-        int knowledge = useKnowledge ? sgs.GetKnowledge().GetCurrent() : 100;
+        // Native NPC spell bases do not use the player Knowledge multiplier.
+        // Keeping explicit NPC KNO=0 must not erase a legacy compatibility skill.
+        bool sourceNpc = effector is Npc statNpc && target is Player
+            && Aion.GameServer.Retail.RetailNpcStatCatalog.TryGet(statNpc,out _);
+        int knowledge = useKnowledge && !sourceNpc ? sgs.GetKnowledge().GetCurrent() : 100;
         damage *= (magicBoost / 1000f) + (knowledge / 100f);
 
         if (useBoostSpellAttack)
@@ -426,6 +430,15 @@ public class StatFunctions
         SkillElement element)
     {
         if (attacker.Equals(target)) return baseDamage; // Material skills are cast on the creature itself.
+        bool statPair = attacker is Npc sourceNpc && target is Player && Aion.GameServer.Retail.RetailNpcStatCatalog.TryGet(sourceNpc,out _)
+            || attacker is Player && target is Npc targetNpc && Aion.GameServer.Retail.RetailNpcStatCatalog.TryGet(targetNpc,out _);
+        if (!useTemplateDmg && statPair)
+        {
+            var pve = Aion.GameServer.Controllers.Attack.RetailNpc.SkyTempleCombatInputs.Pve(attacker,target,element==SkillElement.NONE);
+            int id = attacker is Npc n ? n.GetNpcId() : ((Npc)target).GetNpcId();
+            return baseDamage * Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcNormalDamageStages.CalculatePveRatio(
+                Aion.GameServer.Controllers.Attack.RetailNpc.SkyTempleCombatInputs.Scope(id),pve.Attack,pve.Defense);
+        }
         int attackBonus = 0;
         int defenseBonus = 0;
         float damage = baseDamage;

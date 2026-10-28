@@ -9,6 +9,8 @@ using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Aion.GameServer.World.Geo;
+using Aion.GameServer.GeoEngine.RetailPath;
+using Microsoft.Extensions.Logging;
 
 namespace Aion.GameServer.SkillEngine.Effects;
 
@@ -16,13 +18,23 @@ namespace Aion.GameServer.SkillEngine.Effects;
 [XmlType("StaggerEffect")]
 public class StaggerEffect : EffectTemplate
 {
+    private static readonly ILogger retailLog=AionLog.For(nameof(StaggerEffect));
     public override void ApplyEffect(Effect effect)
     {
+        if(SkyTempleNpcForcedMove.Owns(effect)&&!SkyTempleNpcForcedMove.CanApplyAtHit(effect,out _,out _,out var failure))
+        {effect.GetSuccessEffects().Remove(this);retailLog.LogWarning("SkyTemple Stagger rejected: {Reason}",failure);return;}
         effect.AddToEffectedController();
     }
 
     public override void StartEffect(Effect effect)
     {
+        bool prepassed=false;
+        if(SkyTempleNpcForcedMove.Owns(effect))
+        {
+            if(!SkyTempleNpcForcedMove.CanApplyAtHit(effect,out var endpoint,out prepassed,out var failure))
+            {effect.GetSuccessEffects().Remove(this);retailLog.LogWarning("SkyTemple Stagger retired before commit: {Reason}",failure);return;}
+            if(!prepassed)effect.SetTargetLoc(endpoint.X,endpoint.Y,endpoint.Z);
+        }
         Creature effected = effect.GetEffected();
         effected.GetController().CancelCurrentSkill(effect.GetEffector());
         effected.GetEffectController().RemoveParalyzeEffects();
@@ -31,10 +43,18 @@ public class StaggerEffect : EffectTemplate
             player.GetFlyController().OnStopGliding();
             player.GetController().OnStopMove();
         }
-        Aion.GameServer.World.World.GetInstance().UpdatePosition(effected, effect.GetTargetX(), effect.GetTargetY(), effect.GetTargetZ(), effected.GetHeading());
-        if (effected is Player)
-            PacketSendUtility.BroadcastPacketAndReceive(effected, new SM_FORCED_MOVE(effect.GetEffector(), effected.GetObjectId(),
-                    effect.GetTargetX(), effect.GetTargetY(), effect.GetTargetZ()));
+        if(SkyTempleNpcForcedMove.Owns(effect)&&!SkyTempleNpcForcedMove.CanApplyAtHit(effect,out _,out _,out var retired))
+        {effect.GetSuccessEffects().Remove(this);retailLog.LogWarning("SkyTemple Stagger retired during stop callbacks: {Reason}",retired);return;}
+        if(!prepassed)
+        {
+            Aion.GameServer.World.World.GetInstance().UpdatePosition(effected, effect.GetTargetX(), effect.GetTargetY(), effect.GetTargetZ(), effected.GetHeading());
+            if(SkyTempleNpcForcedMove.Owns(effect)&&(!SkyTempleNpcForcedMove.CanCommit(effect,out _,out var declined)||
+                effected.GetX()!=effect.GetTargetX()||effected.GetY()!=effect.GetTargetY()||effected.GetZ()!=effect.GetTargetZ()))
+            {effect.GetSuccessEffects().Remove(this);retailLog.LogWarning("SkyTemple Stagger world commit declined: {Reason}",declined);return;}
+            if (effected is Player)
+                PacketSendUtility.BroadcastPacketAndReceive(effected, new SM_FORCED_MOVE(effect.GetEffector(), effected.GetObjectId(),
+                        effect.GetTargetX(), effect.GetTargetY(), effect.GetTargetZ()));
+        }
         effect.GetEffected().GetEffectController().SetAbnormal(AbnormalState.STAGGER);
         effect.SetAbnormal(AbnormalState.STAGGER);
     }
@@ -51,6 +71,12 @@ public class StaggerEffect : EffectTemplate
             return;
         if (effect.IsSubEffect() && !(effect.GetEffected() is Player))
             effect.SetSubEffectType(SubEffectType.STAGGER);
+        if(SkyTempleNpcForcedMove.TryCalculate(effect,out var forced))
+        {
+            if(!forced.Supported)
+            {effect.GetSuccessEffects().Remove(this);retailLog.LogWarning("SkyTemple Stagger geometry rejected: {Reason}",forced.Detail);return;}
+            var endpoint=forced.Endpoint!.Value;effect.SetTargetLoc(endpoint.X,endpoint.Y,endpoint.Z);return;
+        }
         Creature effector = effect.GetEffector();
         Creature effected = effect.GetEffected();
         // Move effected 2 meters backward as on retail

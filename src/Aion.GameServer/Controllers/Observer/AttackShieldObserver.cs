@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Controllers.Attack;
+using Aion.GameServer.Controllers.Attack.RetailNpc;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Summons;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Effects;
@@ -30,6 +32,38 @@ public class AttackShieldObserver : AttackCalcObserver
     private readonly int mpValue;
 
     private bool totalHitPercentSet = false;
+
+    internal int RetailShieldSkillId=>effect.GetSkillId();
+
+    // Called under the target's attack-calculation lock. Only the exact
+    // source-matched ordinary self shield is admitted; other observers keep
+    // their existing compatibility path. No player/PvP attack uses this API.
+    internal bool MatchesRetailPlayerShield(Player target,RetailNpcPlayerShieldSource source)
+    {
+        if(GetType()!=typeof(AttackShieldObserver) || source.Chance!=1000 ||source.Id!=effect.GetSkillId()
+            ||source.Level!=effect.GetSkillLevel() ||effect.RetailHasEnded
+            ||!ReferenceEquals(effect.GetEffected(),target) ||!ReferenceEquals(effect.GetEffector(),target)
+            ||shieldType!=ShieldType.NORMAL ||hitType!=HitType.EVERYHIT ||hitPercent ||totalHitPercent
+            ||hit!=source.PerHit ||totalHit<=0 ||totalHit>source.InitialPool ||probability!=100
+            ||minRadius!=0 ||maxRadius!=100 ||mpValue!=0 ||healType is not null) return false;
+        var shields=effect.GetEffectTemplates().Where(x=>x.Position==1).ToArray();
+        return shields is [ShieldEffect shield] && shield.GetType()==typeof(ShieldEffect)
+            &&shield.Effectid==154 &&shield.Duration1==0 &&shield.Duration2==300000
+            &&shield.Value==source.InitialPool &&shield.Delta==0 &&shield.hitvalue==source.PerHit
+            &&shield.hitdelta==0 &&!shield.percent &&shield.NoResist &&shield.Hittype==HitType.EVERYHIT
+            &&shield.HitTypeProb==100 &&shield.EffectConditions is null &&shield.EffectSubConditions is null;
+    }
+
+    internal int ApplyRetailPlayerShield(int damage,RetailNpcPlayerShieldSource source,out Effect? depleted)
+    {
+        depleted=null;
+        if(damage<=0)return damage;
+        _=SkyTempleNpcCombat.Draw(1,1000); // Native draws even at source chance 1000.
+        int absorbed=Math.Min(Math.Min(damage,source.PerHit),totalHit);
+        totalHit-=absorbed;
+        if(totalHit==0)depleted=effect;
+        return damage-absorbed;
+    }
 
     public AttackShieldObserver(int hit, int totalHit, bool percent, Effect effect, HitType type, ShieldType shieldType, int probability)
         : this(hit, totalHit, percent, false, effect, type, shieldType, probability, 0, 100, null, 0)

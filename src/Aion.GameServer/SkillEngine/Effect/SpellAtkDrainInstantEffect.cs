@@ -19,6 +19,7 @@ public class SpellAtkDrainInstantEffect : DamageEffect
 
     public override void ApplyEffect(Effect effect)
     {
+        if (Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatSpellDrain.TryApply(effect,this,()=>base.ApplyEffect(effect))) return;
         base.ApplyEffect(effect);
         ThreadPoolManager.GetInstance().Schedule(ct =>
         {

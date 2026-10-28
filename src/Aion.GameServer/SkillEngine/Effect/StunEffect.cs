@@ -17,6 +17,7 @@ public class StunEffect : EffectTemplate
 
     public override void Calculate(Effect effect)
     {
+        if (Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatSpellDrain.TryCalculateStun(effect,this)) return;
         base.Calculate(effect, StatEnum.STUN_RESISTANCE, null);
     }
 

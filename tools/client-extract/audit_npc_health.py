@@ -1,61 +1,28 @@
 #!/usr/bin/env python3
-"""Our npc health against retail's, and the placeholder values hiding in it.
+"""Compare explicit 4.8 NPC HP with explicit HP in a supplied retail XML.
 
-WHY THIS EXISTS
----------------
-A fortress killer loaded with **140 max HP**. Retail gives it **327,127**. That was found by accident,
-while working out why a pin could not hold two npcs in a fight -- the killer was being one-shot by the
-garrison chief it was supposed to be hunting.
+Read-only by default. Match the direct name and max_hp children of the same npc;
+missing HP remains absent. Ordered attack/skill data is not a record boundary.
+The former </data> splitter could borrow a following NPC's HP, so its historical
+counts and missing-field comparisons must not be reused as evidence.
 
-> `<stats maxHp="140">` is in our data explicitly. It is not a loader default and not a missing field:
-> it is a value, and it is wrong by a factor of two thousand.
+This legacy audit selects values by developer name. The reviewed npc-audit
+pipeline supplies region/version identities and native C# profile calculations
+for the supported combat-stat adapter. This script does not prove constructor,
+owner/scaling, active encounter or effective combat behavior.
 
-Retail's `npcs.xml` carries `<max_hp>` for every npc in the game. Comparing the two:
+The historical --apply mode replaces only host HP<=200 with explicit retail
+HP>=1000. Current stat work uses reviewed coherent packages; do not invoke this
+repair mode for that rollout.
 
-| | |
-|---|---|
-| comparable npcs | 62,592 |
-| **identical** | **39,512** |
-| ours less than half retail's | 10,703 |
-| ours higher than retail's | 7,723 |
-| within half | 4,652 |
-
-So the bulk imported correctly and a large minority did not.
-
-THE PLACEHOLDER SHAPE
----------------------
-**4,273 of the understated sit at 200 HP or less**, and the values cluster the way a spread of
-placeholders does -- roughly a hundred npcs each at 100, 105, 110, 114, 128, 130, 135, 145. The worst
-of them are not small npcs:
-
-    BLDF5_Fortress_GuardianHead   ours 128   retail 290,150,400
-    BGAB1_Door_Li_4_lv65_BigHP    ours 113   retail 168,000,000
-    BGAB1_LGuardianChief_65_Al    ours 108   retail 156,553,560
-
-A fortress boss with 128 HP is not a balance choice. A siege against one is over before it starts, and
-every npc-versus-npc mechanic in the abyss is being fought by npcs that cannot survive a hit.
-
-WHAT `--apply` CHANGES, AND WHAT IT WILL NOT TOUCH
---------------------------------------------------
-Only the unambiguous case: **ours is 200 or less and retail is at least a thousand.** That is a
-placeholder against a real value, and copying retail's number is the whole fix.
-
-It deliberately leaves alone:
-
-* the 7,723 where **ours is higher** -- that direction is not a placeholder and may be a deliberate
-  choice made here; it needs reading, not a sweep;
-* everything between half and one -- a genuine scaling decision looks like that, and this tool cannot
-  tell one from an import that rounded;
-* npcs with no retail row at all.
-
-Usage:  python audit_npc_health.py [--apply] [--limit N]
+Usage: python audit_npc_health.py [--npcs PATH] [--limit N]
 """
 import argparse
 import collections
-import io
 import pathlib
 import re
 import sys
+import xml.etree.ElementTree as ET
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from client_npc_names import npc_names  # noqa: E402
@@ -63,8 +30,6 @@ from client_npc_names import npc_names  # noqa: E402
 REPO = pathlib.Path(__file__).resolve().parents[2]
 TEMPLATES = REPO / "game-server" / "data" / "static_data" / "npcs" / "npc_templates.xml"
 
-NAME_RE = re.compile(r"<name>([^<]+)</name>")
-HP_RE = re.compile(r"<max_hp>(\d+)</max_hp>")
 OURS_RE = re.compile(r'<npc_template npc_id="(\d+)"[^>]*>\s*<stats maxHp="(\d+)"')
 
 #: Below this, our value is a token rather than a health pool.
@@ -75,22 +40,30 @@ REAL = 1000
 
 
 def retail_health(path):
-    """npc dev name -> max_hp, streamed: the file is over five hundred megabytes."""
+    """Explicit root HP by NPC name; never borrow from another/nested record.
+
+    iterparse reads the XML encoding declaration/BOM and bounds retained payload
+    to each NPC, including records whose ordered lists contain nested `data`.
+    Missing HP stays absent; constructor or script defaults belong to a separate
+    evidence-backed construction audit, not this explicit-value comparison.
+    """
     out = {}
-    buffered = ""
-    with io.open(path, "r", encoding="utf-16", errors="replace") as handle:
-        while True:
-            block = handle.read(1 << 22)
-            if not block:
-                break
-            buffered += block
-            records = buffered.split("</data>")
-            buffered = records.pop()
-            for record in records:
-                named = NAME_RE.search(record)
-                health = HP_RE.search(record)
-                if named and health:
-                    out[named.group(1)] = int(health.group(1))
+    for _, record in ET.iterparse(path, events=("end",)):
+        if record.tag != "npc":
+            continue
+        names, values = record.findall("name"), record.findall("max_hp")
+        if len(names) > 1 or len(values) > 1:
+            raise ValueError("Ambiguous NPC name/max_hp fields")
+        if names and values:
+            name = names[0].text
+            value = values[0].text
+            if not name or value is None or not re.fullmatch(r"[0-9]+", value.strip()):
+                raise ValueError("Invalid NPC name/max_hp field")
+            health = int(value)
+            if name in out and out[name] != health:
+                raise ValueError(f"Conflicting explicit HP for NPC {name}")
+            out[name] = health
+        record.clear()
     return out
 
 

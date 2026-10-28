@@ -19,11 +19,15 @@ public abstract class AbstractHealEffect : EffectTemplate, HealEffectTemplate
     {
         if (!base.Calculate(effect, null, null))
             return;
+        if(healType==HealType.HP&&this is HealInstantEffect heal
+            &&Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatHealCombat.TryCalculate(effect,heal))return;
         effect.SetReserveds(new EffectReserved(Position, CalculateHealValue(effect, healType), EffectReservedResourceTypeExtensions.Of(healType), false), false);
     }
 
     public void ApplyEffect(Effect effect, HealType healType)
     {
+        if(healType==HealType.HP&&this is HealInstantEffect heal
+            &&Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatHealCombat.TryApply(effect,heal))return;
         Creature effected = effect.GetEffected();
         int healValue = effect.GetReserveds(Position).GetValue();
         switch (healType)

@@ -1,6 +1,7 @@
 using Aion.GameServer.Commons.Utils;
 using System.Xml.Serialization;
 using Aion.GameServer.Controllers.Attack;
+using Aion.GameServer.Controllers.Attack.RetailNpc;
 using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.Model.Stats.Container;
@@ -27,26 +28,35 @@ public class BlindEffect : EffectTemplate
 
     public override void StartEffect(Effect effect)
     {
+        bool nativeRecorded=RetailNpcStatPhysicalStatuses.BeginBlind(effect,this);
+        bool nativeNpcDrain=RetailNpcStatSpellDrain.IsSelectedBlind(effect,this);
         effect.SetAbnormal(AbnormalState.BLIND);
         effect.GetEffected().GetEffectController().SetAbnormal(AbnormalState.BLIND);
-        effect.AddObserver(effect.GetEffected(), new BlindObserver(Value));
+        effect.AddObserver(effect.GetEffected(), new BlindObserver(Value,nativeRecorded,nativeNpcDrain));
     }
 
     public override void EndEffect(Effect effect)
     {
+        RetailNpcStatPhysicalStatuses.EndBlind(effect);
         effect.GetEffected().GetEffectController().UnsetAbnormal(AbnormalState.BLIND);
     }
 
     private sealed class BlindObserver : AttackStatusObserver
     {
-        public BlindObserver(int value)
+        internal readonly bool NativeRecorded;
+        private readonly bool nativeNpcDrain;
+        public BlindObserver(int value,bool nativeRecorded,bool nativeNpcDrain)
             : base(value, AttackStatus.DODGE)
         {
+            NativeRecorded=nativeRecorded;
+            this.nativeNpcDrain=nativeNpcDrain;
         }
 
         public override bool CheckAttackerStatus(AttackStatus status)
         {
-            return Rnd.Chance() < Value;
+            return nativeNpcDrain ? RetailNpcStatSpellDrain.BlindMiss(Value,SkyTempleNpcCombat.Draw) : Rnd.Chance() < Value;
         }
     }
+    internal static bool IsNativeRecordedObserver(AttackCalcObserver observer)
+        =>observer is BlindObserver {NativeRecorded:true};
 }

@@ -62,6 +62,17 @@ public static class NpcSkillCasting
     /// <summary>Returns the level an NPC's npc_skills entry gives a skill.</summary>
     public static int LevelOf(Npc owner, int skillId, int fallbackLevel = 1)
     {
+        if (Aion.GameServer.Retail.SkyTempleNpcProfileCatalog.TryGet(owner, out var profile))
+        {
+            // Source order is significant when an ID has more than one binding.
+            foreach (var entry in profile.Skills)
+                if (entry.Id48 == skillId) return entry.Level;
+            return fallbackLevel;
+        }
+        // Same independently bound numeric level as automatic entries. This
+        // helper still requests exactly the caller's original skill/action.
+        if(Aion.GameServer.Retail.RetailNpcStatSkillLevels.GetDirectLevel(owner,skillId) is { } selectedLevel)
+            return selectedLevel;
         NpcSkillList? skills = owner.GetSkillList();
         if (skills == null)
             return fallbackLevel;

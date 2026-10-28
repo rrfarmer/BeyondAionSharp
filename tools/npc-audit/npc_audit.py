@@ -362,6 +362,68 @@ def stats_package(args):
     print(json.dumps({'report': str(out / 'profiles.json'), **summary}))
 
 
+def curse_scenario(args):
+    """Project supplied native-stage numbers without creating actors or enabling effects."""
+    dll = REPO / 'tools/Aion.NpcAudit/bin/Debug/net10.0/Aion.NpcAudit.dll'
+    need(dll.is_file(), 'Build tools/Aion.NpcAudit first; this command never builds')
+    values = [args.percentage_base, args.unscaled_total, args.existing_percent, args.added_percent,
+              args.old_maximum, args.current]
+    result = subprocess.run(['dotnet', str(dll), '--curse-scenario', args.resource,
+                             *map(str, values)], cwd=REPO, capture_output=True, text=True)
+    need(result.returncode == 0, 'Calculator failed: ' + result.stderr.strip())
+    report = loads(result.stdout)
+    report['calculator_sha256'] = sha_file(dll)
+    print(json.dumps(report, indent=2))
+
+
+def curse_class_bases(args):
+    """Compare class base inputs without creating a player or changing gameplay."""
+    ensure_dll_window()
+    dll = REPO / 'tools/Aion.NpcAudit/bin/Debug/net10.0/Aion.NpcAudit.dll'
+    need(dll.is_file(), 'Build tools/Aion.NpcAudit first; this command never builds')
+    game_dll = dll.parent / 'Aion.GameServer.dll'
+    need(game_dll.is_file(), 'The GameServer calculator assembly is missing')
+    result = subprocess.run(['dotnet', str(dll), '--curse-class-bases', args.player_class, str(args.level)],
+                            cwd=REPO, capture_output=True, text=True)
+    need(result.returncode == 0, 'Calculator failed: ' + result.stderr.strip())
+    report = loads(result.stdout)
+    report['calculator_sha256'] = sha_file(dll)
+    report['game_server_sha256'] = sha_file(game_dll)
+    print(json.dumps(report, indent=2))
+
+
+def armor_enchant_comparison(args):
+    import armor_enchant  # Optional equipment experiment; never needed by stat commands.
+    """Compare an armor item's selected enchant tables without changing gear or gameplay."""
+    ensure_dll_window()
+    dll = REPO / 'tools/Aion.NpcAudit/bin/Debug/net10.0/Aion.NpcAudit.dll'
+    need(dll.is_file(), 'Build tools/Aion.NpcAudit first; this command never builds')
+    game_dll = dll.parent / 'Aion.GameServer.dll'
+    need(game_dll.is_file(), 'The GameServer calculator assembly is missing')
+    calculator_sha, game_sha = sha_file(dll), sha_file(game_dll)
+    retail_items, _ = armor_enchant.selected_region_file(args.retail_root, 'item_armors.xml')
+    retail_tables, _ = armor_enchant.selected_region_file(args.retail_root, 'item_enchanttable.xml')
+    paths = [retail_items, retail_tables, args.host_items, args.host_tables]
+    before = {str(path.resolve()): sha_file(path) for path in paths}
+    selected = armor_enchant.prepare(args.item, args.level, args.retail_root, args.host_items, args.host_tables, args.stat)
+    need([p.resolve() for p in selected['source_paths']] == [p.resolve() for p in paths], 'Source selection changed')
+    scenario = '--armor-hp-enchant-scenario' if args.stat == 'max-hp' else '--armor-enchant-scenario'
+    result = subprocess.run(['dotnet', str(dll), scenario, *map(str, selected['inputs'])],
+                            cwd=REPO, capture_output=True, text=True)
+    need(result.returncode == 0, 'Calculator failed: ' + result.stderr.strip())
+    need(all(sha_file(path) == before[str(path.resolve())] for path in paths), 'A source file changed during comparison')
+    need(sha_file(dll) == calculator_sha and sha_file(game_dll) == game_sha, 'Calculator changed during comparison')
+    report = loads(result.stdout)
+    report.update({k: v for k, v in selected.items() if k not in ('source_paths', 'inputs')})
+    report['selected_operands'] = selected['inputs']
+    report['sources_sha256'] = before
+    report['calculator_sha256'] = calculator_sha
+    report['game_server_assembly_sha256'] = game_sha
+    report['scope'] = (f'{args.stat} enchant contribution only. The supplied item is not equipped or changed; '
+                       'actual selection, eligibility, gear bonuses, armor revision and final player stats are not established.')
+    print(json.dumps(report, indent=2))
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest='command', required=True)
@@ -392,6 +454,25 @@ def main(argv=None):
     p.add_argument('--templates', type=Path, default=REPO / 'game-server/data/static_data/npcs/npc_templates.xml')
     p.add_argument('--no-build', action='store_true')
     p.set_defaults(run=stats_package)
+    p = sub.add_parser('curse-scenario', help='Offline 5.8 curse arithmetic for explicitly supplied native-stage player inputs')
+    p.add_argument('--resource', required=True, choices=['hp', 'mp'])
+    p.add_argument('--percentage-base', required=True, type=int, help='Retail percentage-scaled base, including applicable inherent armor')
+    p.add_argument('--unscaled-total', required=True, type=int, help='All other native contributions before percentage adjustment')
+    p.add_argument('--existing-percent', required=True, type=int, help='Aggregate existing retail percent modifier')
+    p.add_argument('--added-percent', required=True, type=int, help='Curse percentage; use -35 for the reviewed sources')
+    p.add_argument('--old-maximum', required=True, type=int); p.add_argument('--current', required=True, type=int)
+    p.set_defaults(run=curse_scenario)
+    p = sub.add_parser('curse-class-bases', help='Compare 4.8 class bases with the 5.8 curse percentage-base calculation')
+    p.add_argument('--class', dest='player_class', required=True, help='Named 4.8 class or all')
+    p.add_argument('--level', type=int, required=True, help='4.8 player level, 1 through 65')
+    p.set_defaults(run=curse_class_bases)
+    p = sub.add_parser('armor-enchant', help='Compare an armor item\'s 4.8 and 5.8 enchant contribution')
+    p.add_argument('--item', required=True, type=int); p.add_argument('--level', required=True, type=int)
+    p.add_argument('--stat', choices=('physical-defense', 'max-hp'), default='physical-defense')
+    p.add_argument('--retail-root', type=Path, default=Path(r'D:\Aion58ServerTesting\Server\Map\XML'))
+    p.add_argument('--host-items', type=Path, default=REPO / 'game-server/data/static_data/items/item_templates.xml')
+    p.add_argument('--host-tables', type=Path, default=REPO / 'game-server/data/static_data/enchants/enchant_templates.xml')
+    p.set_defaults(run=armor_enchant_comparison)
     args = parser.parse_args(argv)
     try:
         args.run(args)

@@ -30,10 +30,20 @@ public class EffectController
     private volatile Dictionary<string, Effect> passiveEffectMap = EMPTY_MAP;
     private readonly Dictionary<string, Effect> abnormalEffectMap = new Dictionary<string, Effect>();
     private int abnormals;
+    // NPC damage reads the native Stumble bit, whose End clears unconditionally
+    // (140b8efda -> 140363280), independently of the legacy player owner union.
+    // Creature::Init14034f785 starts this bit clear. This value never controls
+    // player/PvP state, packets, effect admission or scheduling.
+    private int retailNpcStumbleActive;
+    internal bool RetailNpcStumbleActive => Volatile.Read(ref retailNpcStumbleActive) != 0;
+    private readonly Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatTargetConditions? retailNpcPeriodicConditions;
+    internal int RetailNpcTargetConditionMask=>retailNpcPeriodicConditions?.Mask??0;
+    internal int RetailNpcPoisonBleedMask=>RetailNpcTargetConditionMask&3;
 
     public EffectController(Creature owner)
     {
         this.owner = owner;
+        if(owner is Player)retailNpcPeriodicConditions=new();
     }
 
     public virtual Creature GetOwner()
@@ -43,6 +53,7 @@ public class EffectController
 
     public virtual void AddEffect(Effect nextEffect)
     {
+        if (nextEffect.PreparedNpcDrainInitialAborted || Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatSpellDrain.InitialCommitPending(nextEffect)) return;
         Dictionary<string, Effect> mapToUpdate = GetMapForEffect(nextEffect);
 
         bool useEffectId = true;
@@ -127,6 +138,7 @@ public class EffectController
         try
         {
             mapToUpdate[nextEffect.GetStack()] = nextEffect;
+            Aion.GameServer.Controllers.Movement.SkyTempleNpcReturnState.RegisteredEffect(owner,nextEffect);
         }
         finally
         {
@@ -415,6 +427,15 @@ public class EffectController
     public void RemovePetOrderUnSummonEffects()
     {
         RemoveEffects(abnormalEffectMap, e => e.IsPetOrderUnSummonEffect());
+    }
+
+    // Native CloseAerial type-vector55 removes matching active effects,
+    // independently of their originating skill ID. Only the selected NPC
+    // close callback reaches this method; player/PvP callers keep their owner.
+    internal void RemoveRetailNpcAerialEffects()
+    {
+        if(owner is Player)
+            RemoveEffects(abnormalEffectMap, e => e.GetEffectTemplates().Any(t => t is OpenAerialEffect));
     }
 
     public void RemoveParalyzeEffects()
@@ -843,8 +864,14 @@ public class EffectController
 
     public void SetAbnormal(AbnormalState state)
     {
+        // Native state commits before its subsequent notifications. This read
+        // side never changes the existing player/PvP abnormal union below.
+        retailNpcPeriodicConditions?.Set(state);
+        var retail=owner is Npc npc?Aion.GameServer.Controllers.Attack.RetailNpc.SkyTempleNpcSkillState.AbnormalChange.Capture(npc):null;
         owner.GetObserveController().NotifyAbnormalSettedObservers(state);
         abnormals |= state.GetId();
+        if (owner is Player && (state & AbnormalState.STUMBLE) != 0)
+            Volatile.Write(ref retailNpcStumbleActive, 1);
 
         // TODO move to observer?
         // if player is sitting when setting certain abnormal states, he is forcefully made to stand up
@@ -856,11 +883,15 @@ public class EffectController
                 PacketSendUtility.BroadcastPacket((Player)owner, new SM_EMOTION(owner, EmotionType.STAND), true);
             }
         }
+        retail?.Set(state);
     }
 
     public void UnsetAbnormal(AbnormalState state)
     {
+        retailNpcPeriodicConditions?.Clear(state);
+        var retail=owner is Npc npc?Aion.GameServer.Controllers.Attack.RetailNpc.SkyTempleNpcSkillState.AbnormalChange.Capture(npc):null;
         int count = 0;
+        bool retained=false;
         @lock.EnterReadLock();
         try
         {
@@ -869,7 +900,7 @@ public class EffectController
                 if ((effect.GetAbnormals() & state.GetId()) == state.GetId())
                 {
                     if (++count == 2)
-                        return;
+                    {retained=true;break;}
                 }
             }
         }
@@ -877,7 +908,12 @@ public class EffectController
         {
             @lock.ExitReadLock();
         }
-        abnormals &= ~state.GetId();
+        if(!retained)abnormals &= ~state.GetId();
+        if (owner is Player && (state & AbnormalState.STUMBLE) != 0)
+            Volatile.Write(ref retailNpcStumbleActive, 0);
+        // Preserve4.8 effective-stack ownership. The sourceNPC mirror receives
+        // every normally completed Clear attempt, after releasing the effect lock.
+        retail?.Clear(state);
     }
 
     /// <summary>Used for checking unique abnormal states.</summary>

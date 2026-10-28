@@ -1,10 +1,10 @@
 using System;
-using Aion.GameServer.Controllers.Attack.RetailNpc;
 using Aion.GameServer.Model.Templates.Items;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Controllers.Attack;
+using Aion.GameServer.Controllers.Attack.RetailNpc;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
@@ -30,6 +30,15 @@ namespace Aion.GameServer.Controllers;
 public abstract class CreatureController : VisibleObjectController
 {
     private static readonly ILogger log = AionLog.For(nameof(CreatureController));
+    private long retailLifeEpoch;
+    internal long RetailLifeEpoch => System.Threading.Volatile.Read(ref retailLifeEpoch);
+    private void RetireRetailLife()
+    {
+        // The selected periodic/regen final guard uses this same HP lock. Release it
+        // before any effect retirement or other callback acquires its own owner gate.
+        lock(GetOwner().GetLifeStats())
+            System.Threading.Interlocked.Increment(ref retailLifeEpoch);
+    }
     private volatile Aion.GameServer.Controllers.Observer.TerrainZoneCollisionMaterialActor actor;
     private readonly ConcurrentDictionary<int, ScheduledTask> tasks = new ConcurrentDictionary<int, ScheduledTask>();
 
@@ -114,6 +123,7 @@ public abstract class CreatureController : VisibleObjectController
     /// <summary>Perform tasks on Creature death. Should ONLY be called from CreatureLifeStats to avoid duplicate death events.</summary>
     public virtual void OnDie(Creature lastAttacker)
     {
+        RetireRetailLife();
         GetOwner().GetMoveController().AbortMove();
         GetOwner().SetCasting(null);
         GetOwner().GetEffectController().RemoveAllEffects();
@@ -126,7 +136,7 @@ public abstract class CreatureController : VisibleObjectController
             GetOwner().SetState(CreatureState.DEAD);
         GetOwner().GetObserveController().NotifyDeathObservers(lastAttacker);
         PacketSendUtility.BroadcastPacketAndReceive(GetOwner(),
-            new SM_EMOTION(GetOwner(), EmotionType.DIE, 0, GetOwner().Equals(lastAttacker) ? 0 : lastAttacker.GetObjectId()));
+            new SM_EMOTION(GetOwner(), EmotionType.DIE, 0, lastAttacker == null || GetOwner().Equals(lastAttacker) ? 0 : lastAttacker.GetObjectId()));
         GetOwner().GetKnownList().ForEachObject(o =>
         {
             if (o is Creature creature)
@@ -178,7 +188,55 @@ public abstract class CreatureController : VisibleObjectController
     /// criticalProcEffect: stumble which procced from an earlier critical hit and is applied on top of this damage, null if none procced.
     /// criticalHit: whether the attack status packet must mark this damage as a critical hit.
     /// </remarks>
-    private void OnAttack(Creature attacker, Effect effect, TYPE type, int damage, bool notifyAttack, LOG logId, AttackStatus? status, HopType? hopType, Effect criticalProcEffect, bool criticalHit)
+    internal void OnRetailPeriodicAttack(SkyTempleNpcPeriodicEffects.TickDispatch dispatch)
+    {
+        var current=dispatch.ClaimFor(GetOwner());
+        if(!PrepareRetailNpcAttack(current.Source))return;
+        OnAttack(current.Source!,current.Effect,TYPE.DAMAGE,current.Damage,false,current.Log,
+            current.Effect.GetAttackStatus(),current.Hop,null!,current.Critical,dispatch);
+        FinishRetailNpcAttack(current.Source);
+    }
+
+    internal void OnRetailSkillAttack(SkyTempleNpcSkillTiming.ImpactDispatch dispatch)
+    {
+        var current=dispatch.ClaimFor(GetOwner());
+        if(!PrepareRetailNpcAttack(current.Source))return;
+        OnAttack(current.Source,current.Effect,TYPE.REGULAR,current.Damage,true,LOG.REGULAR,
+            current.Effect.GetAttackStatus(),current.Hop,null!,false,null,dispatch);
+        FinishRetailNpcAttack(current.Source);
+    }
+    internal void OnStatisticsPeriodicAttack(RetailNpcStatPeriodicCombat.TickDispatch dispatch)
+    {
+        dispatch.ClaimFor(GetOwner());
+        if(!PrepareRetailNpcAttack(dispatch.Caster))return;
+        if(GetOwner() is Npc && GetOwner().IsDead())return;
+        OnAttack(dispatch.Caster!,dispatch.Effect,TYPE.DAMAGE,dispatch.Damage,false,dispatch.Log,
+            dispatch.Critical?AttackStatus.CRITICAL:AttackStatus.NORMALHIT,dispatch.Hop,null!,dispatch.Critical,statPeriodic:dispatch);
+        FinishRetailNpcAttack(dispatch.Caster);
+        if(GetOwner() is Npc target && dispatch.Caster is { } source)
+            Aion.GameServer.Ai.Handler.ShoutEventHandler.OnEnemyAttack((Aion.GameServer.Ai.NpcAI)target.GetAi(),source);
+    }
+    internal void OnPreparedNpcDrainInitialAttack(RetailNpcStatSpellDrain.NpcInitialDispatch dispatch,HopType? hop)
+    {
+        dispatch.Claim(GetOwner());
+        OnAttack(dispatch.Caster,dispatch.Effect,TYPE.REGULAR,dispatch.Damage,true,LOG.REGULAR,
+            dispatch.Effect.GetAttackStatus(),hop,null!,false,statInitial:dispatch);
+    }
+    internal void OnRetailPlayerDrainAttack(RetailNpcStatSpellDrain.PlayerInitialDispatch dispatch,HopType? hop)
+    {
+        dispatch.Claim(GetOwner());
+        bool provoked=dispatch.Effect.GetSkillTemplate().GetActivationAttribute()==ActivationAttribute.PROVOKED;
+        OnAttack(dispatch.Caster,dispatch.Effect,provoked?TYPE.DAMAGE:TYPE.REGULAR,dispatch.Damage,true,
+            provoked?LOG.PROCATKINSTANT:LOG.REGULAR,dispatch.Effect.GetAttackStatus(),hop,null!,false,playerDrain:dispatch);
+    }
+    protected virtual bool PrepareRetailNpcAttack(Creature? attacker)=>true;
+    protected virtual void FinishRetailNpcAttack(Creature? attacker) { }
+
+    private void OnAttack(Creature attacker, Effect effect, TYPE type, int damage, bool notifyAttack, LOG logId, AttackStatus? status, HopType? hopType, Effect criticalProcEffect, bool criticalHit,
+        SkyTempleNpcPeriodicEffects.TickDispatch? periodic = null,SkyTempleNpcSkillTiming.ImpactDispatch? impact = null,
+        RetailNpcStatPeriodicCombat.TickDispatch? statPeriodic = null,
+        RetailNpcStatSpellDrain.NpcInitialDispatch? statInitial = null,
+        RetailNpcStatSpellDrain.PlayerInitialDispatch? playerDrain = null)
     {
         if (!GetOwner().IsSpawned())
             return;
@@ -214,14 +272,16 @@ public abstract class CreatureController : VisibleObjectController
         // is also the only place that knows WHICH skill, which retail's is_event_skill_id asks about.
         // The event itself carries only the caster, so the id is handed over first; PatternAi clears
         // it in the same finally that clears LastCaster.
-        if (effect != null)
+        if (effect != null && attacker is not null)
         {
             if (GetOwner().GetAi() is Aion.GameServer.Ai.Pattern.PatternAi spelled)
                 spelled.NoteSpelledSkill(effect.GetSkillId());
             GetOwner().GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.Spelled, attacker);
         }
 
-        GetOwner().GetAggroList().AddDamage(attacker, damage, notifyAttack, hopType);
+        // Legacy AggroList.IsAware explicitly rejects null; only the private
+        // periodic registry dispatch can legitimately have no current source.
+        GetOwner().GetAggroList().AddDamage(attacker!, damage, notifyAttack, hopType);
 
         // notify all NPC's around that creature is attacking me
         GetOwner().GetKnownList().ForEachNpc(npc => npc.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.CreatureNeedsSupport, GetOwner()));
@@ -229,8 +289,20 @@ public abstract class CreatureController : VisibleObjectController
         // Retail's on_see_friend_attacked and on_friend_spelled, which aionemu has no events for.
         // Beside the fan-out above because it walks the same list; see Ai/FriendCombatNotice.
         Aion.GameServer.Ai.FriendCombatNotice.Raise(GetOwner(), attacker, effect != null);
-        GetOwner().GetLifeStats().ReduceHp(type, damage, effect == null ? 0 : effect.GetSkillId(), logId, attacker, criticalHit);
+        int hpBefore = GetOwner().GetLifeStats().GetCurrentHp();
+        if(playerDrain is not null)GetOwner().GetLifeStats().ReduceRetailPlayerDrainHp(playerDrain);
+        else if(statPeriodic is not null)GetOwner().GetLifeStats().ReduceStatisticsPeriodicHp(statPeriodic);
+        else if(statInitial is not null)GetOwner().GetLifeStats().ReducePreparedNpcDrainInitialHp(statInitial);
+        else if(periodic is not null)GetOwner().GetLifeStats().ReduceRetailPeriodicHp(periodic);
+        else if(impact is not null)GetOwner().GetLifeStats().ReduceRetailSkillHp(impact);
+        else GetOwner().GetLifeStats().ReduceHp(type, damage, effect == null ? 0 : effect.GetSkillId(), logId, attacker!, criticalHit);
+        if((periodic is not null||statPeriodic is not null) && attacker is null)
+            SkyTempleNpcCombat.LogOrphanPeriodicHp(effect ?? throw new InvalidOperationException("Periodic HP work lost its owned Effect"),
+                damage,hpBefore,GetOwner().GetLifeStats().GetCurrentHp());
+        else SkyTempleNpcCombat.LogHp(attacker!, GetOwner(), effect == null ? 0 : effect.GetSkillId(), damage,
+            hpBefore, GetOwner().GetLifeStats().GetCurrentHp());
         GetOwner().IncrementAttackedCount();
+        SkyTempleNpcProtection.CompleteEffectReflection(effect);
 
         if (!GetOwner().IsDead() && attacker is Player player)
         {
@@ -292,6 +364,17 @@ public abstract class CreatureController : VisibleObjectController
 
     public virtual void AttackTarget(Creature target, int time, bool skipChecks)
     {
+        // An empty retail normal vector contains no automatic normal action.
+        // Preserve existing skill/AI owners without inventing a raw-attack auto.
+        if (GetOwner() is Npc statNpc && Aion.GameServer.Retail.RetailNpcStatCatalog.TryGet(statNpc,out var statProfile)
+            && statProfile.Attacks.IsEmpty) return;
+        if(SkyTempleNpcCombat.RejectUnverifiedTarget(GetOwner(),target))return;
+        uint? retailAttackTick=null;
+        if(GetOwner() is Npc recoveryNpc && Aion.GameServer.Retail.SkyTempleNpcProfileCatalog.TryGet(recoveryNpc,out _))
+        {
+            if(SkyTempleNpcSkillState.GetNextActionInterval(recoveryNpc)>0)return;
+            retailAttackTick=SystemClock.RetailTick32();
+        }
         bool addAttackObservers = true;
         if (!skipChecks
             && (target == null || GetOwner().IsDead() || GetOwner().GetLifeStats().IsAboutToDie() || !GetOwner().CanAttack() || !GetOwner().IsSpawned()))
@@ -312,7 +395,7 @@ public abstract class CreatureController : VisibleObjectController
         ISet<CalculationType> calculationTypes = new HashSet<CalculationType> { CalculationType.APPLY_POWER_SHARD_DAMAGE, CalculationType.REMOVE_POWER_SHARD };
         if (GetOwner() is Player p && p.GetEquipment().IsDualWeaponEquipped())
             calculationTypes.Add(CalculationType.DUAL_WIELD);
-        if (SkyTempleNpcCombat.TryCalculateNormal(GetOwner(), target, out var retailNormal, out var retailElement, calculationTypes))
+        if (SkyTempleNpcCombat.TryCalculateNormal(GetOwner(), target, out var retailNormal, out var retailElement,calculationTypes))
         {
             attackResult = retailNormal;
             if (retailElement != SkillElement.NONE)
@@ -352,15 +435,25 @@ public abstract class CreatureController : VisibleObjectController
             Aion.GameServer.Ai.Event.AiEventType.CreatureNeedsHelp);
 
         GetOwner().GetGameStats().IncreaseAttackCounter();
+        if(retailAttackTick.HasValue)SkyTempleNpcSkillState.NormalEmitted((Npc)GetOwner(),retailAttackTick.Value);
         if (addAttackObservers)
         {
             GetOwner().GetObserveController().NotifyAttackObservers(target, 0);
         }
 
+        var retailReflection = SkyTempleNpcProtection.NormalReflection(GetOwner(), target, attackResult);
         if (time == 0)
+        {
             target.GetController().OnAttack(GetOwner(), damage, firstAttackStatus, criticalProcEffect);
+            retailReflection?.Complete();
+        }
         else
-            ThreadPoolManager.GetInstance().Schedule(_ => { new DelayedOnAttack(target, GetOwner(), damage, firstAttackStatus, criticalProcEffect).Run(); return System.Threading.Tasks.ValueTask.CompletedTask; }, TimeSpan.FromMilliseconds(time));
+        {
+            // Capture the target generation at launch, before the timer can outlive a
+            // despawn/respawn of the same managed object. Impact only executes that work.
+            var pending = new DelayedOnAttack(target, GetOwner(), damage, firstAttackStatus, criticalProcEffect,retailReflection);
+            ThreadPoolManager.GetInstance().Schedule(_ => { pending.Run(); return System.Threading.Tasks.ValueTask.CompletedTask; }, TimeSpan.FromMilliseconds(time));
+        }
     }
 
     /// <summary>Handle dialog select: GetOwner() is the target/dialog sender; the given player clicked the dialog.</summary>
@@ -435,6 +528,8 @@ public abstract class CreatureController : VisibleObjectController
 
     public override void OnDelete()
     {
+        RetireRetailLife();
+        SkyTempleNpcPeriodicEffects.RetireTarget(GetOwner());
         CancelAllTasks();
         base.OnDelete();
     }
@@ -521,6 +616,8 @@ public abstract class CreatureController : VisibleObjectController
         Skill castingSkill = creature.GetCastingSkill();
         if (castingSkill != null)
         {
+            if(creature is Npc retailNpc)SkyTempleNpcSkillState.Cancel(retailNpc,castingSkill.GetSkillId());
+            SkyTempleNpcSkillTiming.Cancel(castingSkill);
             castingSkill.CancelCast();
             creature.SetCasting(null);
         }
@@ -579,6 +676,8 @@ public abstract class CreatureController : VisibleObjectController
 
     public override void OnDespawn()
     {
+        RetireRetailLife();
+        SkyTempleNpcPeriodicEffects.RetireTarget(GetOwner());
         base.OnDespawn();
         if (actor != null)
         {
@@ -598,19 +697,32 @@ public abstract class CreatureController : VisibleObjectController
         private int finalDamage;
         private AttackStatus attackStatus;
         private Effect criticalProcEffect;
+        private SkyTempleNpcProtection.PendingReflection retailReflection;
+        private readonly bool retail;
+        private readonly long targetEpoch;
+        private readonly int map, instance;
 
-        public DelayedOnAttack(Creature target, Creature creature, int finalDamage, AttackStatus attackStatus, Effect criticalProcEffect)
+        public DelayedOnAttack(Creature target, Creature creature, int finalDamage, AttackStatus attackStatus, Effect criticalProcEffect,
+            SkyTempleNpcProtection.PendingReflection retailReflection = null)
         {
             this.target = target;
             this.creature = creature;
             this.finalDamage = finalDamage;
             this.attackStatus = attackStatus;
             this.criticalProcEffect = criticalProcEffect;
+            this.retailReflection = retailReflection;
+            retail = SkyTempleNpcCombat.IsCohortCombat(creature,target);
+            targetEpoch = target.GetController().RetailLifeEpoch;
+            map = target.GetWorldId(); instance = target.GetInstanceId();
         }
 
         public void Run()
         {
+            if (retail && (!target.IsSpawned() || target.IsDead() || target.GetController().RetailLifeEpoch != targetEpoch
+                || target.GetWorldId()!=map || target.GetInstanceId()!=instance || !creature.IsSpawned()
+                || creature.GetWorldId()!=map || creature.GetInstanceId()!=instance)) return;
             target.GetController().OnAttack(creature, finalDamage, attackStatus, criticalProcEffect);
+            retailReflection?.Complete();
             target = null;
             creature = null;
             criticalProcEffect = null;

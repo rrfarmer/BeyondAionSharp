@@ -28,6 +28,75 @@ public abstract class CreatureGameStats
     protected readonly Creature owner;
     private readonly ConcurrentDictionary<StatEnum, List<IStatFunction>> stats = new ConcurrentDictionary<StatEnum, List<IStatFunction>>();
 
+    // Low 31 bits count active collection writers, bit 31 is a short resource
+    // commit reservation, and high 32 bits count completed writes. A single
+    // atomic read can detect both an active writer
+    // and an add/remove pair during one retail curse stat observation. This
+    // does not cover mutations inside a function or reserve the observed state.
+    private long retailStatMutationStamp;
+    internal sealed class RetailStatMutationOwner
+    {
+        internal long Completed;
+        internal readonly object Gate=new();
+        internal HashSet<IStatFunction>? Expected;
+    }
+    private System.Runtime.CompilerServices.ConditionalWeakTable<Effect,RetailStatMutationOwner>? retailStatOwners;
+    private const long RetailStatReservation=0x80000000L;
+    private void BeginRetailStatMutation()
+    {
+        var spin=new System.Threading.SpinWait();
+        while(true)
+        {
+            long stamp=System.Threading.Volatile.Read(ref retailStatMutationStamp);
+            if((stamp & RetailStatReservation)!=0){spin.SpinOnce();continue;}
+            if((stamp & 0x7fffffffL)==0x7fffffffL)throw new InvalidOperationException("Too many concurrent stat writers");
+            if(System.Threading.Interlocked.CompareExchange(ref retailStatMutationStamp,unchecked(stamp+1),stamp)==stamp)return;
+        }
+    }
+    private void EndRetailStatMutation(IStatOwner? statOwner,bool preparedCurseMutation=false)
+    {
+        try
+        {
+            var owners=System.Threading.Volatile.Read(ref retailStatOwners);
+            if(preparedCurseMutation &&statOwner is Effect effect &&owners is not null &&owners.TryGetValue(effect,out var tracked))
+                System.Threading.Interlocked.Increment(ref tracked.Completed);
+        }
+        finally { System.Threading.Interlocked.Add(ref retailStatMutationStamp, 0xffffffffL); }
+    }
+    internal RetailStatMutationOwner TrackRetailStatOwner(Effect effect)
+    {
+        var owners=System.Threading.Volatile.Read(ref retailStatOwners);
+        if(owners is null)
+        {
+            var created=new System.Runtime.CompilerServices.ConditionalWeakTable<Effect,RetailStatMutationOwner>();
+            owners=System.Threading.Interlocked.CompareExchange(ref retailStatOwners,created,null)??created;
+        }
+        return owners.GetValue(effect,static _=>new());
+    }
+    internal bool TryCaptureRetailStatMutation(out long stamp)
+    {
+        stamp=System.Threading.Volatile.Read(ref retailStatMutationStamp);
+        return (stamp & 0xffffffffL)==0;
+    }
+    internal bool RetailStatMutationUnchanged(long stamp)
+        => (stamp & 0xffffffffL)==0 &&System.Threading.Volatile.Read(ref retailStatMutationStamp)==stamp;
+    // Call only for the short resource write, after max-stat calculation and
+    // before callbacks. Never wait for existing writers while holding HP.
+    internal bool TryReserveRetailStatCommit(long stamp)
+        => (stamp & 0xffffffffL)==0 &&System.Threading.Interlocked.CompareExchange(
+            ref retailStatMutationStamp,stamp | RetailStatReservation,stamp)==stamp;
+    internal void ReleaseRetailStatCommit(long stamp)
+    {
+        if(System.Threading.Interlocked.CompareExchange(ref retailStatMutationStamp,stamp,stamp | RetailStatReservation)
+            !=(stamp | RetailStatReservation))throw new InvalidOperationException("Retail stat reservation changed");
+    }
+    internal bool TryRetailExternalStatMutations(long stamp,RetailStatMutationOwner tracked,out uint count)
+    {
+        long owned=System.Threading.Volatile.Read(ref tracked.Completed);
+        count=unchecked((uint)(stamp >> 32)-(uint)owned);
+        return RetailStatMutationUnchanged(stamp);
+    }
+
     private int attackCounter = 0;
     private int cachedSpeed;
 
@@ -67,27 +136,61 @@ public abstract class CreatureGameStats
 
     // Java parity: List<? extends IStatFunction> -> C# covariant IEnumerable (body only iterates).
     public void AddEffectOnly(IStatOwner statOwner, IEnumerable<IStatFunction> functions)
+        => AddEffectOnlyCore(statOwner,functions,false);
+
+    private void AddEffectOnlyCore(IStatOwner statOwner,IEnumerable<IStatFunction> functions,bool preparedCurseMutation)
     {
-        foreach (IStatFunction function in functions)
+        bool completed=false;
+        BeginRetailStatMutation();
+        try
         {
-            IStatFunction functionToAdd = Equals(statOwner, function.GetOwner()) ? function : new StatFunctionProxy(statOwner, function);
-            stats.AddOrUpdate(functionToAdd.GetName(),
-                k =>
-                {
-                    List<IStatFunction> statFunctions = new List<IStatFunction>();
-                    statFunctions.Add(functionToAdd);
-                    return statFunctions;
-                },
-                (k, statFunctions) =>
-                {
-                    lock (statFunctions)
+            foreach (IStatFunction function in functions)
+            {
+                IStatFunction functionToAdd = Equals(statOwner, function.GetOwner()) ? function : new StatFunctionProxy(statOwner, function);
+                stats.AddOrUpdate(functionToAdd.GetName(),
+                    k =>
                     {
+                        List<IStatFunction> statFunctions = new List<IStatFunction>();
                         statFunctions.Add(functionToAdd);
-                        statFunctions.Sort();
-                    }
-                    return statFunctions;
-                });
+                        return statFunctions;
+                    },
+                    (k, statFunctions) =>
+                    {
+                        lock (statFunctions)
+                        {
+                            statFunctions.Add(functionToAdd);
+                            statFunctions.Sort();
+                        }
+                        return statFunctions;
+                    });
+            }
+            completed=true;
         }
+        finally { EndRetailStatMutation(statOwner,preparedCurseMutation &&completed); }
+    }
+
+    // Only the prepared curse owner may discount its exact HP/MP pair. Generic
+    // additions attributed to the same effect still invalidate its witness.
+    internal void AddPreparedRetailCurseEffectOnly(Effect effect,IReadOnlySet<IStatFunction> selected)
+    {
+        ArgumentNullException.ThrowIfNull(selected);
+        if(!ReferenceEquals(effect.GetEffected(),owner)
+            ||!Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatSpellDrain.HasPreparedCurse(effect)
+            ||selected.Count!=2 ||selected.Any(f=>f.GetType()!=typeof(StatAddFunction) ||!f.IsBonus() ||f.HasConditions())
+            ||selected.Count(f=>f.GetName()==StatEnum.MAXHP)!=1 ||selected.Count(f=>f.GetName()==StatEnum.MAXMP)!=1)
+            throw new InvalidOperationException("Prepared retail curse stat pair differs");
+        bool approved=false;
+        var owners=System.Threading.Volatile.Read(ref retailStatOwners);
+        if(owners is not null &&owners.TryGetValue(effect,out var tracked))
+        {
+            lock(tracked.Gate)
+            {
+                if(tracked.Expected is not null)throw new InvalidOperationException("Prepared retail curse stat pair already bound");
+                tracked.Expected=new HashSet<IStatFunction>(selected,ReferenceEqualityComparer.Instance);
+                approved=true;
+            }
+        }
+        AddEffectOnlyCore(effect,selected,approved);
     }
 
     public void AddEffect(IStatOwner statOwner, IEnumerable<IStatFunction> functions)
@@ -96,28 +199,69 @@ public abstract class CreatureGameStats
         OnStatsChange(statOwner is Effect effect ? effect : null);
     }
 
-    // Retire only this source overlay when its NPC target becomes owned/scaled.
-    // Other owners, unrelated effect components and the existing expiry remain.
-    internal void ReplaceOwnedFunctions(IStatOwner statOwner, IReadOnlySet<IStatFunction> previous, IEnumerable<IStatFunction> replacement)
+    // A statistics-only NPC can retire into an owned/scaled context. Replace
+    // only the selected numeric functions, retaining every other effect owner
+    // and this effect's unrelated components, registration and expiry.
+    internal void ReplaceOwnedFunctions(IStatOwner statOwner,IReadOnlySet<IStatFunction> previous,IEnumerable<IStatFunction> replacement)
     {
-        foreach (var functions in stats.Values)
-            lock (functions) functions.RemoveAll(f => statOwner.Equals(f.GetOwner())
-                && previous.Contains(f is StatFunctionProxy proxy ? proxy.GetProxiedFunction() : f));
-        AddEffect(statOwner, replacement);
+        BeginRetailStatMutation();
+        try
+        {
+            foreach(var functions in stats.Values)
+                lock(functions)functions.RemoveAll(f=>statOwner.Equals(f.GetOwner())
+                    &&previous.Contains(f is Aion.GameServer.Model.Stats.Calc.Functions.StatFunctionProxy proxy?proxy.GetProxiedFunction():f));
+            AddEffect(statOwner,replacement);
+        }
+        finally { EndRetailStatMutation(statOwner); }
     }
 
     public void EndEffect(IStatOwner statOwner)
     {
-        bool statsChanged = false;
-        foreach (List<IStatFunction> functions in stats.Values)
-        {
-            lock (functions)
-            {
-                statsChanged |= functions.RemoveAll(statFunction => statOwner.Equals(statFunction.GetOwner())) > 0;
-            }
-        }
+        bool statsChanged = RemoveEffectFunctions(statOwner);
         if (statsChanged && !owner.IsDead())
             OnStatsChange(null);
+    }
+
+    // The prepared retail curse owns a paired HP/MP update after removing its
+    // own modifiers. Existing callers still use EndEffect and its normal update.
+    internal bool EndPreparedRetailCurseEffectOnly(Effect effect,IReadOnlySet<IStatFunction> selected)
+    {
+        ArgumentNullException.ThrowIfNull(selected);
+        if(!ReferenceEquals(effect.GetEffected(),owner)
+            ||!Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatSpellDrain.HasPreparedCurse(effect))
+            throw new InvalidOperationException("Prepared retail curse stat owner differs");
+        bool approved=false,completed=false;
+        var owners=System.Threading.Volatile.Read(ref retailStatOwners);
+        if(owners is not null &&owners.TryGetValue(effect,out var tracked))
+            lock(tracked.Gate)approved=tracked.Expected is { } expected &&expected.SetEquals(selected);
+        BeginRetailStatMutation();
+        try
+        {
+            bool changed=false;
+            foreach(var functions in stats.Values)
+                lock(functions)changed|=functions.RemoveAll(f=>effect.Equals(f.GetOwner())
+                    &&selected.Contains(f is StatFunctionProxy proxy?proxy.GetProxiedFunction():f))>0;
+            completed=true;return changed;
+        }
+        finally { EndRetailStatMutation(effect,approved &&completed); }
+    }
+
+    private bool RemoveEffectFunctions(IStatOwner statOwner)
+    {
+        BeginRetailStatMutation();
+        try
+        {
+            bool statsChanged = false;
+            foreach (List<IStatFunction> functions in stats.Values)
+            {
+                lock (functions)
+                {
+                    statsChanged |= functions.RemoveAll(statFunction => statOwner.Equals(statFunction.GetOwner())) > 0;
+                }
+            }
+            return statsChanged;
+        }
+        finally { EndRetailStatMutation(statOwner); }
     }
 
     public float GetPositiveStat(StatEnum statEnum, float baseValue)

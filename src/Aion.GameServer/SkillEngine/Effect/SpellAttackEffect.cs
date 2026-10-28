@@ -1,3 +1,4 @@
+using Aion.GameServer.Controllers.Attack.RetailNpc;
 using System.Xml.Serialization;
 using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Model.GameObjects;
@@ -11,13 +12,22 @@ namespace Aion.GameServer.SkillEngine.Effects;
 [XmlType("SpellAttackEffect")]
 public class SpellAttackEffect : AbstractOverTimeEffect
 {
+    public override void Calculate(Effect effect)
+    {
+        if(RetailNpcStatSpellDrain.TryCalculatePeriodicSpell(effect,this))return;
+        base.Calculate(effect);
+    }
+
     protected override void ResolveMagicalCritical(Effect effect)
     {
+        if(RetailNpcStatPeriodicCombat.TryResolveCritical(effect,this))return;
         effect.RollMagicalCritical(Position, CalculateCritProbMod(effect)); // periodic damage ignores the apply_magical_critical flag
     }
 
     public override void StartEffect(Effect effect)
     {
+        if(SkyTempleNpcPeriodicEffects.TryStart(effect,this,null))return;
+        if(RetailNpcStatPeriodicCombat.TryStart(effect,this)){base.StartEffect(effect);return;}
         int valueWithDelta = CalculateBaseValue(effect);
         int finalDamage = AttackUtil.CalculateMagicalOverTimeSkillResult(effect, valueWithDelta, this, effect.GetSkillTemplate().IsApplyMagicalSkillBoostBonus());
         effect.SetReserveds(new EffectReserved(Position, finalDamage, EffectReserved.ResourceType.HP, true, false), true);
@@ -26,6 +36,7 @@ public class SpellAttackEffect : AbstractOverTimeEffect
 
     public override void OnPeriodicAction(Effect effect)
     {
+        if(RetailNpcStatPeriodicCombat.TryTick(effect,this))return;
         Creature effected = effect.GetEffected();
         effected.GetController().OnAttack(effect, SmAttackStatus.TYPE.DAMAGE, effect.GetReserveds(Position).GetValue(), false, SmAttackStatus.LOG.SPELLATK, Hoptype,
             effect.IsMagicalCritical(Position));

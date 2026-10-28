@@ -40,4 +40,5 @@ public class AlwaysResistEffect : EffectTemplate
             return false;
         }
     }
+    internal static bool IsResistOnlyObserver(AttackCalcObserver observer)=>observer is ResistObserver;
 }

@@ -68,6 +68,8 @@ public abstract class BufEffect : EffectTemplate
                     break;
             }
         }
-        return Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatBuffs.Select(effect, this, modifiers);
+        if (Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpc17860DefenseEffect.TrySelectForOfflineFixture(effect,this,out var prepared))
+            return prepared;
+        return Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatBuffs.Select(effect,this,modifiers);
     }
 }

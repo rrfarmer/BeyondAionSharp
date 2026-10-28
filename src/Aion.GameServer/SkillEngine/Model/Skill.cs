@@ -1,3 +1,4 @@
+using Aion.GameServer.Controllers.Attack.RetailNpc;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.SkillEngine.Condition;
 using System;
@@ -302,8 +303,11 @@ public class Skill
         if (skillMethod == SkillMethod.CAST || skillMethod == SkillMethod.ITEM)
             effector.GetObserveController().NotifyStartSkillCastObservers(this);
 
+        // Selected NPC direct/queued/automatic starts share one current source reuse row.
+        if(effector is Npc selectedNpc && !SkyTempleNpcSkillState.CanStartSkill(selectedNpc,this))return false;
         // start casting
         effector.SetCasting(this);
+        if(effector is Npc startingNpc)SkyTempleNpcSkillState.StartingSkill(startingNpc,this);
 
         // send packets to start casting
         if (skillMethod == SkillMethod.CAST || skillMethod == SkillMethod.ITEM)
@@ -316,7 +320,7 @@ public class Skill
 
         effector.GetObserveController().Attach(moveListener);
 
-        if (effector is Npc npc)
+        if (effector is Npc npc && !Aion.GameServer.Retail.SkyTempleNpcProfileCatalog.TryGet(npc,out _))
         {
             NpcSkillEntry currentNpcSkillEntry = npc.GetGameStats().GetLastSkill();
             if (currentNpcSkillEntry != null)
@@ -462,6 +466,13 @@ public class Skill
     protected void UpdateHitTime(bool checkAnimation)
     {
         hitTime = clientHitTime;
+        if (SkyTempleNpcSkillTiming.TryPrepare(this,out int retailHitWord))
+        {hitTime=retailHitWord;return;}
+        RetailNpcVampireCastFixture.TryAttachForNpcCombat(this);
+        if (RetailNpcVampireCastFixture.TryPrepareForOfflineFixture(this,out int fixtureHitWord))
+        {hitTime=fixtureHitWord;return;}
+        if (RetailNpc17860CastFixture.TryPrepareForOfflineFixture(this,out int kasikaHitWord))
+        {hitTime=kasikaHitWord;return;}
         if (!checkAnimation || !(effector is Player player) || skillMethod != SkillMethod.CAST && skillMethod != SkillMethod.ITEM)
             return;
 
@@ -645,6 +656,11 @@ public class Skill
         RemoveObservers();
         if (!effector.IsCasting() || isCancelled)
             return;
+        if (SkyTempleNpcSkillTiming.IsSelected(this) && !SkyTempleNpcSkillTiming.CanFinishCast(this))
+        {
+            if (ReferenceEquals(effector.GetCastingSkill(),this))effector.GetController().AbortCast();
+            return;
+        }
         if (CancelOnUnusableFirstTarget() || EndOnGoneFirstTarget())
             return;
         // check if target is out of skill range or other requirements are not met (anymore)
@@ -665,6 +681,7 @@ public class Skill
             return;
         }
         effector.SetCasting(null);
+        SkyTempleNpcSkillTiming.CastEnded(this);
 
         // Create effects and precalculate result
         int dashStatus = 0;
@@ -676,7 +693,11 @@ public class Skill
             foreach (Creature effected in effectedList)
             {
                 Effect effect = new Effect(this, effected);
+                RetailNpcVampireCastFixture.BeforeInitializationForOfflineFixture(this,effect);
+                RetailNpc17860CastFixture.BeforeInitializationForOfflineFixture(this,effect);
                 effect.Initialize();
+                RetailNpcVampireCastFixture.AfterInitializationForOfflineFixture(this,effect);
+                RetailNpc17860CastFixture.AfterInitializationForOfflineFixture(this,effect);
                 if (effected is Player)
                 {
                     if (effect.GetEffectResult() == EffectResult.CONFLICT)
@@ -753,7 +774,9 @@ public class Skill
             sentCastSpellResultPacket = SendCastSpellEnd(dashStatus, effects);
 
         // item skills apply their effects immediately, hitTime only tells the client when to display the hit
-        if (IsInstantSkill() || isItemSkill)
+        if (SkyTempleNpcSkillTiming.IsSelected(this) || RetailNpcVampireCastFixture.IsSelectedForOfflineFixture(this)
+            || RetailNpc17860CastFixture.IsSelectedForOfflineFixture(this)
+            || IsInstantSkill() || isItemSkill)
             ApplyEffect(effects);
         else
             ThreadPoolManager.GetInstance().Schedule(_ => { ApplyEffect(effects); return System.Threading.Tasks.ValueTask.CompletedTask; }, TimeSpan.FromMilliseconds(hitTime));

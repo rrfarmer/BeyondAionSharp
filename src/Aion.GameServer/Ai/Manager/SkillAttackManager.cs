@@ -6,6 +6,7 @@ using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Controllers.Attack;
+using Aion.GameServer.Controllers.Attack.RetailNpc;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Skill;
@@ -135,6 +136,7 @@ public class SkillAttackManager
 
     public static void AfterUseSkill(NpcAI npcAI)
     {
+        SkyTempleNpcSkillState.Completed(npcAI.GetOwner());
         npcAI.SetSubStateIfNot(AISubState.NONE);
         npcAI.OnGeneralEvent(AiEventType.AttackComplete);
     }
@@ -147,6 +149,8 @@ public class SkillAttackManager
         }
 
         Npc owner = npcAI.GetOwner();
+
+        if (SkyTempleNpcSkillState.TryChoose(npcAI,out var retailSkill)) return retailSkill;
 
         NpcSkillEntry queuedSkill = owner.GetNextQueuedSkill();
         if (queuedSkill != null && queuedSkill.GetNextSkillTime() == 0 && IsReady(owner, queuedSkill))

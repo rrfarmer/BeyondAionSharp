@@ -246,11 +246,11 @@ public class PlayerController : CreatureController<Player>
         player.GetController().CancelCurrentSkill(null);
         Aion.GameServer.Services.RecallService.GetInstance().Cancel(player, Aion.GameServer.Services.RecallService.CancelReason.CANCELLED);
         SetRebirthReviveInfo();
-        Creature master = lastAttacker.GetMaster();
+        Creature master = lastAttacker?.GetMaster();
 
         if (Aion.GameServer.Services.DuelService.GetInstance().IsDueling(player))
         {
-            bool killedByOpponent = player.IsDueling(master);
+            bool killedByOpponent = master != null && player.IsDueling(master);
             Aion.GameServer.Services.DuelService.GetInstance().LoseDuel(player);
             if (killedByOpponent)
             {
@@ -297,7 +297,7 @@ public class PlayerController : CreatureController<Player>
 
         DoReward();
 
-        if (master is Npc || master.Equals(player))
+        if (master == null || master is Npc || master.Equals(player))
         {
             if (player.GetLevel() > 4 && !player.GetEffectController().HasAbnormalEffect(e => e.IsNoDeathPenalty()))
                 player.GetCommonData().CalculateExpLoss();
@@ -417,6 +417,22 @@ public class PlayerController : CreatureController<Player>
         EnterCombat(true);
 
         base.AttackTarget(target, time, true);
+    }
+
+    protected override bool PrepareRetailNpcAttack(Creature? attacker)
+    {
+        if(GetOwner().IsDead())return false;
+        if(attacker is not null && !GetOwner().Equals(attacker) && attacker.GetMaster() is Player && !GetOwner().IsEnemy(attacker))return false;
+        CancelUseItem();return true;
+    }
+    protected override void FinishRetailNpcAttack(Creature? attacker)
+    {
+        if(attacker is Npc npc)
+        {
+            Aion.GameServer.Ai.Handler.ShoutEventHandler.OnAttack((Aion.GameServer.Ai.NpcAI)npc.GetAi(),GetOwner());
+            Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnAttack(new Aion.GameServer.QuestEngine.Model.QuestEnv(npc,GetOwner(),0));
+        }
+        EnterCombat(false);
     }
 
     public override void OnAttack(Creature attacker, Effect effect, TYPE type, int damage, bool notifyAttack, LOG logId, AttackStatus? attackStatus, HopType? hopType)

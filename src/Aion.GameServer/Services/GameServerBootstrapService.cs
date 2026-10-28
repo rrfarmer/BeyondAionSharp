@@ -141,6 +141,24 @@ public sealed class GameServerBootstrapService : IHostedService
 		// instance singleton; bind it before any engine InitAsync touches a DataManager.* accessor.
 		Aion.GameServer.Dataholders.DataManager.RegisterInstance(dataManager);
 
+		bool skyTempleRequested = Environment.GetEnvironmentVariable("AION_RETAIL_SKYTEMPLE_ENABLED") == "1";
+		string? skyTempleArtifact = Environment.GetEnvironmentVariable("AION_RETAIL_SKYTEMPLE_DATA");
+		await Aion.GameServer.Retail.SkyTempleNpcProfileCatalog.InitializeAsync(skyTempleRequested, skyTempleArtifact, cancellationToken);
+		if (skyTempleRequested)
+		{
+			var profiles = Aion.GameServer.Retail.SkyTempleNpcProfileCatalog.GetPreparedProfiles();
+			Aion.GameServer.Controllers.Attack.RetailNpc.SkyTempleNpcCombat.ValidateProfiles(profiles);
+			Aion.GameServer.GeoEngine.RetailPath.SkyTempleNpcNavigationAssets.Initialize();
+		}
+		else _logger.LogInformation("Sky Temple retail package disabled (AION_RETAIL_SKYTEMPLE_ENABLED is not1).");
+
+		bool retailCohortsRequested = await Aion.GameServer.Retail.RetailNpcCohortCatalog.InitializeAsync(
+			Environment.GetEnvironmentVariable(Aion.GameServer.Retail.RetailNpcCohortCatalog.ManifestEnvironment),
+			Environment.GetEnvironmentVariable(Aion.GameServer.Retail.RetailNpcCohortCatalog.ManifestHashEnvironment), cancellationToken);
+		if (retailCohortsRequested)
+			Aion.GameServer.GeoEngine.RetailPath.SkyTempleNpcNavigationAssets.InitializeCohorts(
+				Aion.GameServer.Retail.RetailNpcCohortCatalog.GetPreparedMaps());
+
 		// Java parity: DataManager.init() runs DecomposeAction.validateRandomItemIds() AFTER the holders are wired
 		// (it reads the DataManager.ITEM_DATA bridge). Must run here, after RegisterInstance — not inside
 		// StaticData.LoadLeafHoldersFromFiles, where the bridge isn't bound yet ("DataManager singleton bridge not
@@ -222,10 +240,25 @@ public sealed class GameServerBootstrapService : IHostedService
 		if (shouldInitFaithfulEngines)
 			_faithfulEnginesInitialized = true;
 
+		if (skyTempleRequested)
+		{
+			// GeoService owns the live4.8 placeable catalog. Join its loaded map
+			// after engine initialization, before any body/spawn path can see
+			// enabled profiles. Hashing external files alone is not readiness.
+			Aion.GameServer.GeoEngine.RetailPath.SkyTempleNpcNavigationAssets.Configured.ValidateLoadedMap();
+			Aion.GameServer.Retail.SkyTempleNpcProfileCatalog.ActivatePrepared();
+			_logger.LogInformation("Sky Temple retail package enabled:25 combat profiles, map320050000, artifact {Path}", Path.GetFullPath(skyTempleArtifact!));
+		}
+		if (retailCohortsRequested)
+		{
+			Aion.GameServer.Retail.RetailNpcCohortCatalog.ActivatePrepared();
+			_logger.LogInformation("Reviewed retail cohorts enabled: {Count} map/NPC memberships", Aion.GameServer.Retail.RetailNpcCohortCatalog.ActiveCount);
+		}
+
 		await Aion.GameServer.Retail.RetailNpcStatCatalog.InitializeAsync(
 			Environment.GetEnvironmentVariable(Aion.GameServer.Retail.RetailNpcStatCatalog.ManifestEnvironment),
 			Environment.GetEnvironmentVariable(Aion.GameServer.Retail.RetailNpcStatCatalog.HashEnvironment), cancellationToken);
-		_logger.LogInformation("Retail statistics-only memberships: {Count}",
+		_logger.LogInformation("Retail statistics-only memberships: {Count}; existing navigation and AI retained",
 			Aion.GameServer.Retail.RetailNpcStatCatalog.Members.Count);
 
 		return dataManager;

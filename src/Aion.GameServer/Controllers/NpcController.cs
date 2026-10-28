@@ -70,6 +70,19 @@ public class NpcController : CreatureController<Npc>
 
     public override void OnBeforeSpawn()
     {
+        if(Aion.GameServer.Retail.SkyTempleNpcProfileCatalog.TryGet(GetOwner(),out _))
+        {
+            // A replacement life must not initialize while an old selected NPC
+            // expiry callback owns movement. Retirement itself stays HP-only.
+            lock(GetOwner())lock(GetOwner().GetMoveController())BeforeSpawnCurrent();
+        }
+        else BeforeSpawnCurrent();
+    }
+
+    private void BeforeSpawnCurrent()
+    {
+        GetOwner().GetLifeStats().StopRetailHeartbeat();
+        Aion.GameServer.Controllers.Movement.SkyTempleNpcReturnState.AcceptBirth(GetOwner());
         base.OnBeforeSpawn();
         Npc owner = GetOwner();
 
@@ -85,6 +98,7 @@ public class NpcController : CreatureController<Npc>
         }
 
         InstanceScaler.OnBeforeSpawn(owner);
+        owner.GetLifeStats().BeginRetailDrainLife();
         owner.GetLifeStats().SetCurrentHpPercent(100);
         owner.GetAi().OnGeneralEvent(AiEventType.BeforeSpawned);
     }
@@ -93,11 +107,14 @@ public class NpcController : CreatureController<Npc>
     {
         base.OnAfterSpawn();
         GetOwner().GetAi().OnGeneralEvent(AiEventType.Spawned);
+        GetOwner().GetLifeStats().StartRetailHeartbeat();
+        Aion.GameServer.Retail.SkyTempleNpcDiagnostics.Spawned(GetOwner());
     }
 
     public override void OnDespawn()
     {
         Npc owner = GetOwner();
+        owner.GetLifeStats().StopRetailHeartbeat();
         CancelCurrentSkill((Creature)null);
         owner.GetEffectController().RemoveAllEffects();
         if (owner.GetSpawn().HasPool() && !owner.IsDead())
@@ -112,6 +129,7 @@ public class NpcController : CreatureController<Npc>
     public override void OnDie(Creature lastAttacker)
     {
         Npc owner = GetOwner();
+        owner.GetLifeStats().StopRetailHeartbeat();
         if (owner.GetSpawn().HasPool())
             owner.GetSpawn().ResetPoolSpot(owner.GetInstanceId());
 
@@ -275,6 +293,7 @@ public class NpcController : CreatureController<Npc>
 
     public override void OnAddHate(Creature attacker, bool isNewInAggroList)
     {
+        Aion.GameServer.Controllers.Attack.RetailNpc.SkyTempleNpcSkillState.HateReceived(GetOwner(),attacker);
         if (isNewInAggroList && attacker is Aion.GameServer.Model.GameObjects.Players.Player)
         {
             if (((Aion.GameServer.Model.GameObjects.Players.Player)attacker).IsInTeam())

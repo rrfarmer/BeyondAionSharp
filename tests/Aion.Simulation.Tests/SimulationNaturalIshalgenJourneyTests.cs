@@ -53,6 +53,12 @@ public sealed partial class SimulationFastScenarioTests
 			Environment.GetEnvironmentVariable("AION_SIM_RUN_ID") ?? "ni07", "b01", $"sim-player-{accountId}",
 			virtualTime: () => TimeSpan.FromMilliseconds(fixture.Clock.NowMillis));
 		Console.WriteLine($"NI-07 combat trace: {combatTracePath}");
+		// Optional read-only source-calculation evidence alongside ordinary play.
+		// No encounter, progression, combat policy or stat input is changed.
+		string? retailEvidence=Environment.GetEnvironmentVariable("AION_RETAIL_STATS_NATURAL_EVIDENCE");
+		using var retailLogs=string.IsNullOrEmpty(retailEvidence)?null:
+			new ThreeKeysRuntimeLogProvider(retailEvidence,()=>fixture.Clock.NowMillis);
+		if(retailLogs is not null)fixture.LoggerFactory.AddProvider(retailLogs);
 		using var policy = NewPolicy("NI07", includeHistory: true);
 		// The joined scope includes Ishalgen/Ascension and thirteen Altgard segments. Preserve
 		// the ordinary 45-minute deadline and every in-game recovery/stall limit; allow the

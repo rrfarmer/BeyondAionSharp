@@ -27,6 +27,12 @@ public class TargetEventHandler
                 AttackManager.ScheduleNextAttack(npcAI);
                 break;
             case AIState.RETURNING:
+                if(Aion.GameServer.Controllers.Movement.SkyTempleNpcNavigation.Enabled(npcAI.GetOwner()))
+                {
+                    // A native return-completed command is not a claim that the
+                    // actual position equals the birth/goal; the owner validates it.
+                    return;
+                }
                 npcAI.GetOwner().GetMoveController().AbortMove();
                 if (npcAI.GetOwner().IsAtSpawnLocation())
                     npcAI.OnGeneralEvent(AiEventType.BackHome);
@@ -79,6 +85,8 @@ public class TargetEventHandler
 
     public static void OnTargetGiveup(NpcAI npcAI)
     {
+        if(Aion.GameServer.Controllers.Movement.SkyTempleNpcNavigation.Enabled(npcAI.GetOwner()))
+            Aion.GameServer.Controllers.Movement.SkyTempleNpcReturnState.PrepareEncounterEnd(npcAI.GetOwner());
         if (npcAI.IsLogging())
         {
             AILogger.Info(npcAI, "onTargetGiveup");

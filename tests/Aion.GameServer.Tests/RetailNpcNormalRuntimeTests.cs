@@ -159,7 +159,7 @@ public sealed class RetailNpcNormalRuntimeTests
         Assert.Equal(25, count); Assert.Empty(h.Clock.Faults);
     }
 
-    internal static Npc FreshNpc(BossAiHarness h, int map, int id, string aiName = "retail_stat_runtime_fixture")
+    internal static Npc FreshNpc(BossAiHarness h, int map, int id, string aiName = "retail_stat_runtime_fixture", bool suppressCritical = true)
     {
         var spawn = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(map, id, 100, 100, 200, 0, null, aiName);
         var npc = new Npc(new NpcController(), spawn, DataManager.NPC_DATA.GetNpcTemplate(id));
@@ -167,7 +167,7 @@ public sealed class RetailNpcNormalRuntimeTests
         npc.SetKnownlist(new KnownList(npc));
         npc.SetPosition(h.World.CreatePosition(map, 100, 100, 200, 0, 1));
         // Controlled noncritical ordinary state; status arithmetic has its own native-vector tests.
-        npc.GetGameStats().AddEffectOnly(new Owner(), [new StatRateFunction(StatEnum.PHYSICAL_CRITICAL, -100, true),
+        if (suppressCritical) npc.GetGameStats().AddEffectOnly(new Owner(), [new StatRateFunction(StatEnum.PHYSICAL_CRITICAL, -100, true),
             new StatRateFunction(StatEnum.MAGICAL_CRITICAL, -100, true)]);
         return npc;
     }

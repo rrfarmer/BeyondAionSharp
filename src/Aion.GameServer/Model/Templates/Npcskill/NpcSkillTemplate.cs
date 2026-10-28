@@ -37,6 +37,15 @@ public class NpcSkillTemplate
         return lv;
     }
 
+    /// <summary>Copies host selection metadata without mutating its shared template.
+    /// Condition and spawn descriptors remain the same read-only host definitions.</summary>
+    internal NpcSkillTemplate CloneWithSkillLevel(int level)
+    {
+        var result = (NpcSkillTemplate)MemberwiseClone();
+        result.lv = level;
+        return result;
+    }
+
     public int GetProbability()
     {
         return prob;

@@ -57,6 +57,13 @@ public class FirstTargetRangeProperty
         if (effector.GetMoveController().IsInMove() && !firstTarget.GetAggroList().IsHating(effector))
             firstTargetRange += PositionUtil.CalculateMaxCoveredDistance(effector, 50);
 
+        // The selected SkyTemple action and its movement goal share computed retail
+        // range+LOS. Preserve the adjusted cast range and the existing self/POINT and
+        // post-start early branches above; unrelated NPCs/players retain Java behavior.
+        if(effector is Npc npc&&npc.GetMoveController().UsesRetailNavigation)
+            return npc.GetMoveController().RetailArrival(firstTarget,firstTargetRange)==
+                Aion.GameServer.Controllers.Movement.SkyTempleArrival.Arrived;
+
         if (!firstTarget.GetEffectController().IsInAnyAbnormalState(AbnormalState.CANT_MOVE_STATE)
             && !PositionUtil.IsInAttackRange(effector, firstTarget, firstTargetRange))
         {

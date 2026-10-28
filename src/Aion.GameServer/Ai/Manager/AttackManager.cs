@@ -3,8 +3,11 @@ using System.Threading.Tasks;
 using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Controllers.Attack;
+using Aion.GameServer.Controllers.Attack.RetailNpc;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Retail;
 using Aion.GameServer.Utils;
+using Microsoft.Extensions.Logging;
 
 namespace Aion.GameServer.Ai.Manager;
 
@@ -16,6 +19,7 @@ namespace Aion.GameServer.Ai.Manager;
 /// </summary>
 public class AttackManager
 {
+    private static readonly ILogger RetailLog=AionLog.For(nameof(AttackManager));
     public static void StartAttacking(NpcAI npcAI)
     {
         if (npcAI.IsLogging())
@@ -23,6 +27,8 @@ public class AttackManager
             AILogger.Info(npcAI, "AttackManager: startAttacking");
         }
         npcAI.GetOwner().GetGameStats().SetFightStartingTime();
+        SkyTempleNpcSkillState.BeginEncounter(npcAI.GetOwner());
+        Aion.GameServer.Controllers.Movement.SkyTempleNpcReturnState.EncounterStarted(npcAI.GetOwner());
         VisibleObject target = npcAI.GetOwner().GetTarget();
         if (target is Creature creature) // may be null at this point (-> triggering then TARGET_GIVEUP)
             EmoteManager.EmoteStartAttacking(npcAI.GetOwner(), creature);
@@ -31,6 +37,7 @@ public class AttackManager
 
     public static void ScheduleNextAttack(NpcAI npcAI)
     {
+        if(UpdateRetailChase(npcAI))return;
         if (npcAI.IsLogging())
         {
             AILogger.Info(npcAI, "AttackManager: scheduleNextAttack");
@@ -83,6 +90,9 @@ public class AttackManager
             AILogger.Info(npcAI, "AttackManager: attackTimeDelta " + npc.GetGameStats().GetLastAttackTimeDelta());
         }
 
+        bool retail=SkyTempleNpcProfileCatalog.TryGet(npc,out _);
+        if(retail&&UpdateRetailChase(npcAI))return;
+
         // switch target if there is more hated creature
         if (npc.GetGameStats().GetLastChangeTargetTimeDelta() > 5)
         {
@@ -96,6 +106,19 @@ public class AttackManager
                 npcAI.OnCreatureEvent(AiEventType.TargetChanged, mostHated);
                 return;
             }
+        }
+        if(retail)
+        {
+            // Preserve the existing most-hated switch until its native event
+            // producer is integrated. CanSee is concealment/GM visibility, not
+            // route LOS. NativeCanAttack removes an invalid/unseen current target;
+            // it has no Java2second loss task or Java target/home radius.
+            if(npc.GetTarget() is not Creature current||current.IsDead()||!current.IsSpawned()||
+                current.GetWorldId()!=npc.GetWorldId()||current.GetInstanceId()!=npc.GetInstanceId()||!npc.CanSee(current))
+            {npcAI.OnGeneralEvent(AiEventType.TargetGiveup);return;}
+            if(npcAI.IsMoveSupported())npc.GetMoveController().MoveToTargetObject();
+            else npcAI.OnGeneralEvent(AiEventType.TargetGiveup);
+            return;
         }
         if (!npc.CanSee(npc.GetTarget()))
         {
@@ -121,6 +144,57 @@ public class AttackManager
             return;
         }
         npcAI.OnGeneralEvent(AiEventType.TargetGiveup);
+    }
+
+    /// <summary>Called by existing movement/attack updates only. True consumes this
+    /// update; no new task or fabricated arrival. Controller->nav snapshot->skill
+    /// gate order matches the movement retirement owner; AI callbacks hold neither
+    /// nav nor SkillState.Gate. Action deadline producers use the same controller.</summary>
+    internal static bool UpdateRetailChase(NpcAI ai)
+    {
+        var npc=ai.GetOwner();
+        if(!SkyTempleNpcProfileCatalog.TryGet(npc,out _))return false;
+        SkyTempleNpcSkillState.ChaseDecision decision;
+        lock(npc.GetMoveController())
+        {
+            if(!SkyTempleNpcSkillState.TryEvaluateChase(npc,out decision))return false;
+            if(decision.Disposition==SkyTempleNpcSkillState.ChaseDisposition.Unsupported)return true;
+            if(decision.Disposition!=SkyTempleNpcSkillState.ChaseDisposition.Expired)return false;
+        }
+        DispatchRetailChaseExpiry(ai,decision);
+        return true;
+    }
+
+    internal static bool DispatchRetailChaseExpiry(NpcAI ai,SkyTempleNpcSkillState.ChaseDecision decision)
+    {
+        var npc=ai.GetOwner();
+        lock(npc.GetMoveController())
+        {
+            if(!decision.TryClaimExpiry(npc))return false;
+            if(npc.GetCastingSkill()?.GetSkillTemplate().IsMaintain()==true)
+            {RetailLog.LogWarning("SkyTemple return unsupported active maintained cast npc={Npc}",npc.GetObjectId());return false;}
+        }
+        // GetAllEffects snapshots both maps (including NoShow) then releases its
+        // reader. StartEffect can hold Effect->SetAbnormal->controller: never
+        // acquire an effect monitor while holding the controller in this owner.
+        if(!Aion.GameServer.Controllers.Movement.SkyTempleNpcReturnState.TryCleanupOrder(npc,out var cleanup))return false;
+        foreach(var effect in cleanup)
+        {
+            lock(npc.GetMoveController())if(!decision.ClaimedIdentityIsCurrent(npc))return false;
+            if(!npc.GetEffectController().GetAllEffects().Any(current=>ReferenceEquals(current,effect)))continue;
+            effect.EndEffect(false);
+        }
+        lock(npc)lock(npc.GetMoveController())
+        {
+            // Cleanup may renew738 through an abnormal clear. Native has already
+            // decided to stop; only actor/target/world/profile identity is rechecked.
+            if(!decision.ClaimedIdentityIsCurrent(npc)||ai.GetState()!=AIState.FIGHT)return false;
+            if(!Aion.GameServer.Controllers.Movement.SkyTempleNpcReturnState.PrepareChaseTimeout(npc))return false;
+            RetailLog.LogInformation("SkyTemple chase expired npc={Npc} template={Template} target={Target} tick={Tick} deadline738={Deadline} failedApproach={Failure} map={Map} instance={Instance}",
+                npc.GetObjectId(),npc.GetNpcId(),npc.GetTarget()?.GetObjectId(),decision.Tick,decision.Deadline,decision.ApproachFailure,npc.GetWorldId(),npc.GetInstanceId());
+            ai.OnGeneralEvent(AiEventType.TargetGiveup);
+            return true;
+        }
     }
 
     private static bool CheckGiveupDistance(NpcAI npcAI)

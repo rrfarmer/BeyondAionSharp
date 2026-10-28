@@ -1,3 +1,4 @@
+using Aion.GameServer.Controllers.Attack.RetailNpc;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using System;
 using System.Collections.Generic;
@@ -65,6 +66,7 @@ public class Effect : IStatOwner
     private Effect subEffect;
 
     private readonly AtomicBoolean hasEnded = new AtomicBoolean();
+    private int preparedNpcDrainInitialAborted;
     private bool isCancelOnDmg;
     private bool subEffectAbortedBySubConditions;
 
@@ -99,6 +101,9 @@ public class Effect : IStatOwner
     // Whether this effect is a sub effect of another effect
     private bool isSubEffect = false;
     private bool applyCriticalProcEffect = false;
+    // Set only after the NPC statistics adapter's source/host/owner preflights.
+    // The shared4.8 skill template retains its original protocol/content data.
+    private bool retailNpcPhysicalPrimary;
     private readonly AtomicBoolean allowGodstoneActivation = new AtomicBoolean();
 
     public Effect(Skill skill, Creature effected)
@@ -290,6 +295,23 @@ public class Effect : IStatOwner
         magicalCriticals[position - 1] = magicalCritical;
     }
 
+    /// <summary>Import a decision calculated by the scoped retail NPC adapter. This owns
+    /// the same cache and wire/periodic position bits as RollMagicalCritical, without a second roll.</summary>
+    internal void SetCalculatedMagicalCritical(int position, bool critical)
+    {
+        if (position < 1 || position > magicalCriticals.Length)
+            throw new ArgumentOutOfRangeException(nameof(position));
+        magicalCritical = critical;
+        magicalCriticalRolled = true;
+        magicalCriticals[position - 1] = critical;
+    }
+
+    internal bool TryGetCalculatedMagicalCritical(out bool critical)
+    {
+        critical=magicalCritical;
+        return magicalCriticalRolled;
+    }
+
     /// <summary>An effect which got filtered out breaks the chain, so the next effect position rolls its own magical critical again.</summary>
     public void ResetMagicalCritical()
     {
@@ -390,6 +412,23 @@ public class Effect : IStatOwner
         lock (reservedEffects)
         {
             reservedEffects.Add(er);
+        }
+    }
+
+    // SetReserveds deliberately keeps Java's append semantics. A selected
+    // statistics heal can retire after Check; replace only its exact owned
+    // packet slot so legacy Apply cannot read an earlier selected reservation.
+    internal void ReplaceStatisticsHealReservation(EffectReserved selected,EffectReserved replacement)
+    {
+        if(!Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatHealCombat.OwnsMetadata(this,selected)
+            ||selected.GetType_()!=EffectReserved.ResourceType.HP||selected.IsDamage()
+            ||replacement.GetType_()!=EffectReserved.ResourceType.HP||replacement.IsDamage()
+            ||selected.GetPosition()!=replacement.GetPosition())
+            throw new InvalidOperationException("Statistics heal does not own the replacement reservation");
+        lock(reservedEffects)
+        {
+            if(!reservedEffects.Remove(selected))throw new InvalidOperationException("Selected statistics heal reservation disappeared");
+            if(!reservedEffects.Add(replacement))throw new InvalidOperationException("Replacement statistics heal reservation already exists");
         }
     }
 
@@ -553,8 +592,11 @@ public class Effect : IStatOwner
         return forceType != null;
     }
 
+    internal void MarkRetailNpcPhysicalPrimary()=>retailNpcPhysicalPrimary=true;
+
     public bool IsPhysicalEffect()
     {
+        if(retailNpcPhysicalPrimary)return true;
         EffectTemplate mainEffectTemplate = skillTemplate.GetEffectTemplate(1);
         return mainEffectTemplate != null && mainEffectTemplate.GetElement() == SkillElement.NONE;
     }
@@ -675,18 +717,29 @@ public class Effect : IStatOwner
         Creature effected = GetEffected();
         try
         {
-            foreach (EffectTemplate template in successEffects.Values)
+            // The guarded drain primary must finish its HP decision before a
+            // dependent effect can register. ConcurrentDictionary does not
+            // promise position order; leave other skill families unchanged.
+            IEnumerable<EffectTemplate> applying = RetailNpcStatSpellDrain.HasGuardedInitial(this)
+                ? successEffects.OrderBy(entry => entry.Key).Select(entry => entry.Value)
+                : successEffects.Values;
+            foreach (EffectTemplate template in applying)
             {
                 if (!ShouldApplyFurtherEffects(effected))
                     break;
                 template.ApplyEffect(this);
                 if (!ShouldApplyFurtherEffects(effected))
                     break;
+                if (RetailNpcStatSpellDrain.InitialCommitPending(this))
+                {
+                    if (RetailNpcStatSpellDrain.HasDeferredVampireTimeline(this)) continue;
+                    break;
+                }
                 template.StartSubEffect(this);
             }
-            if (applyCriticalProcEffect && subEffect != null)
+            if (!PreparedNpcDrainInitialAborted && !RetailNpcStatSpellDrain.InitialCommitPending(this) && applyCriticalProcEffect && subEffect != null)
                 subEffect.ApplyEffect();
-            if (effected != null)
+            if (!PreparedNpcDrainInitialAborted && !RetailNpcStatSpellDrain.InitialCommitPending(this) && effected != null)
                 effected.GetAi().OnEffectApplied(this);
         }
         catch (Exception e)
@@ -719,6 +772,7 @@ public class Effect : IStatOwner
 
     private bool ShouldApplyFurtherEffects(Creature effected)
     {
+        if (PreparedNpcDrainInitialAborted) return false;
         if (effected != null)
         {
             if (!effected.IsSpawned() && !skillTemplate.IsPassive()) // only allow on despawned if it's a passive skill (players get them during enterWorld)
@@ -729,6 +783,9 @@ public class Effect : IStatOwner
         return true;
     }
 
+    internal bool PreparedNpcDrainInitialAborted => Volatile.Read(ref preparedNpcDrainInitialAborted)!=0;
+    internal void AbortPreparedNpcDrainInitial() => Interlocked.Exchange(ref preparedNpcDrainInitialAborted,1);
+
     /// <summary>
     /// Start effect which includes: - start effect defined in template - start subeffect if possible - activate toggle skill if needed - schedule end of effect
     /// </summary>
@@ -736,7 +793,7 @@ public class Effect : IStatOwner
     {
         lock (this)
         {
-            if (hasEnded.Get()) // multiple concurrent skill casts can end each others effects by conflict
+            if (hasEnded.Get() || PreparedNpcDrainInitialAborted || RetailNpcStatSpellDrain.InitialCommitPending(this))
                 return;
             if (successEffects.IsEmpty)
                 return;
@@ -770,12 +827,15 @@ public class Effect : IStatOwner
                 return;
             endTime = SystemClock.CurrentMillis() + duration.Value;
 
-            endTask = ThreadPoolManager.GetInstance().Schedule(_ =>
+            if (!SkyTempleNpcPeriodicEffects.Owns(this))
             {
-                endedByTime = true;
-                EndEffect(true);
-                return System.Threading.Tasks.ValueTask.CompletedTask;
-            }, TimeSpan.FromMilliseconds(duration.Value));
+                endTask = ThreadPoolManager.GetInstance().Schedule(_ =>
+                {
+                    endedByTime = true;
+                    EndEffect(true);
+                    return System.Threading.Tasks.ValueTask.CompletedTask;
+                }, TimeSpan.FromMilliseconds(duration.Value));
+            }
         }
         effected.GetPosition().GetWorldMapInstance().GetInstanceHandler().OnStartEffect(this);
     }
@@ -805,6 +865,7 @@ public class Effect : IStatOwner
             if (!hasEnded.CompareAndSet(false, true))
                 return;
         }
+        SkyTempleNpcPeriodicEffects.Retire(this);
         StopTasks();
         RemoveObservers();
 
@@ -902,6 +963,7 @@ public class Effect : IStatOwner
     /// <summary>Try to add this effect to effected controller</summary>
     public void AddToEffectedController()
     {
+        if (PreparedNpcDrainInitialAborted || RetailNpcStatSpellDrain.InitialCommitPending(this)) return;
         if (!addedToController)
         {
             Creature effected = GetEffected();
@@ -1206,7 +1268,9 @@ public class Effect : IStatOwner
 
     public void EndEffects()
     {
-        bool hasStatModifiers = false;
+        // A selected retail numeric program can supply modifiers when the host
+        // StatUp has no <change>. Keep removal with this same Effect owner.
+        bool hasStatModifiers = Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatBuffs.HasSelectedProgram(this);
         foreach (EffectTemplate template in successEffects.Values)
         {
             template.EndEffect(this);
@@ -1324,6 +1388,9 @@ public class Effect : IStatOwner
     {
         this.effectResult = effectResult;
     }
+
+    internal bool RetailHasEnded => hasEnded.Get();
+    internal void SetRetailPeriodicDeadline(long value) => endTime=value;
 
     public bool IsEndedByTime()
     {

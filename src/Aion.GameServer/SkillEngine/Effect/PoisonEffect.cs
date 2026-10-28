@@ -1,3 +1,4 @@
+using Aion.GameServer.Controllers.Attack.RetailNpc;
 using System.Xml.Serialization;
 using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Model.GameObjects;
@@ -14,6 +15,7 @@ public class PoisonEffect : AbstractOverTimeEffect
 {
     protected override void ResolveMagicalCritical(Effect effect)
     {
+        if(RetailNpcStatPeriodicCombat.TryResolveCritical(effect,this))return;
         effect.RollMagicalCritical(Position, CalculateCritProbMod(effect)); // periodic damage ignores the apply_magical_critical flag
     }
 
@@ -24,6 +26,8 @@ public class PoisonEffect : AbstractOverTimeEffect
 
     public override void StartEffect(Effect effect)
     {
+        if(RetailNpcStatPeriodicCombat.TryStart(effect,this))
+        {base.StartEffect(effect, AbnormalState.POISON);return;}
         int valueWithDelta = CalculateBaseValue(effect);
         int finalDamage = AttackUtil.CalculateMagicalOverTimeSkillResult(effect, valueWithDelta, this, false);
         effect.SetReserveds(new EffectReserved(Position, finalDamage, EffectReserved.ResourceType.HP, true, false), true);
@@ -37,6 +41,7 @@ public class PoisonEffect : AbstractOverTimeEffect
 
     public override void OnPeriodicAction(Effect effect)
     {
+        if(RetailNpcStatPeriodicCombat.TryTick(effect,this))return;
         Creature effected = effect.GetEffected();
         effected.GetController().OnAttack(effect, SmAttackStatus.TYPE.DAMAGE, effect.GetReserveds(Position).GetValue(), false, SmAttackStatus.LOG.POISON, Hoptype,
             effect.IsMagicalCritical(Position));

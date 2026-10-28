@@ -63,6 +63,7 @@ public class ItemEquipmentListener
         if (item.GetTempering() > 0)
             TemperingEffect.Apply(owner, item);
         owner.GetGameStats().UpdateArmorMasteryStats(owner.GetEquipment().GetEquippedItems());
+        Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatEquipmentResponses.Equipped(owner,item);
     }
 
     private static void ForEachBonusStats(Action<RandomBonusEffect> action, params RandomBonusEffect[] bonusStatsEffects)
@@ -111,6 +112,7 @@ public class ItemEquipmentListener
         if (item.GetBuffSkill() != 0)
             SkillLearnService.RemoveSkill(owner, item.GetBuffSkill());
         owner.GetGameStats().UpdateArmorMasteryStats(owner.GetEquipment().GetEquippedItems());
+        Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatEquipmentResponses.Unequipped(owner,item);
     }
 
     private static void AddWeaponStats(Item item, CreatureGameStats cgs)

@@ -13,6 +13,7 @@ public class ReflectorEffect : ShieldEffect
 
     public override void StartEffect(Effect effect)
     {
+        if (Aion.GameServer.Controllers.Attack.RetailNpc.SkyTempleNpcProtection.TryStart(effect,true)) return;
         int hit = hitvalue + hitdelta * effect.GetSkillLevel();
 
         AttackShieldObserver asObserver = new AttackShieldObserver(hit, Value, percent, false, effect, Hittype, GetType_(), HitTypeProb, minradius, radius,
@@ -23,6 +24,7 @@ public class ReflectorEffect : ShieldEffect
 
     public override void EndEffect(Effect effect)
     {
+        Aion.GameServer.Controllers.Attack.RetailNpc.SkyTempleNpcProtection.End(effect,true);
     }
 
     public override ShieldType GetType_()

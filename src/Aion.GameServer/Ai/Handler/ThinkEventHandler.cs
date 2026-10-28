@@ -99,8 +99,10 @@ public class ThinkEventHandler
             npc.ClearQueuedSkills();
             npc.GetGameStats().SetLastSkill(null);
             npc.GetGameStats().ResetFightStats();
+            bool retail=Aion.GameServer.Controllers.Movement.SkyTempleNpcNavigation.Enabled(npc);
+            if(retail)Aion.GameServer.Controllers.Movement.SkyTempleNpcReturnState.PrepareEncounterEnd(npc);
             npcAI.OnGeneralEvent(AiEventType.AttackFinish);
-            npcAI.OnGeneralEvent(npc.IsAtSpawnLocation() ? AiEventType.BackHome : AiEventType.NotAtHome);
+            npcAI.OnGeneralEvent(!retail&&npc.IsAtSpawnLocation() ? AiEventType.BackHome : AiEventType.NotAtHome);
         }
     }
 

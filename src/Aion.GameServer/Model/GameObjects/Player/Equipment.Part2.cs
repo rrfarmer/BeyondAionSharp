@@ -34,6 +34,21 @@ public partial class Equipment
         }
     }
 
+    // Keep response ownership and the physical equipment snapshot under the
+    // same monitor used by equip/unequip and initial stat application.
+    internal T InspectEquippedItems<T>(System.Func<IReadOnlyList<Item>,T> inspect)
+    {
+        lock(equipment)return inspect(equipment.Values.Distinct().ToArray());
+    }
+
+    // Retail stat selection walks occupied slots, including duplicate entries
+    // for a two-handed item. Preserve keys and run the inspection under the
+    // same equipment monitor; callers must not retain mutable item references.
+    internal T InspectEquippedSlots<T>(System.Func<IReadOnlyList<KeyValuePair<long,Item>>,T> inspect)
+    {
+        lock(equipment)return inspect(equipment.ToArray());
+    }
+
     public ISet<int> GetEquippedItemIds()
     {
         lock (equipment)
@@ -172,6 +187,7 @@ public partial class Equipment
                 equipment[slot.GetSlotIdMask()] = item;
             }
         }
+        if(item.IsEquipped())Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatEquipmentResponses.Loaded(owner,item);
     }
 
     private void PutItemBackToInventory(Item item)
@@ -191,6 +207,7 @@ public partial class Equipment
         Item twoHanded = null;
         lock (equipment)
         {
+            Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatEquipmentResponses.RestoreLoaded(owner,equipment.Values.Distinct().ToArray());
             foreach (Item item in equipment.Values)
             {
                 if ((item.GetEquipmentSlot() & ItemSlot.MAIN_OFF_HAND.GetSlotIdMask()) == 0

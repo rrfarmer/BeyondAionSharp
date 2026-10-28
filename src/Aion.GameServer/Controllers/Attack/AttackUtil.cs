@@ -1,9 +1,9 @@
 using System;
-using Aion.GameServer.Controllers.Attack.RetailNpc;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using Aion.GameServer.Commons.Utils;
+using Aion.GameServer.Controllers.Attack.RetailNpc;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Model;
@@ -31,7 +31,7 @@ public class AttackUtil
     /// </summary>
     public static List<AttackResult> CalculatePhysAttackResult(Creature attacker, Creature attacked, ISet<CalculationType> calculationTypes)
     {
-        if (SkyTempleNpcCombat.TryCalculateNormal(attacker, attacked, out var retail, out _, calculationTypes)) return retail;
+        if (SkyTempleNpcCombat.TryCalculateNormal(attacker, attacked, out var retail, out _,calculationTypes)) return retail;
         AttackStatus attackStatus = CalculatePhysicalStatus(attacker, attacked, true, 0, 100, false, false);
         List<AttackResult> attackResultList = StatFunctions.CalculateAttackDamage(attacker, SkillElement.NONE, attackStatus, calculationTypes);
         AdjustDamageByStatModifiers(attacker, attacked, attackStatus, attackResultList, SkillElement.NONE);
@@ -259,7 +259,7 @@ public class AttackUtil
         bool send = !(template is DelayedSpellAttackInstantEffect) && !(template is ProcAtkInstantEffect);
         OneTimeBoostSkillAttack? boost = OneTimeBoostSkillAttackEffect.GetActiveBoost(effector, template);
 
-        AttackStatus status = element switch
+        AttackStatus status = SkyTemplePlayerCombat.TryPhysicalSkillStatus(effect,template,out var retailStatus) ? retailStatus : element switch
         {
             SkillElement.NONE => CalculatePhysicalStatus(effector, effected, template, effect),
             _ => effect.IsMagicalCritical(template.GetPosition()) ? AttackStatus.CRITICAL : AttackStatus.NORMALHIT,
@@ -275,7 +275,16 @@ public class AttackUtil
             calculationTypes.Add(CalculationType.DUAL_WIELD);
         if (!useTemplateDmg)
         {
-            if (effector is SummonedObject && !(effector is Servant))
+            if (RetailNpcLegacySkillWeapon.TryPhysical(effect, element, useTemplateDmg, status, calculationTypes, out var sourceWeapon))
+            {
+                // Preserve this skill's existing scalar/effects, replacing only its
+                // weapon base. Reuse the raw draw for PERCENT and conditional bonus;
+                // using an already-buffed base or rerolling 80–120% counts it twice.
+                baseAttack = sourceWeapon.RawBase;
+                ht = effect.GetSkillType() == SkillType.MAGICAL ? HitType.MAHIT : HitType.PHHIT;
+                weaponAttack.Add(new AttackResult(sourceWeapon.WeaponDamage, status, ht));
+            }
+            else if (effector is SummonedObject && !(effector is Servant))
             {
                 ht = effect.GetSkillType() == SkillType.MAGICAL ? HitType.MAHIT : HitType.PHHIT;
                 baseAttack = effector.GetGameStats().GetMainHandPAttack(calculationTypes).GetBase();
@@ -354,7 +363,9 @@ public class AttackUtil
             else
             {
                 bool applyMagicalSkillBoostBonus = template.ShouldApplyMagicalSkillBoostBonus(effect);
-                damage = StatFunctions.CalculateMagicalSkillDamage(effector, effected, damage, (int)bonus, template, applyMagicalSkillBoostBonus,
+                if (SkyTemplePlayerCombat.TryMagicalSkillBase(effector,effected,damage,(int)bonus,template,applyMagicalSkillBoostBonus,
+                    template.ShouldUseKnowledge(),template.ShouldUseBoostSpellAttackEffects(),out var incomingMagic)) damage=incomingMagic;
+                else damage = StatFunctions.CalculateMagicalSkillDamage(effector, effected, damage, (int)bonus, template, applyMagicalSkillBoostBonus,
                     template.ShouldUseKnowledge(), template.ShouldUseBoostSpellAttackEffects());
             }
             if (template.ShouldApplyAttackerMovementModifier())
@@ -371,6 +382,10 @@ public class AttackUtil
         if (randomDamageType > 0)
             damage = RandomizeDamage(randomDamageType, damage);
 
+        float incomingPhysical=damage;
+        bool retailIncomingPhysical = isPhysical && !useTemplateDmg && SkyTemplePlayerCombat.TryPhysicalSkillDefense(effector,effected,damage,out incomingPhysical);
+        if (retailIncomingPhysical) damage=incomingPhysical;
+
         if (status.IsCritical() && !useTemplateDmg)
         {
             int critAddDmg = template.CalculateCritAddDmg(effect);
@@ -378,7 +393,7 @@ public class AttackUtil
             damage = CalculateWeaponCritical(element, effected, damage, GetWeaponGroup(effector, true), critAddDmg, stat, true);
         }
 
-        if (isPhysical)
+        if (isPhysical && !retailIncomingPhysical)
         {
             float def = StatFunctions.AdjustStatByMovementModifier(effected, StatEnum.PHYSICAL_DEFENSE, effected.GetGameStats().GetPDef().GetCurrent());
             damage -= def / 10;
@@ -403,15 +418,21 @@ public class AttackUtil
         {
             damage /= effect.GetSkill().GetEffectedList().Count;
         }
-        damage = StatFunctions.AdjustDamageByPvpOrPveModifiers(effector, effected, damage, effect.GetPvpDamage(), useTemplateDmg, element);
+        if (SkyTemplePlayerCombat.TrySkillPve(effector,effected,isPhysical,damage,out var incomingPve,useTemplateDmg)) damage=incomingPve;
+        else damage = StatFunctions.AdjustDamageByPvpOrPveModifiers(effector, effected, damage, effect.GetPvpDamage(), useTemplateDmg, element);
 
-        if (damage < 0)
+        if (SkyTemplePlayerCombat.TryCommonSkillMinimum(effector,effected,template,damage,out var incomingMinimum))
+            damage=incomingMinimum;
+        else if (damage < 0)
             damage = 0;
 
         if (effected is Npc)
         {
             damage = effected.GetAi().ModifyDamage(effector, damage, effect);
         }
+        // Template/NoReduce families retain their separately unverified path.
+        // Supported common skill damage uses the defender's late fixed trim.
+        if(!useTemplateDmg&&SkyTemplePlayerCombat.TryTargetTrim(effector,effected,isPhysical,damage,out var targetTrim))damage=targetTrim;
         CalculateEffectResult(effect, effected, (int)damage, status, ht, ignoreShield, template.GetPosition(), send);
     }
 
@@ -458,7 +479,7 @@ public class AttackUtil
         return damage * multiplier;
     }
 
-    private static void CalculateEffectResult(Effect effect, Creature effected, int damage, AttackStatus status, HitType hitType, bool ignoreShield,
+    internal static void CalculateEffectResult(Effect effect, Creature effected, int damage, AttackStatus status, HitType hitType, bool ignoreShield,
         int position, bool send)
     {
         AttackResult attackResult = new AttackResult(damage, status, hitType);
@@ -473,6 +494,7 @@ public class AttackUtil
             effect.SetProtectedSkillId(attackResult.GetProtectedSkillId());
             effect.SetProtectorId(attackResult.GetProtectorId());
             effect.SetShieldDefense(attackResult.GetShieldType());
+            SkyTempleNpcProtection.AttachEffectReflection(effect, attackResult);
         }
         effect.SetReserveds(new EffectReserved(position, attackResult.GetDamage(), ResourceType.HP, true, send, attackResult.GetAttackStatus()), false);
         effect.SetAttackStatus(attackResult.GetAttackStatus());
@@ -484,7 +506,7 @@ public class AttackUtil
     /// </summary>
     public static List<AttackResult> CalculateMagAttackResult(Creature attacker, Creature attacked, SkillElement element, ISet<CalculationType> calculationTypes)
     {
-        if (SkyTempleNpcCombat.TryCalculateNormal(attacker, attacked, out var retail, out _, calculationTypes)) return retail;
+        if (SkyTempleNpcCombat.TryCalculateNormal(attacker, attacked, out var retail, out _,calculationTypes)) return retail;
         AttackStatus attackStatus = CalculateMagicalStatus(attacker, attacked, 100, false);
         List<AttackResult> attackResultList = StatFunctions.CalculateAttackDamage(attacker, element, attackStatus, calculationTypes);
         AdjustDamageByStatModifiers(attacker, attacked, attackStatus, attackResultList, element);

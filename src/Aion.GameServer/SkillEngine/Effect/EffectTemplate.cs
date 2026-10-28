@@ -1,3 +1,4 @@
+using Aion.GameServer.Retail;
 using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
@@ -5,6 +6,7 @@ using Aion.GameServer.Ai.Poll;
 using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Controllers.Attack;
+using Aion.GameServer.Controllers.Attack.RetailNpc;
 using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Controllers.Effects;
 using Aion.GameServer.Dataholders;
@@ -234,12 +236,32 @@ public abstract class EffectTemplate
             return false;
         }
 
+        if(SkyTempleNpcCombat.IsCohortCombat(effect.GetEffector(),effect.GetEffected()))
+            effect.GetEffected().GetObserveController().PreflightSkyTempleProtection(effect.GetEffector());
+        if(effect.GetEffector() is Npc preparingNpc && ReferenceEquals(effect.GetEffected(),preparingNpc)&&
+            effect.GetSkillId() is 16522 or 16699 && SkyTempleNpcProfileCatalog.TryGet(preparingNpc,out _))
+            effect.GetEffected().GetObserveController().PreflightSkyTempleProtection(preparingNpc,true);
         bool isForcedEffect = effect.IsForcedEffect();
         if (!isForcedEffect && (!ValidateEffectConditions(effect) || !ValidatePreEffects(effect)))
         {
             effect.ResetMagicalCritical(); // a filtered out effect breaks the chain, so the next position rolls its own critical
             return false;
         }
+        if(effect.GetEffector() is Npc && effect.GetEffected() is Npc && GetType()==typeof(SpellAtkDrainInstantEffect)
+            && Position==1 && RetailNpcStatNpcDrainInitial.TryConsumeOfflineInitialization(effect,this,out bool offlineNpcDrain))
+            return offlineNpcDrain;
+        if(effect.GetEffector() is Npc && effect.GetEffected() is Player && GetType()==typeof(SpellAtkDrainInstantEffect)
+            && Position==1 && RetailNpcVampirePrimaryProjection.TryConsumeOfflineInitialization(effect,this,out bool offlineVampire))
+            return offlineVampire;
+        if(effect.GetEffector() is Npc && effect.GetEffected() is Player && GetType()==typeof(SpellAtkDrainInstantEffect)
+            && Position==1 && RetailNpc17860PrimaryProjection.TryConsumeInitializationForOfflineFixture(effect,this,out bool offlineKasika))
+            return offlineKasika;
+        if (SkyTempleNpcSkillCombat.TryCalculate(effect,this,spellStatus,out bool retailSuccess))
+            return retailSuccess;
+        if (RetailNpcStatSkillCombat.TryCalculate(effect,this,spellStatus,out bool retailStatSuccess))
+            return retailStatSuccess;
+        if (SkyTemplePlayerCombat.TryTargetCheck(effect,this,spellStatus,out bool retailIncomingSuccess))
+            return retailIncomingSuccess;
         ResolveMagicalCritical(effect);
         if (!isForcedEffect && IsDodgedOrResisted(effect, statEnum))
         {
@@ -274,7 +296,21 @@ public abstract class EffectTemplate
                 if (!effect.IsInSuccessEffects(position))
                     return false;
             }
-            if (Rnd.Chance() >= GetPreEffectProb())
+            if (RetailNpcStatSpellDrain.TryCheckMpPreEffect(effect,this,out bool retailMpPass))
+                return retailMpPass;
+            if (RetailNpcStatSpellDrain.TryCheckBlindPreEffect(effect,this,out bool retailBlindPass))
+                return retailBlindPass;
+            if (RetailNpcStatSpellDrain.TryCheckNpcPeriodicPreEffect(effect,this,out bool retailNpcDrainPass))
+                return retailNpcDrainPass;
+            if (effect.GetEffector() is Npc npc && SkyTempleNpcProfileCatalog.TryGet(npc,out var selected))
+            {
+                if(!selected.Skills.Any(x=>x.Id48==effect.GetSkillId()&&x.Level==effect.GetSkillLevel()))
+                    throw new InvalidOperationException("Unbound selected preeffect source");
+                // Main345290 inclusive0..100; JG at345297 rejects only draw>prob.
+                int probability=GetPreEffectProb();
+                if(probability!=0&&SkyTempleNpcCombat.Draw(0,100)>probability)return false;
+            }
+            else if (Rnd.Chance() >= GetPreEffectProb())
                 return false;
         }
         return true;
@@ -341,25 +377,34 @@ public abstract class EffectTemplate
     {
         if (SubEffectField == null)
             return;
-        ActionModifiers? mod = GetModifiers();
-        if (mod != null)
+        bool selectedChild=SkyTempleNpcSkillCombat.TryPrepareChild(effect,this,out bool proceed);
+        if(selectedChild)
         {
-            ActionModifier? modifier = GetActionModifiers(effect);
-            if (modifier == null)
+            if(!proceed)return;
+        }
+        else
+        {
+            ActionModifiers? mod = GetModifiers();
+            if (mod != null)
             {
+                ActionModifier? modifier = GetActionModifiers(effect);
+                if (modifier == null)
+                {
+                    return;
+                }
+            }
+            // Pre-Check for sub effect conditions
+            if (!EffectSubConditionsCheck(effect))
+            {
+                effect.SetSubEffectAborted(true);
                 return;
             }
+    
+            // chance to trigger subeffect
+            if (Rnd.Chance() >= SubEffectField.GetChance(effect.GetSkillLevel()))
+                return;
+    
         }
-        // Pre-Check for sub effect conditions
-        if (!EffectSubConditionsCheck(effect))
-        {
-            effect.SetSubEffectAborted(true);
-            return;
-        }
-
-        // chance to trigger subeffect
-        if (Rnd.Chance() >= SubEffectField.GetChance(effect.GetSkillLevel()))
-            return;
 
         SkillTemplate template = DataManager.SKILL_DATA.GetSkillTemplate(SubEffectField.GetSkillId());
         int level = 1;
@@ -369,7 +414,13 @@ public abstract class EffectTemplate
         }
         Aion.GameServer.SkillEngine.Model.Effect newEffect = new Aion.GameServer.SkillEngine.Model.Effect(effect.GetEffector(), effect.GetOriginalEffected(), template, level, null, effect.GetForceType(), true, null);
         newEffect.SetShieldDefense(effect.GetShieldDefense());
+        SkyTempleNpcSkillCombat.BindChild(effect,newEffect,this);
         newEffect.Initialize();
+        // A privately produced secondary can be resisted or rejected by computed geometry.
+        // Do not copy its provisional status/default coordinates into a successful primary.
+        if ((SkyTempleNpcSkillCombat.HasOwnedChild(newEffect,17039,8217) ||
+             SkyTempleNpcSkillCombat.HasOwnedChild(newEffect,16794,8223)) &&
+            !newEffect.GetSuccessEffects().Any()) return;
         if (newEffect.GetSpellStatus() != SpellStatus.DODGE && newEffect.GetSpellStatus() != SpellStatus.RESIST)
             effect.SetSpellStatus(newEffect.GetSpellStatus());
         effect.SetSubEffect(newEffect);
@@ -408,6 +459,7 @@ public abstract class EffectTemplate
 
     public void StartSubEffect(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
+        if (SkyTempleNpcSkillTiming.DeferChild(effect))return;
         if (SubEffectField == null)
             return;
         // Apply-Check for sub effect conditions

@@ -40,6 +40,9 @@ public partial class ItemTemplate : VisibleObjectTemplate
     [XmlElement("godstone")] public GodstoneInfo godstoneInfo;
     [XmlElement("stigma")] public Stigma stigma;
     [XmlAttribute("name")] public string name;
+    // The host XML already carries this internal source name. Retain it for
+    // source-identity checks without changing the displayed item name.
+    [XmlAttribute("cName")] public string? retailSourceName;
     private static readonly byte[] DEFAULT_LEVEL_RESTRICTION = new byte[] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
     [XmlIgnore] public byte[] levelRestrictions = DEFAULT_LEVEL_RESTRICTION;
@@ -335,6 +338,8 @@ public partial class ItemTemplate : VisibleObjectTemplate
     {
         return name == null ? "" : name;
     }
+
+    internal string? GetRetailSourceName() => retailSourceName;
 
     public override int GetTemplateId()
     {

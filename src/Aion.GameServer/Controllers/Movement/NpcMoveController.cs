@@ -19,6 +19,9 @@ using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Aion.GameServer.World.Geo;
+using Aion.GameServer.GeoEngine.RetailPath;
+using Aion.GameServer.Ai.Event;
+using Aion.GameServer.Controllers.Attack.RetailNpc;
 
 namespace Aion.GameServer.Controllers.Movement;
 
@@ -41,6 +44,31 @@ public class NpcMoveController : CreatureMoveController<Npc>
 
     private WalkerTemplate walkerTemplate;
     private RouteStep currentStep;
+    private SkyTempleNpcNavigation retailNavigation;
+    private SkyTempleMoveKind? retailLastMove;
+    private string retailLastDiagnostic;
+
+    internal SkyTempleNpcNavigation RetailNavigation => retailNavigation ??= new(Owner);
+    internal bool UsesRetailNavigation => SkyTempleNpcNavigation.Enabled(Owner);
+    // Snapshot before acquiring the skill-state gate; navigation itself queries
+    // selected skills before its own lock, so reversing that order is unsafe.
+    internal bool RetailHasRouteFailure
+    { get { var nav=RetailNavigation;lock(nav)return nav.HasRouteFailure; } }
+    internal SkyTempleArrival RetailArrival(Creature target,float? range=null)
+    {lock(RetailNavigation)return RetailNavigation.Arrival(target,range);}
+    internal bool RetailDestinationReached()
+    {
+        // Return completion is owned by the bound ReturnState's actual-position
+        // or computed native2 command, never Java MoveArrived/birth heuristics.
+        if(Owner.GetAi().GetState()==AIState.RETURNING)return false;
+        if(Owner.GetAi().GetState()!=AIState.FIGHT)return retailLastMove==SkyTempleMoveKind.Arrived;
+        // Skill-state owns source/count/reuse/queue selection. Query before taking the
+        // navigation lock: the selector itself may call RetailArrival under its state lock.
+        var target=Owner.GetTarget();
+        if(!SkyTempleNpcSkillState.TryGetApproachGoal(Owner,out var goal)||!ReferenceEquals(target,Owner.GetTarget()))return false;
+        lock(RetailNavigation)return RetailNavigation.CurrentGoal(goal)&&
+            RetailNavigation.Arrival(goal.Target,goal.Range)==SkyTempleArrival.Arrived&&ReferenceEquals(target,Owner.GetTarget());
+    }
 
     public NpcMoveController(Npc owner) : base(owner)
     {
@@ -129,6 +157,25 @@ public class NpcMoveController : CreatureMoveController<Npc>
             AbortMove();
             return;
         }
+        if(UsesRetailNavigation&&AttackManager.UpdateRetailChase((NpcAI)Owner.GetAi()))return;
+        SkyTempleNpcReturnState.Frame? returnFrame=null;
+        if(UsesRetailNavigation&&Owner.GetAi().GetState()==AIState.RETURNING)
+        {
+            if(!SkyTempleNpcReturnState.TryRead(Owner,out var currentReturn))
+            {
+                var nav=RetailNavigation;lock(nav)LogRetailTransition(nav,"return-unsupported",Owner.GetTarget(),
+                    SkyTempleNpcNavigation.Position(Owner),"missing-or-stale-return-goal-owner");return;
+            }
+            returnFrame=currentReturn;
+            switch(currentReturn.Tick(Owner,SystemClock.RetailTick32()))
+            {
+                case SkyTempleNpcReturnState.Control.Complete:
+                    ReturningEventHandler.CompleteRetailReturn((NpcAI)Owner.GetAi(),currentReturn);return;
+                case SkyTempleNpcReturnState.Control.RemoveReason16:
+                    currentReturn.Remove(Owner);return;
+                case SkyTempleNpcReturnState.Control.Unsupported:return;
+            }
+        }
         if (!Owner.CanPerformMove())
         {
             if (Owner.GetAi().IsLogging())
@@ -145,7 +192,16 @@ public class NpcMoveController : CreatureMoveController<Npc>
         if (Started.CompareAndSet(false, true))
         {
             UpdateLastMove();
-            SetAndSendStartMove(Owner);
+            // The retail adapter emits only a computed, revalidated route step. A resumed
+            // movement task must not first broadcast the previous unchecked destination.
+            if(!UsesRetailNavigation)SetAndSendStartMove(Owner);
+        }
+
+        if(UsesRetailNavigation)
+        {
+            MoveRetail(returnFrame);
+            UpdateLastMove();
+            return;
         }
 
         switch (destination)
@@ -181,6 +237,160 @@ public class NpcMoveController : CreatureMoveController<Npc>
     private bool IsOnGround(Creature creature)
     {
         return !creature.IsFlying() && !creature.GetMoveController().IsJumping() && (creature.GetMoveController().GetMovementMask() & MovementMask.FALL) == 0;
+    }
+
+    private void MoveRetail(SkyTempleNpcReturnState.Frame? returnFrame)
+    {
+        var nav=RetailNavigation;
+        var ownerTarget=Owner.GetTarget();
+        // Skill-state may acquire navigation during action selection. Its recovery
+        // read must precede nav, just like the selected approach read below.
+        int recovery=returnFrame is null?SkyTempleNpcSkillState.GetNextMovementInterval(Owner):
+            returnFrame.CapturedTick<SkyTempleNpcSkillState.GetReturnMovementEndTick(Owner)?1:0;
+        SkyTempleNpcApproachGoal? goal=null;
+        bool requiresApproach=destination==Destination.TARGET_OBJECT&&Owner.GetAi().GetState()==AIState.FIGHT;
+        if(requiresApproach)
+        {
+            if(SkyTempleNpcSkillState.TryGetApproachGoal(Owner,out var selected))goal=selected;
+        }
+        SkyTempleGiveUpLease? giveUp=null;
+        SkyTempleMoveStep? returnAction=null;
+        lock(nav)
+        {
+            if(recovery>0)
+            {
+                nav.RecoveryWait(SystemClock.RetailTick32());retailLastMove=SkyTempleMoveKind.Wait;
+                LogRetailTransition(nav,"skill-recovery",ownerTarget,goal?.Target is { } recoveringTarget?
+                    SkyTempleNpcNavigation.Position(recoveringTarget):new(pointX,pointY,pointZ),"movement72c");
+                if(IsInMove())SetAndSendStopMove(Owner);
+                return; // Keep the single existing task/route; no recovery timer or failed chase.
+            }
+            var step=nav.Tick(destination==Destination.TARGET_OBJECT,returnFrame?.Goal??new(pointX,pointY,pointZ),SystemClock.RetailTick32(),goal,ownerTarget,requiresApproach);
+            retailLastMove=step.Kind;
+            LogRetailTransition(nav,step.Kind==SkyTempleMoveKind.Move?"route-acquired":
+                step.Kind==SkyTempleMoveKind.GiveUp?"give-up-pending":step.Kind.ToString(),
+                ownerTarget,nav.RequestedGoal??step.Destination,step.Detail);
+            if(returnFrame is not null&&step.Kind is SkyTempleMoveKind.ReturnTeleport or SkyTempleMoveKind.ReturnCompleted)
+            {
+                returnAction=step;
+            }
+            else if(step.Kind==SkyTempleMoveKind.GiveUp)
+            {
+                giveUp=nav.ClaimGiveUp(step);
+            }
+            else if(step.Kind!=SkyTempleMoveKind.Move)
+            {
+                if(IsInMove())SetAndSendStopMove(Owner);
+                return;
+            }
+            else
+            {
+                if(!nav.CanApply(step))
+                {
+                    nav.Confirm(step,false);retailLastMove=SkyTempleMoveKind.Blocked;
+                    LogRetailTransition(nav,"blocked-recovery",ownerTarget,step.Destination,"stale-step-or-scene");
+                    if(IsInMove())SetAndSendStopMove(Owner);return;
+                }
+                int instance=Owner.GetInstanceId();
+                TargetDestX=step.Destination.X;TargetDestY=step.Destination.Y;TargetDestZ=step.Destination.Z;
+                Heading=step.Heading;
+                Aion.GameServer.World.World.GetInstance().UpdatePosition(Owner,step.Next.X,step.Next.Y,step.Next.Z,Heading,false);
+                // World.UpdatePosition is void and can decline invalid membership. Only its actual
+                // same-lifetime position write acknowledges the follower's progress exchange.
+                bool applied=Owner.IsSpawned()&&!Owner.IsDead()&&Owner.GetInstanceId()==instance&&
+                    SkyTempleNpcNavigation.Position(Owner)==step.Next;
+                nav.Confirm(step,applied);
+                if(!applied)
+                {
+                    retailLastMove=SkyTempleMoveKind.Blocked;
+                    LogRetailTransition(nav,"blocked-recovery",ownerTarget,step.Destination,"world-position-declined");return;
+                }
+                SetInMove(true);MovementMaskField=MovementMask.NPC_STARTMOVE;
+                PacketSendUtility.BroadcastToSightedPlayers(Owner,new SM_MOVE(Owner.GetObjectId(),Owner.GetX(),Owner.GetY(),Owner.GetZ(),
+                    Heading,MovementMaskField,TargetDestX,TargetDestY,TargetDestZ));
+            }
+        }
+        if(returnAction is not null&&returnFrame is not null)ApplyRetailReturn(returnFrame,returnAction);
+        if(giveUp is not null)DispatchRetailGiveUp(nav,giveUp);
+    }
+
+    private void ApplyRetailReturn(SkyTempleNpcReturnState.Frame frame,SkyTempleMoveStep step)
+    {
+        bool completed=false;
+        lock(Owner)lock(this)
+        {
+            if(Owner.GetAi().GetState()!=AIState.RETURNING||!frame.IsCurrent(Owner))return;
+            var nav=RetailNavigation;
+            lock(nav)
+            {
+                if(!nav.CanApply(step))return;
+                nav.Cancel();
+            }
+            if(step.Kind==SkyTempleMoveKind.ReturnCompleted)
+            {
+                // Native raw2 pops/reevaluates at the ACTUAL position. A clipped
+                // path ending does not establish position==goal or grant HP.
+                completed=true;
+            }
+            else if(step.Kind==SkyTempleMoveKind.ReturnTeleport)
+            {
+            // Host4.8 transport/membership adapter, not a native packet claim.
+            // This request is reached only from a computed native follow1/4;
+            // search/unsupported/defensive failures never manufacture raw1.
+            var goal=frame.Goal;
+            Aion.GameServer.World.World.GetInstance().UpdatePosition(Owner,goal.X,goal.Y,goal.Z,frame.Heading,false);
+            if(!frame.IsCurrent(Owner)||!SkyTempleNpcReturnState.SamePoint(SkyTempleNpcNavigation.Position(Owner),goal))
+            {retailLastMove=SkyTempleMoveKind.Blocked;return;}
+            TargetDestX=goal.X;TargetDestY=goal.Y;TargetDestZ=goal.Z;Heading=frame.Heading;
+            SetAndSendStopMove(Owner);retailLastMove=SkyTempleMoveKind.Wait;
+            LogRetailTransition(nav,"return-teleport",Owner.GetTarget(),goal,step.Detail);
+            // No pop here: next update tests actual position before expiry.
+            }
+        }
+        if(completed)ReturningEventHandler.CompleteRetailReturn((NpcAI)Owner.GetAi(),frame);
+    }
+
+    private void DispatchRetailGiveUp(SkyTempleNpcNavigation nav,SkyTempleGiveUpLease lease)
+    {
+        // Match ReturnToLastStepOrSpawn's controller->nav order. In particular,
+        // OnStopMove observers and TargetGiveup/Think run with NO nav lock held.
+        lock(Owner)lock(this)
+        {
+            lock(nav)if(!nav.IsCurrentGiveUp(lease))return;
+            if(Started.Get())
+            {
+                ResetMove(false); // ClaimGiveUp already cancelled precisely that route.
+                SetAndSendStopMove(Owner);
+            }
+            lock(nav)
+            {
+                if(!nav.FinishGiveUp(lease))return;
+                LogRetailTransition(nav,"give-up",lease.Target,nav.RequestedGoal??SkyTempleNpcNavigation.Position(Owner),"bounded-chase-ended");
+            }
+            if(lease.PointMovement)
+            {
+                // The bounded managed point-recovery owner must not fabricate
+                // arrival or run combat hate/return events on an idle patrol.
+                WalkManager.StopWalking((NpcAI)Owner.GetAi());
+                return;
+            }
+            SkyTempleNpcReturnState.PreparePathFailure(Owner);
+            Owner.GetAi().OnGeneralEvent(AiEventType.TargetGiveup);
+        }
+    }
+
+    private void LogRetailTransition(SkyTempleNpcNavigation nav,string transition,VisibleObject? target,
+        RetailSearchPoint goal,string? detail)
+    {
+        // Route identity/positions deliberately do not participate in this key:
+        // moving-target replans and ordinary200ms progress must not log each tick.
+        string phase=Owner.GetAi().GetState()==AIState.RETURNING?"return":"chase";
+        string key=$"{phase}/{transition}/{target?.GetObjectId()}/{nav.SceneRevision}/{detail}";
+        if(key==retailLastDiagnostic)return;
+        retailLastDiagnostic=key;
+        log.LogInformation("SkyTemple navigation {Phase}/{Transition}: npc={Npc} template={Template} target={Target} map={Map} instance={Instance} from={From} goal={Goal} waypoints={Waypoints} scene={Scene} reason={Reason}",
+            phase,transition,Owner.GetObjectId(),Owner.GetNpcId(),target?.GetObjectId(),Owner.GetWorldId(),Owner.GetInstanceId(),
+            SkyTempleNpcNavigation.Position(Owner),goal,nav.RemainingWaypoints,nav.SceneRevision,detail);
     }
 
     /// <summary>
@@ -366,13 +576,16 @@ public class NpcMoveController : CreatureMoveController<Npc>
     }
 
     /// <summary>Initialize values to default ones</summary>
-    public void ResetMove()
+    public void ResetMove()=>ResetMove(true);
+    private void ResetMove(bool cancelRetail,bool notify=true)
     {
+        if(cancelRetail&&retailNavigation is not null)lock(retailNavigation)retailNavigation.Cancel();
+        retailLastMove=null;
         if (Owner.GetAi().IsLogging())
         {
             AILogger.Moveinfo(Owner, "MC perform stop");
         }
-        Owner.GetController().OnStopMove();
+        if(notify)Owner.GetController().OnStopMove();
         Started.Set(false);
         TargetDestX = 0;
         TargetDestY = 0;
@@ -383,15 +596,60 @@ public class NpcMoveController : CreatureMoveController<Npc>
         nextPointFromGeo = false;
     }
 
+    internal void StopRetailReturnMotion(SkyTempleNpcReturnState.Frame frame)
+    {
+        lock(this)
+        {
+            if(!frame.LifeIsCurrent(Owner))return;
+            ResetMove(true,false);SetInMove(false);
+        }
+        if(!frame.LifeIsCurrent(Owner))return;
+        Owner.GetController().OnStopMove(); // No movement/nav monitor across observers.
+        if(frame.LifeIsCurrent(Owner)&&!Started.Get())SetAndSendStopMove(Owner);
+    }
+
     public WalkerTemplate GetWalkerTemplate()
     {
         return walkerTemplate;
     }
 
-    public void SetWalkerTemplate(WalkerTemplate walkerTemplate, int stepIndex)
+    public bool SetWalkerTemplate(WalkerTemplate walkerTemplate, int stepIndex)
     {
+        if(UsesRetailNavigation)
+        {
+            if(SkyTempleNpcWaypointProjection.TryPrepare(Owner,walkerTemplate,out var prepared,out var failure))
+                walkerTemplate=prepared!;
+            else if(failure is not null)
+            {
+                log.LogError("RETAIL_SKYTEMPLE_WAYPOINT_REJECT npc={Npc} object={Object} route={Route} instance={Instance} reason={Reason}",
+                    Owner.GetNpcId(),Owner.GetObjectId(),walkerTemplate?.GetRouteId(),Owner.GetInstanceId(),failure);
+                RejectRetailWalker();
+                return false;
+            }
+            if(stepIndex<0||stepIndex>=walkerTemplate.GetRouteSteps().Count)
+            {
+                log.LogError("RETAIL_SKYTEMPLE_WAYPOINT_REJECT npc={Npc} route={Route} reason=prepared-step-index-outside-route step={Step}",
+                    Owner.GetNpcId(),walkerTemplate.GetRouteId(),stepIndex);
+                RejectRetailWalker();
+                return false;
+            }
+        }
         this.walkerTemplate = walkerTemplate;
         this.currentStep = walkerTemplate.GetRouteStep(stepIndex);
+        return true;
+    }
+
+    private void RejectRetailWalker()
+    {
+        // Native waypoint preparation clears the complete invalid route. An
+        // unsuccessful reassignment must not leave a previously admitted clone
+        // available for subsequent patrol/return selection.
+        lock(this)
+        {
+            walkerTemplate=null!;currentStep=null!;isStop=false;
+            if(Owner.GetAi().GetState() is AIState.WALKING or AIState.FORCED_WALKING)
+                WalkManager.StopWalking((NpcAI)Owner.GetAi());
+        }
     }
 
     public void SetRouteStep(RouteStep step)
@@ -438,7 +696,7 @@ public class NpcMoveController : CreatureMoveController<Npc>
             if (WalkerFormator.ProcessClusteredNpc(Owner, Owner.GetWorldId(), Owner.GetInstanceId()))
                 return false;
 
-            SetWalkerTemplate(DataManager.WALKER_DATA.GetWalkerTemplate(Owner.GetSpawn().GetWalkerId()), 0);
+            if(!SetWalkerTemplate(DataManager.WALKER_DATA.GetWalkerTemplate(Owner.GetSpawn().GetWalkerId()), 0))return false;
             if (walkerTemplate == null)
             {
                 log.LogWarning("Bad Walker Id: {OwnerGetSpawnGetWalkerId} - point: {CurrentStepGetStepIndex}", Owner.GetSpawn().GetWalkerId(), currentStep.GetStepIndex());
@@ -498,6 +756,18 @@ public class NpcMoveController : CreatureMoveController<Npc>
 
     public void ReturnToLastStepOrSpawn()
     {
+        if(UsesRetailNavigation)
+        {
+            lock(Owner)lock(this)
+            {
+                if(destination!=Destination.POINT)AbortMove();
+                if(SkyTempleNpcReturnState.TryRead(Owner,out var frame))
+                    MoveToPoint(frame.Goal.X,frame.Goal.Y,frame.Goal.Z);
+                else log.LogError("SkyTemple return owner unavailable npc={Npc} template={Template} life={Life}",
+                    Owner.GetObjectId(),Owner.GetNpcId(),Owner.GetController().RetailLifeEpoch);
+            }
+            return;
+        }
         lock (this)
         {
             // E2E-authorized correction to Java ce54b7931 (plan §7 #61): LoseAggro clears

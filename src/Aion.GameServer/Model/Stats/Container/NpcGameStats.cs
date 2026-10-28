@@ -1,5 +1,4 @@
 using Aion.GameServer.Ai;
-using Aion.GameServer.Retail;
 using System;
 using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Model.GameObjects;
@@ -10,12 +9,14 @@ using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Stats;
 using Aion.GameServer.Model.Templates.Npc;
+using Aion.GameServer.Retail;
 
 namespace Aion.GameServer.Model.Stats.Container;
 
 /// <summary>Java parity: model/stats/container/NpcGameStats.</summary>
 public class NpcGameStats : CreatureGameStats<Npc>
 {
+    public SkyTempleNpcProfile? RetailProfile { get; }
     internal SkyTempleNpcProfile? StatisticsProfile { get; private set; }
     internal bool StatisticsContextRetired { get; private set; }
     private StatsTemplate? retailStats;
@@ -32,7 +33,12 @@ public class NpcGameStats : CreatureGameStats<Npc>
     public NpcGameStats(Npc owner)
         : base(owner)
     {
-        if (RetailNpcStatCatalog.TryGet(owner, out var profile))
+        if (SkyTempleNpcProfileCatalog.TryGet(owner, out var profile))
+        {
+            RetailProfile = profile;
+            retailStats = profile.CreateStatsTemplate();
+        }
+        else if (RetailNpcStatCatalog.TryGet(owner, out profile))
         {
             StatisticsProfile = profile;
             retailStats = profile.CreateStatsTemplate(owner.GetObjectTemplate().GetStatsTemplate());
@@ -74,7 +80,7 @@ public class NpcGameStats : CreatureGameStats<Npc>
         }
         bool nativeCriticalRate = StatisticsProfile is not null && statEnum is
             StatEnum.PHYSICAL_CRITICAL_RESIST or StatEnum.MAGICAL_CRITICAL_RESIST;
-        if (nativeCriticalRate || StatisticsProfile is not null && statEnum is StatEnum.POWER or StatEnum.HEALTH or StatEnum.AGILITY
+        if (nativeCriticalRate || (RetailProfile ?? StatisticsProfile) is not null && statEnum is StatEnum.POWER or StatEnum.HEALTH or StatEnum.AGILITY
             or StatEnum.ACCURACY or StatEnum.KNOWLEDGE or StatEnum.WILL)
         {
             // Native first-level copies may be zero. Java's player-oriented80minimum must not replace them.
@@ -103,19 +109,27 @@ public class NpcGameStats : CreatureGameStats<Npc>
 
     public override int GetBaseAttackSpeed()
     {
-        return StatisticsProfile is { } profile && profile.Source.Integers["attack_delay"].ParsedValue.HasValue
+        return (RetailProfile ?? StatisticsProfile) is { } profile && profile.Source.Integers["attack_delay"].ParsedValue.HasValue
             ? profile.AttackDelay : owner.GetObjectTemplate().GetAttackSpeed();
     }
 
     protected override Stat2 GetStat(StatEnum statEnum, float baseValue, ISet<CalculationType> calculationTypes)
     {
-        if (StatisticsProfile is { } profile && profile.TrySpecialBase(statEnum, out int sourceBase)) baseValue = sourceBase;
+        if ((RetailProfile ?? StatisticsProfile) is { } profile && profile.TrySpecialBase(statEnum, out int sourceBase)) baseValue = sourceBase;
         return base.GetStat(statEnum, baseValue, calculationTypes);
     }
 
-
     public override Stat2 GetMovementSpeed()
     {
+        if (RetailProfile is { } retail)
+        {
+            // This cohort's source return mode is explicitly run. Managed RETURNING uses that
+            // family before the source return multiplier and current4.8 effect functions.
+            float speed = owner.GetAi().GetState() == AIState.RETURNING ? retail.NormalRunSpeed * retail.ReturnSpeedMultiplier
+                : owner.IsInState(CreatureState.WEAPON_EQUIPPED) ? retail.CombatRunSpeed
+                : owner.IsInState(CreatureState.WALK_MODE) ? retail.NormalWalkSpeed : retail.NormalRunSpeed;
+            return GetStat(StatEnum.SPEED, JRound(speed * 1000));
+        }
         Stat2 newSpeedStat;
         if (owner.IsInState(CreatureState.WEAPON_EQUIPPED))
         {
@@ -145,11 +159,12 @@ public class NpcGameStats : CreatureGameStats<Npc>
 
     public override Stat2 GetAttackRange()
     {
-        return GetStat(StatEnum.ATTACK_RANGE, owner.GetObjectTemplate().GetAttackRange() * 1000);
+        return GetStat(StatEnum.ATTACK_RANGE, RetailProfile is { } p ? p.Attacks[0].Range * 1000 : owner.GetObjectTemplate().GetAttackRange() * 1000);
     }
 
     public override Stat2 GetHpRegenRate()
     {
+        if (RetailProfile is { } p) return GetStat(StatEnum.REGEN_HP, p.HpRegen);
         int divider = 2;
         if (owner.GetAbyssNpcType() != AbyssNpcType.NONE)
             divider = 4; // Abyss type related NPCs restore their health by 25%
@@ -208,6 +223,10 @@ public class NpcGameStats : CreatureGameStats<Npc>
 
     public int GetNextAttackInterval()
     {
+        // Normal emission, skill emission and cancellation share the native728 owner.
+        // The legacy timestamp remains diagnostic here and cannot lengthen Cancel100.
+        if (RetailProfile is not null)
+            return Aion.GameServer.Controllers.Attack.RetailNpc.SkyTempleNpcSkillState.GetNextActionInterval(owner);
         long attackDelay = CurrentTimeMillis() - lastAttackTime;
         int attackSpeed = GetAttackSpeed().GetCurrent();
         if (attackSpeed == 0)

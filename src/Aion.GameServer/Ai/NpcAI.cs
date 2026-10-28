@@ -161,6 +161,8 @@ public abstract class NpcAI : AITemplate<Npc>
 
     public override bool IsDestinationReached()
     {
+        if(GetOwner().GetMoveController() is Aion.GameServer.Controllers.Movement.NpcMoveController move&&move.UsesRetailNavigation)
+            return move.RetailDestinationReached();
         return GetState() switch
         {
             AIState.CONFUSE or AIState.FEAR => Aion.GameServer.Utils.PositionUtil.IsInRange(GetOwner(), GetOwner().GetMoveController().GetTargetX2(),

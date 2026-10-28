@@ -31,7 +31,8 @@ public class Npc : Creature
         // Java: Objects.requireNonNull(objectTemplate) before super (C# cannot run code before base()).
         controller.SetOwner(this);
         moveController = new Aion.GameServer.Controllers.Movement.NpcMoveController(this);
-        skillList = DataManager.NPC_SKILL_DATA.GetOrCreateNpcSkillList(GetNpcId());
+        skillList = Aion.GameServer.Retail.SkyTempleNpcProfileCatalog.TryGet(this, out var retailProfile)
+            ? retailProfile.CreateSkillList() : DataManager.NPC_SKILL_DATA.GetOrCreateNpcSkillList(GetNpcId());
         SetupStatContainers();
     }
 
@@ -109,7 +110,7 @@ public class Npc : Creature
 
     public Aion.GameServer.Model.Skill.NpcSkillList GetSkillList()
     {
-        return skillList;
+        return Aion.GameServer.Retail.RetailNpcStatSkillLevels.Get(this, skillList);
     }
 
     public Aion.GameServer.Model.Skill.NpcSkillEntry GetNextQueuedSkill()

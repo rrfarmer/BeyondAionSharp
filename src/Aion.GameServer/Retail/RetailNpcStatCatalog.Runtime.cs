@@ -36,7 +36,9 @@ internal static partial class RetailNpcStatCatalog
         var file = new FileInfo(full);
         if (!file.Exists || file.Length is <= 0 or > 64 * 1024 * 1024)
             throw new InvalidDataException("Missing/oversized statistics manifest: " + full);
-        var parsed = Parse(await File.ReadAllBytesAsync(full, cancellationToken), sha256, Path.GetDirectoryName(full)!);
+        // Runtime publication is the coherent profile/normal/buff package. Optional
+        // skill/player-state readers remain offline experiments until separately admitted.
+        var parsed = Parse(await File.ReadAllBytesAsync(full, cancellationToken), sha256, Path.GetDirectoryName(full)!, includeAdditional: false);
         bool runtimeReady = false;
         ValidateRuntimePublication(parsed, ref runtimeReady);
         if (!runtimeReady)

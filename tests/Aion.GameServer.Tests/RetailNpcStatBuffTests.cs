@@ -7,6 +7,36 @@ namespace Aion.GameServer.Tests;
 
 public sealed class RetailNpcStatBuffTests
 {
+    [Fact]
+    public void GeneralResistanceDescriptorRequiresThePlayerResistanceParser()
+    {
+        byte[] raw=Encoding.Unicode.GetBytes("<skill_base><id>1</id><name>Fixture</name><effect1_type>StatUp</effect1_type>"
+            +"<effect1_reserved13>arAll</effect1_reserved13><effect1_reserved2>100</effect1_reserved2></skill_base>");
+        string hash=Convert.ToHexStringLower(SHA256.HashData(raw));
+        Assert.False(Assert.Single(RetailNpcStatBuffs.Parse(raw,hash).Programs).Supported);
+        var program=Assert.Single(RetailNpcStatBuffs.ParsePlayerResistance(raw,hash).Programs);
+        Assert.True(program.Supported);
+        var part=Assert.Single(program.Parts);
+        Assert.Equal(StatEnum.ABNORMAL_RESISTANCE_ALL,part.Stat);
+        Assert.False(part.Percent);Assert.Equal(100,RetailNpcStatBuffs.Value(part,1));
+    }
+
+    [SkippableFact]
+    public void PinnedRetailPlayerBuffProvidesGeneralCurseResistanceOperand()
+    {
+        string? path=Environment.GetEnvironmentVariable("AION_RETAIL_CURSE_PLAYER_BUFF_FIXTURE");
+        Skip.If(string.IsNullOrWhiteSpace(path),"Requires pinned 5.8 player buff record");
+        const string hash="0155bee5a323c47ad0e012e98d85fb4f2dcb195c9ad9cf206cef60dc1376f1bd";
+        var source=RetailNpcStatBuffs.ParsePlayerResistance(File.ReadAllBytes(path!),hash);
+        Assert.Equal(2767,source.Id);Assert.Equal("RI_SummonArmor_G1",source.Name);
+        var program=Assert.Single(source.Programs,p=>p.Position==3);
+        Assert.True(program.Supported);
+        var general=Assert.Single(program.Parts,p=>p.Stat==StatEnum.ABNORMAL_RESISTANCE_ALL);
+        Assert.False(general.Percent);int value=RetailNpcStatBuffs.Value(general,1);
+        Assert.Equal(100,value);
+        Assert.Equal(100,RetailNpcStatSpellDrain.CalculateCurseResistance(new(0,default,new(0,value),default,default)));
+    }
+
     private static RetailNpcStatBuffs.Program Parse(string descriptors)
     {
         byte[] raw=Encoding.Unicode.GetBytes("<skill_base><id>16405</id><name>Fixture</name><effect1_type>StatUp</effect1_type>"+descriptors+"</skill_base>");

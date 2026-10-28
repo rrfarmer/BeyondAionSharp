@@ -70,6 +70,16 @@ public class PlayerLifeStats : CreatureLifeStats<Player>
             Aion.GameServer.Taskmanager.Tasks.TeamStatUpdater.GetInstance().Add(owner);
     }
 
+    // Current-value callbacks already send these packets. A prepared curse
+    // also needs them when only the maximum changed (notably zero MP).
+    internal void NotifyPreparedRetailCurseMaxima(bool hpOnly,bool mpOnly)
+    {
+        if(!owner.IsSpawned() || (!hpOnly && !mpOnly))return;
+        if(hpOnly)SendHpPacketUpdate();
+        if(mpOnly)SendMpPacketUpdate();
+        SendGroupPacketUpdate();
+    }
+
     public override void SynchronizeWithMaxStats()
     {
         if (IsDead())
