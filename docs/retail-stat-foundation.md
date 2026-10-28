@@ -51,3 +51,19 @@ the actual verification results.
 
 Before building/testing, honor the repository's journey DLL ownership rule.
 No SIM, bot journey, client or game server is required by this workflow.
+
+## Ordinary normal damage
+
+The normal-attack scope, range, damage stages, dual endpoint split and modifier
+calculation live under `Controllers/Attack/RetailNpc`. The pure range/math files
+compile independently of the game server and native-memory reconstruction code.
+The companion modifier reader uses the existing NPC stat-function owners and
+conditions. Neither part selects a runtime cohort by itself.
+
+```powershell
+dotnet test tests/Aion.GameServer.Tests/Aion.GameServer.Tests.csproj `
+  --filter 'FullyQualifiedName~RetailNpcCombatDamageStagesTests|FullyQualifiedName~RetailNpcNormalBaseMathTests|FullyQualifiedName~RetailNpcDualNormalRangeTests|FullyQualifiedName~RetailNpcStatNormalInputsTests'
+```
+
+These tests cover independent arithmetic witnesses and real host modifier
+functions. A passing arithmetic test is not an enabled-mob or final-HP-loss test.

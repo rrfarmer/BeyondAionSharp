@@ -32,3 +32,28 @@ The source reader/projections alone do not activate these differences. The
 existing broader runtime adapter, package selection and combat integration must
 be reviewed separately. Synthetic unit inputs are not retail data. The full
 source fixtures and their hash-checked integration tests remain external.
+
+## Ordinary normal-attack arithmetic
+
+The normal base uses the selected damage sample and authored attack-profile
+percentage. The effect percentage adds to that profile percentage; its flat
+channel is applied separately. For sample 100, profile 150%, effect +20%, the
+base is 170; adding flat 20 makes 190. Applying Java's generic stat multiplier
+to an already scaled 150 would give the wrong result. Actual proxy/owner
+conditions are evaluated when reading NPC modifier functions.
+
+Native `ChangeAttackParamater` (`0x14035a280`) and `CalcNormalAttackDamage`
+(`0x140369e10`) establish the modifier channels and float operation order. The
+non-inlined scalar operations retain the recovered binary32 rounding points.
+Ordinary arithmetic uses the normal-damage module directly, without depending
+on the native player-memory reconstruction module for those operations.
+
+For dual attacks, the native tail (`0x14035a090..0x14035a10e`) halves each source
+endpoint before later per-hand modifiers. Odd fractions are discarded: 335..503
+becomes 167..251 in each hand. This does not authorize a generic multi-hit split.
+
+The pure stages also cover the reviewed level, physical/elemental defense,
+critical factor and PvE-ratio arithmetic. They require explicit NPC-facing
+inputs and reject a player-versus-player scope. They do not choose live targets,
+draw RNG, apply effects, mutate HP or activate a cohort. The runtime integration
+and its broader input admission remain separate pending work.
