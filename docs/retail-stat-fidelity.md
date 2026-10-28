@@ -147,3 +147,43 @@ when that logger enables debug. Missing-data warnings remain visible. The manage
 retail RNG retains the recovered engine and inclusive mapping; a cryptographic
 host seed is an infrastructure choice, not a claim to reproduce a captured retail
 global seed or interleaving.
+
+## Ordinary StatUp numeric programs
+
+The existing `BufEffect` registration/removal owner now selects source numeric
+programs for matched statistics-only NPC-to-NPC effects. Cast selection, success,
+targeting, duration, secondary effects and scheduling retain their existing owners.
+Player-origin or player-target buffs and unrelated player/PvP programs are outside
+this selection. Unknown descriptors, nonzero R9's separate writer, conditional host
+core modifiers and missing exact bindings remain explicit compatibility warnings.
+
+The source reader is shared with optional damage parsing without depending on its
+damage-family implementation. Direct bindings retain native case-insensitive ASCII
+name lookup. Constant triggered children require a source lineage and matching host
+Provoker links/stack; they are not added to NPC skill lists. The two Ishalgen
+triggered-buff gaps have source-bound child programs; their existing coefficients
+are verified unchanged rather than counted as new numeric defects.
+
+Native `GetBonusAttrTo` index99 (`PMDefend`) expands to PDef plus all six elemental
+defenses, not magical hit resistance. The same six-element expansion applies to
+`ElementalDefendAll`. Complete `SkillEffectStatUp::ApplyEffect` proof supplies four
+ordered descriptors, signed16 skill level, wrapped32 level*delta+value, separate
+flat/percent channels and the existing integer scalar caps. R5/R8/R10/R11/R12/R23/R24
+are not numeric operands in that body; textual R10 such as `Fire` no longer disables
+an otherwise supported program. No regeneration/speed/status getter is imported.
+
+If a unique selected source numeric level differs from an exact existing host NPC
+list binding, only the numeric descriptor uses that level. For NPC212863/skill16458,
+source29 produces evasion+360%, while the existing effect remains host level1.
+Neither its skill entry nor other effect/timing consumers are rewritten.
+
+On late target ownership, the source overlay restores only its original host
+numeric functions. Other owners, effect registration and existing expiry survive.
+Offline gates apply/remove the 293 frozen source-program differences and check
+3,516 defense values plus attack modifiers, HP restoration and source-level context.
+The fixture supplies success and the spawned flag; it runs no spawn AI or clock.
+
+One historical comparison used absent XML `lv`=1; Java/C# actually default the int
+to0. The corrected external comparison changes one row's host-level metadata and
+preserves all293 source numeric vectors. Tests use loaded host levels, not that old
+default. Source reports and the erratum remain outside Git.

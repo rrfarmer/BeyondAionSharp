@@ -105,7 +105,7 @@ public sealed class RetailNpcRuntimeGetterTests
         }
     }
 
-    internal static (byte[] Bytes, string Pin, string Directory) ProfileFixture(bool includeCombat = false)
+    internal static (byte[] Bytes, string Pin, string Directory) ProfileFixture(bool includeCombat = false, bool includeBuffs = false)
     {
         string? path = Environment.GetEnvironmentVariable("AION_RETAIL_STATS_TEST_MANIFEST");
         string? pin = Environment.GetEnvironmentVariable("AION_RETAIL_STATS_TEST_SHA256");
@@ -117,6 +117,7 @@ public sealed class RetailNpcRuntimeGetterTests
         var keys = new HashSet<string> { "version", "mode", "region", "dataset_id", "output_manifest_sha256",
             "cohorts", "identity_review", "supported_maps" };
         if (includeCombat) keys.Add("combat_stats");
+        if (includeBuffs) keys.Add("skill_sources");
         foreach (string key in root.Select(k => k.Key).Where(k => !keys.Contains(k)).ToArray()) root.Remove(key);
         bytes = System.Text.Encoding.UTF8.GetBytes(root.ToJsonString());
         return (bytes, Convert.ToHexStringLower(SHA256.HashData(bytes)), Path.GetDirectoryName(path!)!);

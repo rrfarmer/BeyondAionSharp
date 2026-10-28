@@ -145,3 +145,22 @@ explicitly. Leave both unset to retain the legacy path. To roll back selection,
 unset both at a separately authorized restart; do not edit extracted values or
 reset the dirty checkout. Detailed per-hit diagnostics require debug logging for
 `SkyTempleNpcCombat`; ordinary operation does not serialize every hit as JSON.
+
+## Ordinary buff program gate
+
+`RetailNpcBuffRuntimeTests` retains `skill_sources` from the pinned external package
+without enabling optional damage/player-state machinery. It supplies effect success
+and the spawned-actor flag, then uses real effect registration/removal and scalar
+getters. It does not start a server, run spawn AI, advance a virtual journey or prove
+natural casting/application probability.
+
+Set `AION_RETAIL_STATS_BUFF_CASES` to the corrected external StatUp comparison; the
+test pins SHA256 `37fc2c0e3f73598cda7319804ae22b3016673906d020e9a1500b295a9bef14fb`.
+The original comparison remains preserved with its absent-level erratum. The test
+always obtains actual host skill levels from the loaded NPC skill definitions.
+
+`AION_RETAIL_BUFF_PROGRAM_REPORT` optionally writes source identity and explicit
+supported/compatibility results for every loaded StatUp position to an external
+private path. Unsupported noncore speed, regeneration and status descriptors do
+not silently become partial numeric buffs. Synthetic parsing cases cover ignored
+ancillary fields, the separate R9 writer and strict identity/XML shape validation.

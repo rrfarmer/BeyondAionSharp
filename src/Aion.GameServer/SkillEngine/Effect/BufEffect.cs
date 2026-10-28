@@ -44,10 +44,7 @@ public abstract class BufEffect : EffectTemplate
 
         List<IStatFunction> modifiers = new List<IStatFunction>();
 
-        if (change == null)
-            return modifiers;
-
-        foreach (Aion.GameServer.SkillEngine.Change.Change changeItem in change)
+        foreach (Aion.GameServer.SkillEngine.Change.Change changeItem in change ?? [])
         {
             if (changeItem.GetStat() == null)
             {
@@ -71,6 +68,6 @@ public abstract class BufEffect : EffectTemplate
                     break;
             }
         }
-        return modifiers;
+        return Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatBuffs.Select(effect, this, modifiers);
     }
 }

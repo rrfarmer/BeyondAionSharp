@@ -96,6 +96,16 @@ public abstract class CreatureGameStats
         OnStatsChange(statOwner is Effect effect ? effect : null);
     }
 
+    // Retire only this source overlay when its NPC target becomes owned/scaled.
+    // Other owners, unrelated effect components and the existing expiry remain.
+    internal void ReplaceOwnedFunctions(IStatOwner statOwner, IReadOnlySet<IStatFunction> previous, IEnumerable<IStatFunction> replacement)
+    {
+        foreach (var functions in stats.Values)
+            lock (functions) functions.RemoveAll(f => statOwner.Equals(f.GetOwner())
+                && previous.Contains(f is StatFunctionProxy proxy ? proxy.GetProxiedFunction() : f));
+        AddEffect(statOwner, replacement);
+    }
+
     public void EndEffect(IStatOwner statOwner)
     {
         bool statsChanged = false;

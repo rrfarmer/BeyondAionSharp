@@ -56,11 +56,13 @@ internal static partial class RetailNpcStatCatalog
         var (profiles, maps) = ReadProfiles(root, expected, directory, identities);
         var package = new Package(profiles.ToFrozenDictionary(), maps.ToFrozenSet());
         ReadNormalPackage(root, directory, ref package);
+        ReadBuffPackage(root, directory, ref package);
         ReadAdditionalPackage(root, expected, directory, ref package);
         return package;
     }
 
     static partial void ReadNormalPackage(System.Text.Json.JsonElement root, string directory, ref Package package);
+    static partial void ReadBuffPackage(System.Text.Json.JsonElement root, string directory, ref Package package);
     static partial void ReadAdditionalPackage(JsonElement root, string expected, string directory, ref Package package);
     static partial void ValidateRuntimePublication(Package package, ref bool ready);
 
