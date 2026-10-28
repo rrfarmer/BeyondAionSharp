@@ -433,7 +433,7 @@ public class RetailNpcOrdinaryCoreSeedProjectionTests
         return new(JsonValue.Create(tag), new JsonArray(), text);
     }
 
-    private sealed class Fixture
+    internal sealed class Fixture
     {
         private JsonArray Root { get; } = Node("npc", null, Node("id", "1"), Node("name", "One"), Node("level", "32"));
         internal void Add(JsonNode node) => Root[2]!.AsArray().Add(node);

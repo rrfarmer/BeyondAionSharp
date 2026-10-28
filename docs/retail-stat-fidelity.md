@@ -57,3 +57,19 @@ critical factor and PvE-ratio arithmetic. They require explicit NPC-facing
 inputs and reject a player-versus-player scope. They do not choose live targets,
 draw RNG, apply effects, mutate HP or activate a cohort. The runtime integration
 and its broader input admission remain separate pending work.
+
+## Profile conversion boundary
+
+Statistics-only conversion requires the original 4.8 template. Its HP and
+reviewed NPC attribute/defense bases come from the selected retail calculation;
+MP, legacy skill attack operands and speeds remain compatibility inputs. Omitting
+the original template must not silently substitute zero MP/skill attack or source
+movement. The full pilot's separate conversion remains available with its
+previously reviewed complete profile.
+
+The base-profile reader is shared with the full catalog parser, but its offline
+preview is not activation approval. Tests compare every selected membership with
+the earlier pinned full-parser export, including source/host identity declarations,
+all exported stats, raw damage endpoints and ordered attack entries. Synthetic
+mapping cases distinguish zero primaries and all six elemental channels. No
+current NPC, AI hook, player state or final HP loss is inferred from these tests.
