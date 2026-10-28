@@ -15,6 +15,7 @@
     <Project Path="tests/Aion.Simulation.Tests/Aion.Simulation.Tests.csproj" />
   </Folder>
   <Folder Name="/tools/">
+    <Project Path="tools/Aion.NpcAudit/Aion.NpcAudit.csproj" />
     <Project Path="tools/Aion.ClockReadGuard/Aion.ClockReadGuard.csproj" />
     <Project Path="tools/Aion.LiveBots/Aion.LiveBots.csproj" />
     <Project Path="tools/Aion.LogWatch/Aion.LogWatch.csproj" />

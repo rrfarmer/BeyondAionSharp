@@ -99,7 +99,8 @@ def summarize(profiles, census, scope):
                       normal_interval58=None, normal_endpoint_order='unavailable', ordered_attacks=[],
                       normal_status='unavailable', normal_baseline_status='not_exported',
                       normal_before_target48=None, normal_before_target58=None, normal_comparisons=[],
-                      attributes={}, defenses={}, evidence_blockers=[], special_skill_boundaries=[])
+                      attributes={}, defenses={}, evidence_blockers=[], special_skill_boundaries=[],
+                      unassessed_skill_bindings=[])
         if row is None:
             reason = ('owned_or_scaled_context_requires_separate_source_projection'
                       if family == 'owned_summon_or_siege_fixed_stat_family' else
@@ -163,7 +164,10 @@ def summarize(profiles, census, scope):
             # Skill mechanics do not block base HP/attributes or normal-attack accounting.
             record['special_skill_boundaries'] = sorted({
                 f"{s['skill_id']}:{s['level']}:{s['primary_boundary']}"
-                for s in row['declared_skills'] if not s['primary_supported']})
+                for s in row['declared_skills'] if s['primary_supported'] is False})
+            record['unassessed_skill_bindings'] = [
+                dict(skill_id=s['skill_id'], level=s['level'], source_bound=s['source_bound'])
+                for s in row['declared_skills'] if s['primary_supported'] is None]
             if row['unresolved_source_skill_bindings']:
                 record['special_skill_boundaries'].append('unresolved_source_skill_identity_bindings')
         rows.append(record)
@@ -181,6 +185,7 @@ def summarize(profiles, census, scope):
             evidence_blocked=sum(bool(r['evidence_blockers']) for r in these),
             special_skill_boundaries=sum(bool(r['special_skill_boundaries']) for r in these)))
     return dict(version=1, offline_only=True, activation_ready=False, runtime_verified=False,
+                primary_skill_audit=profiles.get('primary_skill_audit', 'legacy-export-assessment'),
                 scope_policy=scope['policy'], scope_limitations=scope['scope_limitations'],
                 selected_memberships=len(selected), expected_memberships=len(expected),
                 selected_unique_npcs=len({n for _, n in selected}), maps=map_summaries,

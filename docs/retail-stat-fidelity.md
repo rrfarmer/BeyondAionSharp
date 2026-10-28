@@ -203,3 +203,16 @@ HP and an additional2000-HP modifier/removal. It also checks unselected behavior
 and the three Altgard one-damage AI base defenses, which already agree with their
 selected zero evasion/resistance values. Neutral-AI getter coverage alone did not
 prove these actual-AI results.
+
+## Independent offline stat comparison
+
+The [committed CLI](mob-stat-comparison.md) uses the production base/normal/buff
+readers without publishing a catalog or loading optional primary-skill/player-state
+packages. Source identity is separate from support for skill damage: an unassessed
+primary skill is explicitly null, not silently supported or labeled a defect.
+This separation does not alter runtime admission or the existing skill path.
+
+The full selected export preserves all11,517 earlier profile/normal rows and buff
+source records. Required evidence hash failures remain errors. Reports and receipts
+are external/private; generated source records are not committed. The coverage CSV
+now keeps its unassessed-skill column even when the first membership has no profile.

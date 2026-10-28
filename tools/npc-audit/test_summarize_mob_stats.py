@@ -53,6 +53,17 @@ class MobStatCoverageTests(unittest.TestCase):
         self.assertEqual([], row['evidence_blockers'])
         self.assertEqual('selected_offline', row['package_status'])
 
+    def test_unassessed_primary_skills_are_reported_without_inventing_a_failure(self):
+        self.profiles['primary_skill_audit'] = 'not-performed-outside-mob-stat-scope'
+        self.row['declared_skills'] = [dict(skill_id=16596, level=1, source_bound=True,
+                                          primary_supported=None, primary_boundary='not-assessed-by-mob-stat-audit')]
+        report = self.report()
+        row = report['rows'][0]
+        self.assertEqual([], row['special_skill_boundaries'])
+        self.assertEqual([dict(skill_id=16596, level=1, source_bound=True)], row['unassessed_skill_bindings'])
+        self.assertEqual(self.profiles['primary_skill_audit'], report['primary_skill_audit'])
+        self.assertEqual([], row['evidence_blockers'])
+
     def test_missing_owned_and_ordinary_profiles_remain_separate(self):
         self.profiles['rows'] = []
         self.profiles['summary'].update(memberships=0, unique_npcs=0)
@@ -133,6 +144,11 @@ class MobStatCoverageTests(unittest.TestCase):
             self.report()
 
     def test_pinned_inputs_and_new_external_output(self):
+        # The first CSV membership lacks a profile; later selected rows still
+        # need the explicit unassessed-skill column.
+        self.census.append(dict(self.census[0], npc_id=2))
+        self.scope['members'].append(dict(self.scope['members'][0], npc_id=2))
+        self.row['npc_id'] = 2
         with tempfile.TemporaryDirectory() as directory:
             base = Path(directory)
             def asset(name, value):
@@ -151,6 +167,7 @@ class MobStatCoverageTests(unittest.TestCase):
             report = write_report(args)
             self.assertEqual(1, report['selected_memberships'])
             self.assertTrue((args.out/'coverage.csv').is_file())
+            self.assertIn('unassessed_skill_bindings', (args.out/'coverage.csv').read_text().splitlines()[0])
             with self.assertRaisesRegex(ValueError, 'already exists'):
                 write_report(args)
             profiles.write_text('{}', encoding='utf-8')

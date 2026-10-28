@@ -44,7 +44,7 @@ internal static partial class RetailNpcStatCatalog
         Volatile.Write(ref active, parsed);
     }
 
-    private static Package Parse(byte[] bytes, string expected, string directory)
+    private static Package Parse(byte[] bytes, string expected, string directory, bool includeAdditional = true)
     {
         CheckHash(bytes, expected, "statistics manifest");
         using var doc = JsonDocument.Parse(bytes, new() { MaxDepth = 384 });
@@ -57,7 +57,7 @@ internal static partial class RetailNpcStatCatalog
         var package = new Package(profiles.ToFrozenDictionary(), maps.ToFrozenSet());
         ReadNormalPackage(root, directory, ref package);
         ReadBuffPackage(root, directory, ref package);
-        ReadAdditionalPackage(root, expected, directory, ref package);
+        if (includeAdditional) ReadAdditionalPackage(root, expected, directory, ref package);
         return package;
     }
 

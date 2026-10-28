@@ -5,13 +5,14 @@ export against the reviewed Asmodian content envelope. It uses the standard libr
 and can run without game binaries, the server, or SIM. It does not calculate combat
 damage, select a runtime package, or change game data.
 
-First generate a fresh export with the existing `npc_audit.py stats-package` command
-described in `docs/npc-audit.md`. Then run:
+First generate a fresh export with the committed [C# stats command](mob-stat-comparison.md).
+Use its `calculation-receipt.json` below. Older Python-driven exports use `receipt.json`.
+Then run:
 
 ```powershell
 python -B tools/npc-audit/summarize_mob_stats.py `
   --profiles '<external export>/profiles.json' `
-  --receipt '<external export>/receipt.json' `
+  --receipt '<external export>/calculation-receipt.json' `
   --census '<reviewed raw-stat-census.json>' --census-sha256 '<recorded census hash>' `
   --scope '<reviewed scope.json>' --scope-sha256 '<recorded scope hash>' `
   --out '<new external report directory>'
