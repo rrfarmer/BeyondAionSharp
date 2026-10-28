@@ -73,3 +73,34 @@ the earlier pinned full-parser export, including source/host identity declaratio
 all exported stats, raw damage endpoints and ordered attack entries. Synthetic
 mapping cases distinguish zero primaries and all six elemental channels. No
 current NPC, AI hook, player state or final HP loss is inferred from these tests.
+
+## Selected NPC getter integration
+
+The statistics package now has one immutable publication/lookup kernel, separate
+from optional skill and player-state readers. A build lacking the complete combat
+admission consumer rejects configured publication; reading valid profiles cannot
+silently enable only HP and defenses. The test-only install seam intentionally
+allows getter verification without activation.
+
+For selected ownerless NPCs, construction uses the converted template, selected
+level, source primary zero values and reviewed scalar modifier/cap order. Native
+critical-rate resistance uses its 9999 cap, independently of critical-damage
+reduction. Java's existing final AI hook remains in place. An AI alteration of
+exact HP is visible in diagnostics and is an encounter-specific exception, not
+evidence that the unchanged retail base was applied.
+
+Native HP remains an integer through `Stat2.GetCurrent`: for example, 86,954,218
+must not round down to the binary32 value 86,954,216. The exact result expires on
+every subsequent stat mutation, preserving the existing AI/effect hook semantics.
+Untagged stats, including player stats, retain Java's float-to-integer behavior.
+
+Late creator/summon ownership retires an ordinary statistics selection. An
+unpublished NPC reconstructs fresh host HP/MP; an already published one uses the
+existing current-stat update path. Clearing the creator does not readmit the
+ordinary profile. These are explicit compatibility exclusions for unreviewed
+owned/scaled construction, not a substitute calculation for those units.
+
+Offline getter gates construct real NPCs without spawning, applying passive
+skills or running AI. They verify base consumption separately from spawn-time
+effects and encounter behavior. Normal attack application and runtime publication
+remain pending; this integration alone is not a completed cohort rollout.

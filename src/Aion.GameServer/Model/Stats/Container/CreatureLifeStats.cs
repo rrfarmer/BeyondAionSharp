@@ -48,6 +48,17 @@ public abstract class CreatureLifeStats
         return currentHp;
     }
 
+    internal void ResetFreshNpcStatisticsSelection()
+    {
+        if (owner is not Npc || owner.IsInWorld() || owner.IsSpawned())
+            throw new InvalidOperationException("Only an unpublished NPC can reconstruct its fresh stat seed");
+        lock (this)
+        {
+            currentHp = cachedMaxHp = GetMaxHp();
+            currentMp = cachedMaxMp = GetMaxMp();
+        }
+    }
+
     public int GetCurrentMp()
     {
         return currentMp;

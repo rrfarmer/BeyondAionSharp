@@ -18,6 +18,7 @@ public abstract class Stat2
     protected float BonusRate = 1f;
     protected float FixedBonusRate;
     protected float FinalRate = 1f;
+    private int? exactIntegerCurrent;
 
     protected Stat2(StatEnum stat, float @base, Creature owner)
     {
@@ -42,13 +43,13 @@ public abstract class Stat2
     public virtual float GetExactBonus() => BonusField;
 
     // Java parity: setBase(float)
-    public void SetBase(float @base) => BaseField = @base;
+    public void SetBase(float @base) { InvalidateExactIntegerCurrent(); BaseField = @base; }
 
     // Java parity: getBaseRate()
     public float GetBaseRate() => BaseRateField;
 
     // Java parity: setBaseRate(float)
-    public void SetBaseRate(float rate) => BaseRateField = rate;
+    public void SetBaseRate(float rate) { InvalidateExactIntegerCurrent(); BaseRateField = rate; }
 
     // Java parity: addToBase(float)
     public abstract void AddToBase(float @base);
@@ -57,7 +58,19 @@ public abstract class Stat2
     public int GetBonus() => (int)BonusField;
 
     // Java parity: getCurrent()
-    public int GetCurrent() => (int)GetExactCurrent();
+    public int GetCurrent()
+    {
+        // A retail NPC scalar can exceed the precision of float. Preserve its
+        // integer result only until a subsequent AI/stat hook changes it.
+        if (exactIntegerCurrent is { } exact) return exact;
+        return (int)GetExactCurrent();
+    }
+
+    internal void SetExactIntegerCurrent(int value) => exactIntegerCurrent = value;
+
+    internal bool HasUnchangedExactIntegerCurrent() => exactIntegerCurrent.HasValue;
+
+    protected void InvalidateExactIntegerCurrent() => exactIntegerCurrent = null;
 
     // Java parity: getExactCurrent()
     public float GetExactCurrent() => (BaseField * BaseRateField + BonusField * BonusRate + BaseField * FixedBonusRate) * FinalRate;
@@ -69,19 +82,19 @@ public abstract class Stat2
     public float GetExactCurrentWithoutFixedBonus() => (BaseField * BaseRateField + BonusField * BonusRate) * FinalRate;
 
     // Java parity: setBonus(float)
-    public void SetBonus(float bonus) => BonusField = bonus;
+    public void SetBonus(float bonus) { InvalidateExactIntegerCurrent(); BonusField = bonus; }
 
     // Java parity: getBonusRate()
     public float GetBonusRate() => BonusRate;
 
     // Java parity: setBonusRate(float)
-    public void SetBonusRate(float bonusRate) => BonusRate = bonusRate;
+    public void SetBonusRate(float bonusRate) { InvalidateExactIntegerCurrent(); BonusRate = bonusRate; }
 
     // Java parity: addToBonus(float)
     public abstract void AddToBonus(float bonus);
 
     // Java parity: setFixedBonusRate(float)
-    public void SetFixedBonusRate(float fixedBonusRate) => FixedBonusRate = fixedBonusRate;
+    public void SetFixedBonusRate(float fixedBonusRate) { InvalidateExactIntegerCurrent(); FixedBonusRate = fixedBonusRate; }
 
     // Java parity: getFixedBonusRate()
     public float GetFixedBonusRate() => FixedBonusRate;
@@ -90,7 +103,7 @@ public abstract class Stat2
     /// Rate applied to the final value (base and bonus alike), meant for situational penalties which are not part of the stat itself, like the physical
     /// defense loss while flying. Must be set after all stat functions have been applied, since caps are calculated without it.
     /// </summary>
-    public void SetFinalRate(float finalRate) => FinalRate = finalRate;
+    public void SetFinalRate(float finalRate) { InvalidateExactIntegerCurrent(); FinalRate = finalRate; }
 
     public float GetFinalRate() => FinalRate;
 

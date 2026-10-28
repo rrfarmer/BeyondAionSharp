@@ -1,4 +1,5 @@
 using Aion.GameServer.Ai;
+using Aion.GameServer.Retail;
 using System;
 using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Model.GameObjects;
@@ -15,6 +16,9 @@ namespace Aion.GameServer.Model.Stats.Container;
 /// <summary>Java parity: model/stats/container/NpcGameStats.</summary>
 public class NpcGameStats : CreatureGameStats<Npc>
 {
+    internal SkyTempleNpcProfile? StatisticsProfile { get; private set; }
+    internal bool StatisticsContextRetired { get; private set; }
+    private StatsTemplate? retailStats;
     private long lastAttackTime = 0;
     private long lastAttackedTime = 0;
     private long nextAttackTime = 0;
@@ -28,6 +32,19 @@ public class NpcGameStats : CreatureGameStats<Npc>
     public NpcGameStats(Npc owner)
         : base(owner)
     {
+        if (RetailNpcStatCatalog.TryGet(owner, out var profile))
+        {
+            StatisticsProfile = profile;
+            retailStats = profile.CreateStatsTemplate(owner.GetObjectTemplate().GetStatsTemplate());
+        }
+    }
+
+    internal bool RetireStatisticsForOwnedContext()
+    {
+        if (StatisticsProfile is null) return false;
+        StatisticsProfile = null; retailStats = null; StatisticsContextRetired = true;
+        RetailNpcStatCatalog.RestoreRetiredModifiers(owner);
+        return true;
     }
 
     // Java parity helper: Math.round(float) = floor(x+0.5).
@@ -43,11 +60,41 @@ public class NpcGameStats : CreatureGameStats<Npc>
 
     public override StatsTemplate GetStatsTemplate()
     {
-        return owner.GetObjectTemplate().GetStatsTemplate();
+        return retailStats ?? owner.GetObjectTemplate().GetStatsTemplate();
     }
 
     public override Stat2 ApplyStatFunctions(StatEnum statEnum, Stat2 stat, ISet<CalculationType> calculationTypes)
     {
+        if (Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatDefenses.TryApply(owner,statEnum,stat))
+        {
+            owner.GetAi().ModifyOwnerStat(stat);
+            Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatDefenses.WarnIfHpAiOverrides(owner,stat);
+            return stat;
+        }
+        bool nativeCriticalRate = StatisticsProfile is not null && statEnum is
+            StatEnum.PHYSICAL_CRITICAL_RESIST or StatEnum.MAGICAL_CRITICAL_RESIST;
+        if (nativeCriticalRate || StatisticsProfile is not null && statEnum is StatEnum.POWER or StatEnum.HEALTH or StatEnum.AGILITY
+            or StatEnum.ACCURACY or StatEnum.KNOWLEDGE or StatEnum.WILL)
+        {
+            // Native first-level copies may be zero. Java's player-oriented80minimum must not replace them.
+            foreach (var function in GetStatsSorted(statEnum))
+                if (function.Validate(stat)) function.Apply(stat, calculationTypes);
+            if(nativeCriticalRate)
+            {
+                // Native NPC critical RATE resistance caps at9999, independently
+                // of critical DAMAGE reduction's700. The shared Java cap700
+                // loses24..129points on219 selected base profiles. Preserve the
+                // old cap for players, unselected NPCs and full behavior packages.
+                float current=stat.GetExactCurrent(),limited=Math.Clamp(current,0f,9999f);
+                if(current!=limited)
+                {
+                    stat.SetFinalRate(1f);stat.SetBonusRate(1f);
+                    stat.SetBonus(limited-stat.GetExactCurrentWithoutBonus());
+                }
+            }
+            owner.GetAi().ModifyOwnerStat(stat);
+            return stat;
+        }
         Stat2 s = base.ApplyStatFunctions(statEnum, stat, calculationTypes);
         owner.GetAi().ModifyOwnerStat(s);
         return s;
@@ -55,8 +102,16 @@ public class NpcGameStats : CreatureGameStats<Npc>
 
     public override int GetBaseAttackSpeed()
     {
-        return owner.GetObjectTemplate().GetAttackSpeed();
+        return StatisticsProfile is { } profile && profile.Source.Integers["attack_delay"].ParsedValue.HasValue
+            ? profile.AttackDelay : owner.GetObjectTemplate().GetAttackSpeed();
     }
+
+    protected override Stat2 GetStat(StatEnum statEnum, float baseValue, ISet<CalculationType> calculationTypes)
+    {
+        if (StatisticsProfile is { } profile && profile.TrySpecialBase(statEnum, out int sourceBase)) baseValue = sourceBase;
+        return base.GetStat(statEnum, baseValue, calculationTypes);
+    }
+
 
     public override Stat2 GetMovementSpeed()
     {

@@ -14,13 +14,14 @@ public class ReverseStat : Stat2
     // Java parity: addToBase(float)
     public override void AddToBase(float @base)
     {
+        InvalidateExactIntegerCurrent();
         BaseField -= @base;
         if (BaseField < 0)
             BaseField = 0;
     }
 
     // Java parity: addToBonus(float)
-    public override void AddToBonus(float bonus) => BonusField -= bonus;
+    public override void AddToBonus(float bonus) { InvalidateExactIntegerCurrent(); BonusField -= bonus; }
 
     // Java parity: calculatePercent(int)
     public override float CalculatePercent(int delta)

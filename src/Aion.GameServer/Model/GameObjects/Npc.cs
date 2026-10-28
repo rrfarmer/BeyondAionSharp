@@ -58,7 +58,8 @@ public class Npc : Creature
 
     public override sbyte GetLevel()
     {
-        return (sbyte)GetObjectTemplate().GetLevel();
+        return Aion.GameServer.Retail.RetailNpcStatCatalog.TryGetCombatProfile(this, out var profile)
+            ? checked((sbyte)profile.Level) : (sbyte)GetObjectTemplate().GetLevel();
     }
 
     public Aion.GameServer.Model.Templates.Npc.AbyssNpcType GetAbyssNpcType()
@@ -329,6 +330,14 @@ public class Npc : Creature
     public void SetCreatorId(int creatorId)
     {
         this.creatorId = creatorId;
+        if (creatorId != 0) RetireStatisticsForOwnedContext();
+    }
+
+    private void RetireStatisticsForOwnedContext()
+    {
+        if (GetGameStats()?.RetireStatisticsForOwnedContext() != true) return;
+        if (!IsInWorld() && !IsSpawned()) GetLifeStats().ResetFreshNpcStatisticsSelection();
+        else GetLifeStats().UpdateCurrentStats();
     }
 
     public virtual VisibleObject GetCreator()
@@ -420,6 +429,7 @@ public class Npc : Creature
     public void SetSummonOwner(SummonOwner summonOwner)
     {
         this.summonOwner = summonOwner;
+        RetireStatisticsForOwnedContext();
     }
 
     public SummonOwner? GetSummonOwner()
