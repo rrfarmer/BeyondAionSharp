@@ -67,8 +67,9 @@ public class NpcGameStats : CreatureGameStats<Npc>
     {
         if (Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatDefenses.TryApply(owner,statEnum,stat))
         {
+            int beforeAi = stat.GetCurrent();
             owner.GetAi().ModifyOwnerStat(stat);
-            Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatDefenses.WarnIfHpAiOverrides(owner,stat);
+            Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatDefenses.WarnIfAiOverrides(owner, stat, beforeAi);
             return stat;
         }
         bool nativeCriticalRate = StatisticsProfile is not null && statEnum is

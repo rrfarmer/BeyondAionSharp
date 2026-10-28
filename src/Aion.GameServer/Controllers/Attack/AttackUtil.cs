@@ -177,7 +177,7 @@ public class AttackUtil
         }
     }
 
-    private static void ModifyDamageByNpcAi(Creature attacker, Creature attacked, List<AttackResult> attackStatus)
+    internal static void ModifyDamageByNpcAi(Creature attacker, Creature attacked, List<AttackResult> attackStatus)
     {
         if (!(attacker is Npc || attacked is Npc))
             return;

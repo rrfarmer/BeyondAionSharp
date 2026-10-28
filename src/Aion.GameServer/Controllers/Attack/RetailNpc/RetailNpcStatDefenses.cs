@@ -21,12 +21,14 @@ internal static class RetailNpcStatDefenses
     private static readonly ConditionalWeakTable<Npc,HashSet<string>> Warnings=new();
     private static readonly ISet<CalculationType> NoCalculationTypes=new HashSet<CalculationType>();
 
-    internal static void WarnIfHpAiOverrides(Npc npc,Stat2 stat)
+    internal static void WarnIfAiOverrides(Npc npc, Stat2 stat, int beforeAi)
     {
-        if(stat.GetStat()!=StatEnum.MAXHP||stat.HasUnchangedExactIntegerCurrent())return;
-        var warnings=Warnings.GetValue(npc,_=>[]);
-        lock(warnings)if(warnings.Add("MAXHP:ai-override"))
-            Log.LogWarning("RETAIL_STAT_DEFENSE_COMPAT npc={Npc} stat=MAXHP reason=ai-override; host AI stat retained",npc.GetNpcId());
+        int current = stat.GetCurrent();
+        if (current == beforeAi) return;
+        var warnings = Warnings.GetValue(npc, _ => []);
+        lock (warnings) if (warnings.Add(stat.GetStat() + ":ai-override"))
+            Log.LogWarning("RETAIL_STAT_DEFENSE_COMPAT npc={Npc} stat={Stat} reason=ai-override before={Before} after={After}; existing4.8 AI stat owner retained; native script semantics unverified",
+                npc.GetNpcId(), stat.GetStat(), beforeAi, current);
     }
 
     internal static string? Field(StatEnum stat)=>(stat switch

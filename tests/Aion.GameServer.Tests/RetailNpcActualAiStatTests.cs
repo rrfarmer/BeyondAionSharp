@@ -74,6 +74,25 @@ public sealed class RetailNpcActualAiStatTests
         Assert.Empty(h.Clock.Faults);
     }
 
+    [SkippableFact]
+    public void UnitySiegeConfigurationRetainsSelectedIntegerHp()
+    {
+        var (bytes, pin, directory) = RetailNpcRuntimeGetterTests.ProfileFixture();
+        using var installed = RetailNpcStatCatalog.InstallForTests(bytes, pin, directory);
+        Assert.Equal(1f, Aion.GameServer.Configs.Main.SiegeConfig.FORTRESS_PROTECTOR_HEALTH_MULTIPLIER);
+        foreach (int id in new[] { 258207, 260000, 267802 })
+        {
+            var member = RetailNpcStatCatalog.Members.First(m => m.MapId != 0 && m.Profile.NpcId == id);
+            using var h = BossAiHarness.For(member.MapId).WithAi(typeof(EnragedAgent), typeof(FortressProtectorNpcAI)).Build();
+            var npc = Create(member.MapId, id);
+            Assert.True(npc.GetAi() is EnragedAgent or FortressProtectorNpcAI);
+            Assert.NotEqual(member.Profile.MaxHp, (int)(float)member.Profile.MaxHp);
+            Assert.Equal(member.Profile.MaxHp, npc.GetGameStats().GetMaxHp().GetCurrent());
+            Assert.Equal(member.Profile.MaxHp, npc.GetLifeStats().GetMaxHp());
+            Assert.Empty(h.Clock.Faults);
+        }
+    }
+
     private static Npc Create(int map, int id)
     {
         var spawn = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(map, id, 100, 100, 200, 0);

@@ -159,9 +159,9 @@ public sealed class RetailNpcNormalRuntimeTests
         Assert.Equal(25, count); Assert.Empty(h.Clock.Faults);
     }
 
-    private static Npc FreshNpc(BossAiHarness h, int map, int id)
+    internal static Npc FreshNpc(BossAiHarness h, int map, int id, string aiName = "retail_stat_runtime_fixture")
     {
-        var spawn = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(map, id, 100, 100, 200, 0, null, "retail_stat_runtime_fixture");
+        var spawn = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(map, id, 100, 100, 200, 0, null, aiName);
         var npc = new Npc(new NpcController(), spawn, DataManager.NPC_DATA.GetNpcTemplate(id));
         npc.SetEffectController(new EffectController(npc));
         npc.SetKnownlist(new KnownList(npc));
@@ -172,7 +172,7 @@ public sealed class RetailNpcNormalRuntimeTests
         return npc;
     }
 
-    private static Player MortalPlayer(BossAiHarness h, int map)
+    internal static Player MortalPlayer(BossAiHarness h, int map)
     {
         var common = new PlayerCommonData(IDFactory.GetInstance().NextId());
         common.SetPlayerClass(PlayerClass.WARRIOR); common.SetRace(Race.ASMODIANS);

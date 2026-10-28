@@ -233,3 +233,42 @@ compressed source fixture. Public checks visibly skip private cases when the
 fixture is absent; changed bytes fail. Package assembly rejects duplicate rows
 and overlapping memberships, rebases relative assets, preserves known context
 pins and rehashes all inputs before atomic publication. It performs no activation.
+
+## NPC AI stat and normal-damage ownership
+
+The ordinary stat normal-attack fast path skipped the existing one-damage
+mechanic. Statistics-only attacks now invoke that mechanic once per hand after
+the retail numeric stages and before protection. This is an explicit 4.8 content
+compatibility rule, not verified 5.8 script parity. Full behavior packages and
+player/PvP paths are unchanged. Consumed owner output is recorded in debug traces;
+no hook is replayed for diagnostics. A changed result emits a bounded warning.
+
+Do not reinstate Java's generic numeric damage overrides. Pashid/dragon profiles
+already author 130%/120% attacks, and Hyperion authors 150%/450%. Applying Java's
+distance boost again double-counts those modifiers. The 22 Shugo instance members
+also retain calculated retail normal ranges, not the legacy attack-stat replacement.
+Complex phase and custom-map behavior remains separately bounded and unverified.
+
+A no-op `setBaseRate(1)` also expired the native NPC integer HP channel, allowing
+large HP values to round through binary32. An unchanged base-rate operand now
+retains that channel. Real rate changes still expire it and preserve existing
+configuration/scenario behavior. Untagged stats keep their existing float path.
+Offline actual-AI checks cover unity siege settings and retain the earlier world-boss
+HP/legacy skill-attack gates. AI stat deviations now report before/after values
+for defensive getters, including existing one-damage zero-defense rules.
+
+The compiled template-AI metadata audit resolves inherited hooks without executing
+AI: all 11,208 non-global selected memberships resolve, across 735 named classes.
+It finds 389 stat-hook memberships, including 53 inherited cases omitted by the
+direct-only scan. The declared contexts are 10,819 without a stat override, 281
+configuration-scaled, 87 one-damage, 7 special HP-rate, 12 custom PvP-map and the 2
+corrected world bosses. Among one-damage cases, 27 memberships have nonzero source
+evasion/resistance replaced by the existing script rule. These remain explicit
+compatibility exceptions. 111 attacking memberships declare a damage-owner override;
+36 are fortress guards whose player-target normal callback is an identity.
+
+This is template binding and ordinary getter/calculation evidence, not proof of
+active spawn overrides, phases or every custom script. NPC-to-NPC normal attacks
+still use the legacy attack branch with selected defensive getters; retail parity
+for that target branch is unverified. The exact per-NPC boundaries and source pins
+remain in the external reconciled coverage table.

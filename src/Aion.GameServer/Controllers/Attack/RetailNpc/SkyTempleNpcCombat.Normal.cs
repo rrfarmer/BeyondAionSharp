@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using Aion.GameServer.Commons.Utils.RetailRandom;
 using Aion.GameServer.Model;
+using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Container;
@@ -152,6 +153,7 @@ internal static partial class SkyTempleNpcCombat
         if (!float.IsFinite(damage) || damage < 0 || damage >= 2147483648f)
             throw new InvalidOperationException("SkyTemple normal damage is outside int32");
         results = [new AttackResult((int)damage,status,physical ? HitType.PHHIT : HitType.MAHIT)];
+        int afterAi = profile.StatisticsOnly && npc.GetAi() is OneDmgAI ? ApplyOneDamageOwner(npc, player, results) : results[0].GetDamage();
         // Current host protection/effect owner executes exactly once; never run it for diagnostics.
         player.GetObserveController().CheckShieldStatus(results,null!,npc);
         Log.LogDebug("RETAIL_SKYTEMPLE_CALC npc={Npc} source={Source} target={Target} element={Element} sample={Sample} range={Min}..{Max} status={Status} damage={Damage} generation={Generation}",
@@ -159,7 +161,7 @@ internal static partial class SkyTempleNpcCombat
         if (statNormalModifiers is not null)
             LogNormalInputs(profile,npc,player,selected.Ordinal,"main",sample,selected.Modifier,statNormalModifiers[physical],physical,
                 consumedDefense,consumedElement,elementFloor,status,criticalReduction,blockRemainingPercent,blockMaximum,consumedPve,
-                baseDamage,defenseDamage,statusDamage,pveDamage,damage,results[0].GetDamage(),range.Minimum,range.Maximum);
+                baseDamage,defenseDamage,statusDamage,pveDamage,damage,afterAi,results[0].GetDamage(),range.Minimum,range.Maximum);
         if (dualRanges is not null)
         {
             var shared = RetailNpcDualNormalPlan.Share(status);
@@ -202,6 +204,7 @@ internal static partial class SkyTempleNpcCombat
                 if (!float.IsFinite(offDamage) || offDamage < 0 || offDamage >= 2147483648f)
                     throw new InvalidOperationException("Retail offhand damage is outside int32");
                 var off = new List<AttackResult> { new((int)offDamage,shared.OffhandStatus!.Value,physical ? HitType.PHHIT : HitType.MAHIT) };
+                int offAfterAi = profile.StatisticsOnly && npc.GetAi() is OneDmgAI ? ApplyOneDamageOwner(npc, player, off) : off[0].GetDamage();
                 player.GetObserveController().CheckShieldStatus(off,null!,npc);
                 results.AddRange(off);
                 Log.LogDebug("RETAIL_STAT_DUAL_OFFHAND npc={Npc} source={Source} target={Target} element={Element} sample={Sample} range={Min}..{Max} status={Status} damage={Damage} generation={Generation}",
@@ -209,10 +212,29 @@ internal static partial class SkyTempleNpcCombat
                     shared.OffhandStatus.Value,off[0].GetDamage(),profile.Generation);
                 LogNormalInputs(profile,npc,player,selected.Ordinal,"off",offSample,selected.Modifier,statNormalModifiers![physical],physical,
                     offDefense,offElement,elementFloor,shared.OffhandStatus.Value,offCriticalReduction,shieldPercent,shieldMaximum,pve,
-                    offBase,offAfterDefense,offAfterStatus,offPve,offDamage,off[0].GetDamage(),dualRanges.Offhand.Minimum,dualRanges.Offhand.Maximum);
+                    offBase,offAfterDefense,offAfterStatus,offPve,offDamage,offAfterAi,off[0].GetDamage(),dualRanges.Offhand.Minimum,dualRanges.Offhand.Maximum);
             }
         }
         return true;
+    }
+
+    // Preserve the existing one-damage mechanic after the retail numeric stages,
+    // before protection. Other Java numeric/distance overrides must not replace
+    // or multiply the verified source ranges and ordered attack modifiers.
+    // This mechanic remains a visible script-compatibility boundary.
+    private static int ApplyOneDamageOwner(Npc npc, Player target, List<AttackResult> attacks)
+    {
+        int before = attacks[0].GetDamage();
+        AttackUtil.ModifyDamageByNpcAi(npc, target, attacks);
+        int after = attacks[0].GetDamage();
+        if (before != after)
+        {
+            var warnings = ResponseWarnings.GetValue(npc, _ => []);
+            lock (warnings) if (warnings.Add("host-ai-normal-damage"))
+                Log.LogWarning("RETAIL_STAT_NORMAL_COMPAT npc={Npc} reason=one-damage-mechanic owner={Owner}; existing4.8 one-damage owner retained; native script semantics unverified",
+                    npc.GetNpcId(), npc.GetAi().GetType().FullName);
+        }
+        return after;
     }
 
     // Consumed operands only: never re-evaluate effects, protections or RNG for
@@ -221,7 +243,7 @@ internal static partial class SkyTempleNpcCombat
     private static void LogNormalInputs(SkyTempleNpcProfile profile,Npc source,Player target,int ordinal,string hand,
         int sample,int modifier,RetailNpcStatNormalInputs.Modifiers modifiers,bool physical,uint targetDefense,short elementDefense,
         int elementFloor,AttackStatus status,int criticalReduction,int blockRemainingPercent,int blockMax,
-        (int Attack,int Defense) pve,float basis,float afterDefense,float afterStatus,float afterPve,float afterEquipment,int protectedDamage,int rangeMin,int rangeMax)
+        (int Attack,int Defense) pve,float basis,float afterDefense,float afterStatus,float afterPve,float afterEquipment,int aiDamage,int protectedDamage,int rangeMin,int rangeMax)
     {
         if (!Log.IsEnabled(LogLevel.Debug)) return;
         var payload=new {npc=profile.NpcId,source=source.GetObjectId(),target=target.GetObjectId(),ordinal,hand,sample,modifier,
@@ -230,7 +252,7 @@ internal static partial class SkyTempleNpcCombat
             status=status.ToString(),criticalReduction,blockRemainingPercent,blockMax,pveAttack=pve.Attack,pveDefense=pve.Defense,
             baseBits=BitConverter.SingleToUInt32Bits(basis),defenseBits=BitConverter.SingleToUInt32Bits(afterDefense),
             statusBits=BitConverter.SingleToUInt32Bits(afterStatus),pveBits=BitConverter.SingleToUInt32Bits(afterPve),
-            equipmentBits=BitConverter.SingleToUInt32Bits(afterEquipment),requestedDamage=(int)afterEquipment,protectedDamage,rangeMin,rangeMax,sourceHash=profile.SourceRecordSha256,generation=profile.Generation};
+            equipmentBits=BitConverter.SingleToUInt32Bits(afterEquipment),requestedDamage=(int)afterEquipment,aiDamage,protectedDamage,rangeMin,rangeMax,sourceHash=profile.SourceRecordSha256,generation=profile.Generation};
         Log.LogDebug("RETAIL_STAT_NORMAL_INPUT {Payload}",System.Text.Json.JsonSerializer.Serialize(payload));
     }
 

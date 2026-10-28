@@ -15,7 +15,7 @@ public sealed class RetailNpcIntegerStatTests
     [InlineData("final-rate")]
     [InlineData("add-base")]
     [InlineData("add-bonus")]
-    public void AnySubsequentHookExpiresTheExactInteger(string operation)
+    public void ChangingAStatOperandExpiresTheExactInteger(string operation)
     {
         foreach (bool reverse in new[] { false, true })
         {
@@ -36,6 +36,20 @@ public sealed class RetailNpcIntegerStatTests
             }
             Assert.False(stat.HasUnchangedExactIntegerCurrent());
             Assert.Equal((int)stat.GetExactCurrent(), stat.GetCurrent());
+        }
+    }
+
+    [Fact]
+    public void UnchangedUnityRatePreservesTheExactNativeInteger()
+    {
+        foreach (bool reverse in new[] { false, true })
+        {
+            Stat2 stat = reverse ? new ReverseStat(StatEnum.MAXHP, 16777216, null!)
+                : new AdditionStat(StatEnum.MAXHP, 16777216, null!);
+            stat.SetExactIntegerCurrent(16777217);
+            stat.SetBaseRate(1);
+            Assert.True(stat.HasUnchangedExactIntegerCurrent());
+            Assert.Equal(16777217, stat.GetCurrent());
         }
     }
 

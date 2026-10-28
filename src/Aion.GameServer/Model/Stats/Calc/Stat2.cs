@@ -49,7 +49,13 @@ public abstract class Stat2
     public float GetBaseRate() => BaseRateField;
 
     // Java parity: setBaseRate(float)
-    public void SetBaseRate(float rate) { InvalidateExactIntegerCurrent(); BaseRateField = rate; }
+    public void SetBaseRate(float rate)
+    {
+        // A unity siege/AI setting leaves the native NPC result unchanged.
+        // Expire its integer precision only when the operand actually changes.
+        if (BaseRateField != rate) InvalidateExactIntegerCurrent();
+        BaseRateField = rate;
+    }
 
     // Java parity: addToBase(float)
     public abstract void AddToBase(float @base);
