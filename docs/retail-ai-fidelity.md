@@ -41741,3 +41741,63 @@ Native writer/descriptor proof remains in the external stats-only-20261025-01
 combat-worker/statup-review records. Package-full-12 identity is unchanged.
 Focused source review, tests, failed setup attempts and SIM receipts are retained
 in C:/Users/ryanf/Documents/Aion-NPC-Discovery/implementation/asmodian-stat-smoke-20261028-02.
+
+## 2026-10-28 — Remaining 64 retail numeric buff cases
+
+The maintainer authorized resolving the remaining buff cases, offline verification
+first, focused SIM where needed and a local commit. Java BufEffect, NPC skill-list
+and CreatureGameStats integration were read before the correction. Routing stays
+outside this work.
+
+- Two missing selected skill records (18002 and 18706) were extracted byte-for-byte
+  from the supplied 5.8 skill book, resolving seven cases. The immutable package
+  retains the book hash, record byte ranges, raw record hashes and lengths.
+- An optional hash-pinned buff_identity_review asset explicitly joins skills19599,
+  20364 and20365 to the existing 4.8 native-name catalog, actual host stack and
+  localized-name ID. Source name/hash, host entry and level must agree. Ranked
+  names are reviewed individually; no suffix stripping or ID-only admission.
+- Native ArAll writes all25 resistance pairs, including the internal SimpleRoot
+  slot. That slot is appended to StatEnum without moving existing values. Player
+  resistance keeps its existing separate aggregate. Mixed MAXHP/ArAll programs
+  are applied together; existing exact-integer current-HP ratio behavior passes.
+- Native speed, attack-delay, concentration and casting-time numeric operands
+  are now supported. Delay subtracts its modifiers, clamps to500..10000 and then
+  to half/twice the original delay. Speed preserves native binary32 evaluation,
+  flat-unit conversion and absolute/relative caps. Casting keeps the existing
+  reverse-stat owner. Exact scalar integers survive base/bonus reconstruction.
+  Getter corrections require a selected retail buff on an eligible NPC; unknown
+  operators or caller transforms remain explicit compatibility boundaries.
+
+These intentionally replace Java numeric descriptors/getter arithmetic for the
+selected NPC effects. Existing cast admission, durations, shields, lifecycle,
+base-speed selection and task ownership remain. No routing classes, path search,
+bots, quests, gear or unrelated player/PvP calculations changed.
+
+The pinned MainServer64.exe SHA256 is
+`da1ee5633d65a7ebb436b29d15ca24e46ab4f267449384d177bf20d2d26eb8f1`.
+Retained Npc::CalcCurSpeed (1400bc8e0), CalcSecondLevelAttr (1403580f0),
+modifier dispatch/writers and floating constants were checked against its PE
+bytes/disassembly. REA's attempted fresh Ghidra import timed out; its failure is
+retained and is not cited as successful native evidence. Installed dumpbin and
+the retained decompile supplied the completed static checks. No retail process
+instrumentation was required.
+
+Package13 manifest SHA256:
+`7721c21ba8fe010830630395b9f1133a4862f0ce5ba9eb95080c73d7f092713c`.
+Package12 is unchanged and lacks the new source/identity additions. Package13
+is required for this closure; private/native assets remain outside Git.
+
+All64 original cases passed offline (including identity-drift rejection, actual
+getters, modifier removal and current-HP ratios). Focused SIM using production
+statistics-only loading passed1,243 numeric buff cases across the selected
+3,873 profiles/17 maps, with zero remaining buff boundaries. Every original64
+case is present in the receipts. Direct cases also checked production normal
+attack/final HP delivery. Final targeted regressions:41 passed,0 skipped.
+Warning baseline:4,097 existing sites, no increase; clock and null-logger guards
+passed. Natural AI/proc/cast decisions and rendered-client play are not certified.
+
+Evidence, failed attempts and reproducible verification remain at
+C:/Users/ryanf/Documents/Aion-NPC-Discovery/implementation/buff-closeout-20261028-03.
+Revert this scoped local commit to roll back code; no schema migration applies.
+A runtime package rollback requires separately authorized manifest deselection
+and normal restart. No push or deployment was performed.

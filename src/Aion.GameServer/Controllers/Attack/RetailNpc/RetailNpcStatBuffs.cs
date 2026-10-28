@@ -32,6 +32,13 @@ internal static class RetailNpcStatBuffs
     }
     private static readonly ConditionalWeakTable<Effect,SelectedMarker> Selected=new();
     internal static bool HasSelectedProgram(Effect effect)=>Selected.TryGetValue(effect,out _);
+    internal static bool OwnsSelectedFunction(IStatFunction function)
+    {
+        if (function is not StatFunctionProxy proxy || proxy.GetOwner() is not Effect effect
+            || !Selected.TryGetValue(effect, out var marker)) return false;
+        lock (marker) return !marker.Restored && marker.Programs.Values.Any(p =>
+            p.Projected.Any(f => ReferenceEquals(f, proxy.GetProxiedFunction())));
+    }
     internal static void RestoreHostForRetiredTarget(Npc target)
     {
         // Ownership may be assigned before spawn creates an EffectController.
@@ -50,16 +57,25 @@ internal static class RetailNpcStatBuffs
     }
     internal static readonly ImmutableArray<StatEnum> Elements=[StatEnum.WATER_RESISTANCE,StatEnum.WIND_RESISTANCE,
         StatEnum.EARTH_RESISTANCE,StatEnum.FIRE_RESISTANCE,StatEnum.LIGHT_RESISTANCE,StatEnum.DARK_RESISTANCE];
+    internal static readonly ImmutableArray<StatEnum> AbnormalResistances = [StatEnum.POISON_RESISTANCE,
+        StatEnum.BLEED_RESISTANCE, StatEnum.PARALYZE_RESISTANCE, StatEnum.SLEEP_RESISTANCE, StatEnum.ROOT_RESISTANCE,
+        StatEnum.BLIND_RESISTANCE, StatEnum.CHARM_RESISTANCE, StatEnum.DISEASE_RESISTANCE, StatEnum.SILENCE_RESISTANCE,
+        StatEnum.FEAR_RESISTANCE, StatEnum.CURSE_RESISTANCE, StatEnum.CONFUSE_RESISTANCE, StatEnum.STUN_RESISTANCE,
+        StatEnum.PERIFICATION_RESISTANCE, StatEnum.STUMBLE_RESISTANCE, StatEnum.STAGGER_RESISTANCE,
+        StatEnum.OPENAERIAL_RESISTANCE, StatEnum.SNARE_RESISTANCE, StatEnum.SLOW_RESISTANCE, StatEnum.SPIN_RESISTANCE,
+        StatEnum.BIND_RESISTANCE, StatEnum.DEFORM_RESISTANCE, StatEnum.PULLED_RESISTANCE, StatEnum.NOFLY_RESISTANCE,
+        StatEnum.SIMPLEROOT_RESISTANCE];
     internal static bool InScope(StatEnum stat)=>stat is StatEnum.MAXHP or StatEnum.PHYSICAL_ATTACK or StatEnum.MAGICAL_ATTACK
         or StatEnum.PHYSICAL_DEFENSE or StatEnum.MAGICAL_DEFEND or StatEnum.MAGICAL_RESIST or StatEnum.EVASION
         or StatEnum.PARRY or StatEnum.BLOCK or StatEnum.PHYSICAL_ACCURACY or StatEnum.MAGICAL_ACCURACY
-        or StatEnum.PHYSICAL_CRITICAL or StatEnum.BOOST_MAGICAL_SKILL||Elements.Contains(stat);
+        or StatEnum.PHYSICAL_CRITICAL or StatEnum.BOOST_MAGICAL_SKILL or StatEnum.ABNORMAL_RESISTANCE_ALL
+        or StatEnum.SPEED or StatEnum.ATTACK_SPEED or StatEnum.CONCENTRATION or StatEnum.BOOST_CASTING_TIME
+        || Elements.Contains(stat) || AbnormalResistances.Contains(stat);
 
     internal static Source Parse(ReadOnlySpan<byte> bytes,string sha) => ParseCore(bytes,sha,false);
 
-    // Player resistance is a separate, source-bound input to the prepared
-    // vampire calculation. Do not change the NPC buff admission path until
-    // its own all-status fan-out and effect ownership are reviewed.
+    // Player resistance retains its separate aggregate channel. NPC ArAll
+    // writes all 25 native pairs, including the internal SimpleRoot slot.
     internal static Source ParsePlayerResistance(ReadOnlySpan<byte> bytes,string sha) => ParseCore(bytes,sha,true);
 
     private static Source ParseCore(ReadOnlySpan<byte> bytes,string sha,bool playerResistance)
@@ -102,7 +118,12 @@ internal static class RetailNpcStatBuffs
                         ? ImmutableArray.Create(StatEnum.ABNORMAL_RESISTANCE_ALL) : Expand(attribute);
                     if(stats.IsDefaultOrEmpty)throw new Boundary("Unproved attribute: "+attribute);
                     int d=Number(delta),v=Number(value);bool percent=Number(mode)==1;
-                    foreach(var stat in stats)parts.Add(new(stat,d,v,percent));
+                    foreach(var stat in stats)
+                        // Native attr29 subtracts; the managed delay getter is
+                        // direct. Casting-time functions instead have the host
+                        // reverse-stat owner and retain positive boost operands.
+                        parts.Add(stat == StatEnum.ATTACK_SPEED
+                            ? new(stat, unchecked(-d), unchecked(-v), percent) : new(stat,d,v,percent));
                 }
             }
             catch(Boundary error){reason=error.Message;parts.Clear();}
@@ -120,6 +141,9 @@ internal static class RetailNpcStatBuffs
         "pmattack"=>[StatEnum.PHYSICAL_ATTACK,StatEnum.MAGICAL_ATTACK],
         // Attr98 writer14035c19f updates both modifier words for31/32/33.
         "activedefend"=>[StatEnum.EVASION,StatEnum.PARRY,StatEnum.BLOCK],
+        "arall"=>AbnormalResistances,
+        "speed"=>[StatEnum.SPEED],"attackdelay"=>[StatEnum.ATTACK_SPEED],
+        "concentration"=>[StatEnum.CONCENTRATION],"boostcastingtime"=>[StatEnum.BOOST_CASTING_TIME],
         "allresist" or "elementaldefendall" or "edall"=>Elements,
         "physicaldefend"=>[StatEnum.PHYSICAL_DEFENSE],"magicaldefend"=>[StatEnum.MAGICAL_DEFEND],
         "phyattack"=>[StatEnum.PHYSICAL_ATTACK],"magicalattack"=>[StatEnum.MAGICAL_ATTACK],
@@ -180,6 +204,14 @@ internal static class RetailNpcStatBuffs
         foreach(var part in program.Parts)
         {
             int value=Value(part,numericLevel);
+            // Native speed's flat operand is tenths of a metre/second;
+            // managed SPEED uses thousandths. Preserve native overflow guards.
+            if (part.Stat == StatEnum.SPEED && !part.Percent)
+            {
+                long scaled = (long)value * 100;
+                if (scaled is < int.MinValue or > int.MaxValue) return Compatibility("speed-flat-host-width");
+                value = (int)scaled;
+            }
             selected.Add(part.Percent?new StatRateFunction(part.Stat,value,true):new StatAddFunction(part.Stat,value,true));
         }
         var marker=Selected.GetValue(effect,_=>new());

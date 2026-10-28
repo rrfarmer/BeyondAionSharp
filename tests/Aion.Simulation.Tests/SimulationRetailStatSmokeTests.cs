@@ -99,9 +99,13 @@ public sealed partial class SimulationFastScenarioTests
                                 continue;
                             }
                             var et = Assert.IsType<StatupEffect>(template.GetEffectTemplate(program.Position));
+                            float speedBasis = npc.GetGameStats().GetMovementSpeed().GetExactBaseWithoutBaseRate();
+                            int hpBefore = npc.GetLifeStats().GetCurrentHp(), maxBefore = npc.GetLifeStats().GetMaxHp();
                             var effect = new Effect(npc, npc, template, entry.GetSkillLevel());
                             effect.AddSuccessEffect(et); effect.ApplyEffect();
                             Assert.True(RetailNpcStatBuffs.HasSelectedProgram(effect));
+                            Assert.Equal(RetailNpcCurrentHpMath.Adjust(maxBefore, npc.GetLifeStats().GetMaxHp(), hpBefore),
+                                npc.GetLifeStats().GetCurrentHp());
                             var observed = new List<object>();
                             foreach (var stat in program.Parts.Select(part => part.Stat).Distinct())
                             {
@@ -113,6 +117,23 @@ public sealed partial class SimulationFastScenarioTests
                                     var actual = RetailNpcStatNormalInputs.CurrentModifiers(npc, stat == StatEnum.PHYSICAL_ATTACK);
                                     Assert.Equal(new(percent, flat), actual);
                                     observed.Add(new { stat = stat.ToString(), percent, flat });
+                                }
+                                else if (stat is StatEnum.SPEED or StatEnum.ATTACK_SPEED or StatEnum.BOOST_CASTING_TIME)
+                                {
+                                    int expected = stat switch
+                                    {
+                                        StatEnum.SPEED => (int)RetailNpcBuffScalarMath.Speed(speedBasis, percent, checked(flat * 100)),
+                                        StatEnum.ATTACK_SPEED => RetailNpcBuffScalarMath.AttackDelay(p.AttackDelay, percent, flat),
+                                        _ => 1000 - 1000 * percent / 100 - flat
+                                    };
+                                    int actual = stat switch
+                                    {
+                                        StatEnum.SPEED => npc.GetGameStats().GetMovementSpeed().GetCurrent(),
+                                        StatEnum.ATTACK_SPEED => npc.GetGameStats().GetAttackSpeed().GetCurrent(),
+                                        _ => npc.GetGameStats().GetPositiveReverseStat(stat, 1000)
+                                    };
+                                    Assert.Equal(expected, actual);
+                                    observed.Add(new { stat = stat.ToString(), speedBasis, delayBasis = p.AttackDelay, percent, flat, expected, actual });
                                 }
                                 else
                                 {
@@ -169,7 +190,8 @@ public sealed partial class SimulationFastScenarioTests
                                 Assert.Empty(npc.GetGameStats().GetStatsSorted(stat));
                                 if (RetailNpcStatDefenses.Field(stat) is { } field)
                                     Assert.Equal(p.Values[field], npc.GetGameStats().GetStat(stat, p.Values[field]).GetCurrent());
-                                else Assert.Equal(new(0, 0), RetailNpcStatNormalInputs.CurrentModifiers(npc, stat == StatEnum.PHYSICAL_ATTACK));
+                                else if (stat is StatEnum.PHYSICAL_ATTACK or StatEnum.MAGICAL_ATTACK)
+                                    Assert.Equal(new(0, 0), RetailNpcStatNormalInputs.CurrentModifiers(npc, stat == StatEnum.PHYSICAL_ATTACK));
                             }
                             rows.Add(new { npc = p.NpcId, map = group.Key, skill = source.Id, level, program.Position, source.Sha256,
                                 profile = p.SourceRecordSha256, retainedHostAdmission, observed, playerBefore, playerAfter, normalEvents, removed = true });

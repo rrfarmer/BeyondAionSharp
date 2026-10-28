@@ -71,6 +71,13 @@ public class NpcGameStats : CreatureGameStats<Npc>
 
     public override Stat2 ApplyStatFunctions(StatEnum statEnum, Stat2 stat, ISet<CalculationType> calculationTypes)
     {
+        if (Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcBuffScalarMath.TryApply(owner, statEnum, stat))
+        {
+            int beforeAi = stat.GetCurrent();
+            owner.GetAi().ModifyOwnerStat(stat);
+            Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatDefenses.WarnIfAiOverrides(owner, stat, beforeAi);
+            return stat;
+        }
         if (Aion.GameServer.Controllers.Attack.RetailNpc.RetailNpcStatDefenses.TryApply(owner,statEnum,stat))
         {
             int beforeAi = stat.GetCurrent();

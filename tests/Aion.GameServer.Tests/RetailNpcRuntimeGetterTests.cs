@@ -117,7 +117,7 @@ public sealed class RetailNpcRuntimeGetterTests
         var keys = new HashSet<string> { "version", "mode", "region", "dataset_id", "output_manifest_sha256",
             "cohorts", "identity_review", "supported_maps" };
         if (includeCombat) keys.Add("combat_stats");
-        if (includeBuffs) keys.Add("skill_sources");
+        if (includeBuffs) { keys.Add("skill_sources"); keys.Add("buff_identity_review"); }
         foreach (string key in root.Select(k => k.Key).Where(k => !keys.Contains(k)).ToArray()) root.Remove(key);
         bytes = System.Text.Encoding.UTF8.GetBytes(root.ToJsonString());
         return (bytes, Convert.ToHexStringLower(SHA256.HashData(bytes)), Path.GetDirectoryName(path!)!);

@@ -221,6 +221,8 @@ public enum StatEnum
 
     // 4.8
     BLOCK_PENETRATION,
+    // Internal NPC channel; appended so existing 4.8 enum values do not move.
+    SIMPLEROOT_RESISTANCE,
 }
 
 public static class StatEnumExtensions
@@ -245,6 +247,7 @@ public static class StatEnumExtensions
         [StatEnum.BOOST_MAGICAL_SKILL] = 104, [StatEnum.BOOST_CASTING_TIME] = 108,
         [StatEnum.BOOST_HATE] = 109,
         [StatEnum.FLY_TIME] = 23, [StatEnum.FLY_SPEED] = 37,
+        [StatEnum.SIMPLEROOT_RESISTANCE] = 67,
         [StatEnum.BLEED_RESISTANCE] = 44, [StatEnum.BLIND_RESISTANCE] = 48,
         [StatEnum.BIND_RESISTANCE] = 63, [StatEnum.CHARM_RESISTANCE] = 49,
         [StatEnum.CONFUSE_RESISTANCE] = 54, [StatEnum.CURSE_RESISTANCE] = 53,

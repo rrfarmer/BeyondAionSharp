@@ -120,6 +120,7 @@ public sealed partial class SkyTempleNpcProfile
     {
         string? field = stat switch
         {
+            StatEnum.CONCENTRATION => "concentration",
             StatEnum.WATER_RESISTANCE => "elemental_defend_water", StatEnum.WIND_RESISTANCE => "elemental_defend_air",
             StatEnum.EARTH_RESISTANCE => "elemental_defend_earth", StatEnum.FIRE_RESISTANCE => "elemental_defend_fire",
             StatEnum.LIGHT_RESISTANCE or StatEnum.ELEMENTAL_RESISTANCE_LIGHT => "elemental_defend_light",

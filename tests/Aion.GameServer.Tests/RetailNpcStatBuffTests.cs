@@ -24,12 +24,13 @@ public sealed class RetailNpcStatBuffTests
     }
 
     [Fact]
-    public void GeneralResistanceDescriptorRequiresThePlayerResistanceParser()
+    public void GeneralResistanceUsesNpcFanoutAndSeparatePlayerAggregate()
     {
         byte[] raw=Encoding.Unicode.GetBytes("<skill_base><id>1</id><name>Fixture</name><effect1_type>StatUp</effect1_type>"
             +"<effect1_reserved13>arAll</effect1_reserved13><effect1_reserved2>100</effect1_reserved2></skill_base>");
         string hash=Convert.ToHexStringLower(SHA256.HashData(raw));
-        Assert.False(Assert.Single(RetailNpcStatBuffs.Parse(raw,hash).Programs).Supported);
+        var npc = Assert.Single(RetailNpcStatBuffs.Parse(raw,hash).Programs);
+        Assert.True(npc.Supported); Assert.Equal(25, npc.Parts.Length);
         var program=Assert.Single(RetailNpcStatBuffs.ParsePlayerResistance(raw,hash).Programs);
         Assert.True(program.Supported);
         var part=Assert.Single(program.Parts);
@@ -85,8 +86,8 @@ public sealed class RetailNpcStatBuffTests
     public void UnknownDescriptorRejectsTheWholeEffectInsteadOfKeepingAPartialBuff()
     {
         var p=Parse("<effect1_reserved13>physicalDefend</effect1_reserved13><effect1_reserved2>200</effect1_reserved2>"
-            +"<effect1_reserved14>Speed</effect1_reserved14><effect1_reserved4>50</effect1_reserved4>");
-        Assert.False(p.Supported);Assert.Empty(p.Parts);Assert.Contains("Speed",p.UnsupportedReason);
+            +"<effect1_reserved14>UnreviewedAttribute</effect1_reserved14><effect1_reserved4>50</effect1_reserved4>");
+        Assert.False(p.Supported);Assert.Empty(p.Parts);Assert.Contains("UnreviewedAttribute",p.UnsupportedReason);
     }
 
     // Independent native integer/cap witnesses, including the already-capped-seed trap.

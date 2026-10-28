@@ -159,3 +159,50 @@ No push or deployment is authorized. Roll back the expansion by reverting its
 scoped commit at an appropriate local integration point; no database migration
 is involved. For a separately authorized runtime rollback, deselect both retail
 statistics manifest variables and restart normally. Preserve unrelated edits.
+
+## Closure of the remaining 64 buff cases (2026-10-28)
+
+This section supersedes the 64-case boundary list above. All64 original cases
+now pass offline and in focused SIM. The final buff run checked1,243 cases over
+the selected3,873 profiles/17 maps and reported zero buff boundaries. The previous
+HP/normal profile coverage remains as recorded above; this run specifically
+repeated buff application, numeric getters, removal, HP-ratio adjustment and
+normal/final HP delivery for direct cases. No natural-travel run was needed.
+
+Two missing skill sources (18002,18706) were found in the supplied retail skill
+book. Three ranked identities (19599,20364,20365) now use explicit hash-pinned
+source/host joins. Native ArAll fans out to25 NPC resistance slots, including the
+internal SimpleRoot slot. Mixed HP/resistance programs stay whole. Concentration,
+attack-delay, speed and casting-time operands now follow the verified native
+numeric rules. Delay/speed caps and float/integer boundaries have independent
+static witnesses. Speed changes here affect buff numeric getters; routing,
+base-speed selection, pathfinding and movement-task ownership were not edited.
+
+The production statistics-only loader requires the new external manifest:
+
+`C:\Users\ryanf\Documents\Aion-NPC-Discovery\implementation\buff-closeout-20261028-03\package-13\manifest.json`
+
+SHA256: `7721c21ba8fe010830630395b9f1133a4862f0ce5ba9eb95080c73d7f092713c`.
+The manifest includes the two byte-exact skill records and reviewed identity
+asset; older packages remain unchanged. Source names/hashes, the host name
+catalog and actual host stack/localized-name IDs are checked. Unknown or drifted
+programs remain visible compatibility cases rather than partial projections.
+
+Offline closeout/scalar tests:21 passed,0 skipped, including all64 cases and
+identity-drift rejection. Final broader targeted regressions:41 passed,0 skipped.
+Focused SIM:1 passed,0 skipped; all1,243 buff cases passed, all64 original cases
+reconciled. Warning baseline4,097 sites, clock-read and null-logger guards pass.
+Detailed receipts and native byte proofs are under
+`C:\Users\ryanf\Documents\Aion-NPC-Discovery\implementation\buff-closeout-20261028-03`;
+the successful SIM is `runs/attempt-01`.
+
+Cast admission, durations, shields and other lifecycle owners still use existing
+4.8 behavior. Sixty-two cases retain explicit host-admission compatibility;
+numeric parity does not certify the native AI decision/probability to cast.
+Player/PvP behavior, bots, quests and gear are unchanged. These are controlled
+SIM checks, not rendered-client play or full AI certification. Private database
+copies and unchanged normal-account gear were used; originals were preserved.
+
+Revert the scoped closure commit for code rollback. No database migration, push
+or deployment was performed. Runtime package changes/restarts require separate
+deployment authorization; see the existing rollback instructions above.

@@ -38,6 +38,7 @@ internal static class RetailNpcStatDefenses
         StatEnum.PARRY=>"parry",StatEnum.BLOCK=>"block",
         StatEnum.PHYSICAL_ACCURACY=>"hit_accuracy",StatEnum.MAGICAL_ACCURACY=>"magical_hit_accuracy",
         StatEnum.PHYSICAL_CRITICAL=>"critical",StatEnum.BOOST_MAGICAL_SKILL=>"magical_skill_boost",
+        StatEnum.CONCENTRATION=>"concentration",
         StatEnum.WATER_RESISTANCE=>"elemental_defend_water",StatEnum.WIND_RESISTANCE=>"elemental_defend_air",
         StatEnum.EARTH_RESISTANCE=>"elemental_defend_earth",StatEnum.FIRE_RESISTANCE=>"elemental_defend_fire",
         StatEnum.LIGHT_RESISTANCE or StatEnum.ELEMENTAL_RESISTANCE_LIGHT=>"elemental_defend_light",
