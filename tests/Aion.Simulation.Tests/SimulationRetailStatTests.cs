@@ -131,12 +131,9 @@ public sealed partial class SimulationFastScenarioTests
                     var s = npc.GetGameStats();
                     Assert.Same(p, s.StatisticsProfile); Assert.Null(s.RetailProfile);
                     Assert.False(SkyTempleNpcProfileCatalog.TryGet(npc, out _));
-                    // The retained Stat2 storage is binary32. Keep the exact
-                    // retail integer in the profile, measure its representation
-                    // loss explicitly, and allow only that conversion (<0.00001%).
-                    // Do not turn a broad tolerance into permission for HP tuning.
-                    int materializedHp=(int)(float)p.MaxHp;
-                    Assert.InRange(Math.Abs((double)materializedHp-p.MaxHp)/Math.Max(1,p.MaxHp),0,0.0000001);
+                    // Selected MAXHP getters retain the native integer cache.
+                    // A binary32 round trip loses HP on large world bosses.
+                    int materializedHp=p.MaxHp;
                     Assert.Equal(p.Level, (int)npc.GetLevel()); Assert.Equal(materializedHp, npc.GetLifeStats().GetCurrentHp());
                     Assert.Equal(materializedHp, npc.GetLifeStats().GetMaxHp()); Assert.Equal(p.PhysicalDefense, s.GetPDef().GetCurrent());
                     Assert.Equal(p.MagicalDefense, s.GetMDef().GetCurrent()); Assert.Equal(p.MagicalResist, s.GetMResist().GetCurrent());
@@ -209,7 +206,7 @@ public sealed partial class SimulationFastScenarioTests
                         p.PhysicalDefense, p.MagicalDefense, p.MagicalResist, p.Attacks, p.SourceRecordSha256,
                         p.PhysicalDamageTrim,p.MagicalDamageTrim,
                         incomingRecords=outgoing.Select(x=>new {damage=x.GetDamage(),status=x.GetAttackStatus().ToString()}).ToArray(),
-                        materializedHp,hpRoundingDelta=materializedHp-p.MaxHp,
+                        materializedHp,hpRoundingDelta=materializedHp-p.MaxHp,binary32HpProjection=(int)(float)p.MaxHp,
                         physicalCriticalResist=s.GetPCR().GetCurrent(),magicalCriticalResist=s.GetMCR().GetCurrent(),
                         omittedFixturePostSpawnSkills=npc.GetSkillList().GetPostSpawnSkills().Select(x=>new {id=x.GetSkillId(),level=x.GetSkillLevel()}).ToArray(),
                         normalCorrection = p.HasNormalAttackCorrection, attempts, playerBefore, playerAfter,

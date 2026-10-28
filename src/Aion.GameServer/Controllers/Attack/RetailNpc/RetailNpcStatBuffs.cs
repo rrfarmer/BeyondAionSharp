@@ -118,6 +118,8 @@ internal static class RetailNpcStatBuffs
     {
         "pmdefend"=>[StatEnum.PHYSICAL_DEFENSE,..Elements],
         "pmattack"=>[StatEnum.PHYSICAL_ATTACK,StatEnum.MAGICAL_ATTACK],
+        // Attr98 writer14035c19f updates both modifier words for31/32/33.
+        "activedefend"=>[StatEnum.EVASION,StatEnum.PARRY,StatEnum.BLOCK],
         "allresist" or "elementaldefendall" or "edall"=>Elements,
         "physicaldefend"=>[StatEnum.PHYSICAL_DEFENSE],"magicaldefend"=>[StatEnum.MAGICAL_DEFEND],
         "phyattack"=>[StatEnum.PHYSICAL_ATTACK],"magicalattack"=>[StatEnum.MAGICAL_ATTACK],
@@ -155,13 +157,18 @@ internal static class RetailNpcStatBuffs
         if(!ReferenceEquals(effect.GetSkillTemplate().GetEffectTemplate(template.GetPosition()),template))
             return Compatibility("host-effect-identity");
         int numericLevel = effect.GetSkillLevel();
+        bool retainedHostAdmission = false;
         bool HostLink(RetailNpcStatTriggeredBuffs.Link link) => RetailNpcStatTriggeredBuffs.MatchesHost(link,
             Aion.GameServer.Dataholders.DataManager.SKILL_DATA.GetSkillTemplate(link.ParentId)?.GetEffectTemplate(link.Position));
         if (!RetailNpcStatCatalog.TryGetBuff(profile, effect.GetSkillId(), numericLevel, out var source, out var lineage, HostLink))
         {
             if (!RetailNpcStatCatalog.TryGetBuffNumericLevel(caster, profile, effect.GetSkillId(), numericLevel, out numericLevel)
                 || !RetailNpcStatCatalog.TryGetBuff(profile, effect.GetSkillId(), numericLevel, out source, out lineage, HostLink))
-                return Compatibility("missing-exact-source-binding");
+            {
+                if (!RetailNpcStatCatalog.TryGetRetainedHostBuff(caster, profile, effect.GetSkillId(), numericLevel, out source))
+                    return Compatibility("missing-exact-source-binding");
+                retainedHostAdmission = true;
+            }
         }
         if(lineage.Length>0&&!RetailNpcStatCatalog.TriggeredBuffMatchesStack(source.Id,effect.GetSkillTemplate().GetStack()))
             return Compatibility("triggered-child-host-stack-drift");
@@ -177,9 +184,16 @@ internal static class RetailNpcStatBuffs
         }
         var marker=Selected.GetValue(effect,_=>new());
         lock(marker)marker.Programs[program.Position]=(host.ToArray(),selected.ToArray());
+        if (retainedHostAdmission)
+        {
+            var warnings = Warnings.GetValue(caster, _ => []);
+            lock (warnings) if (warnings.Add((effect.GetSkillId(), template.GetPosition(), "retained-host-admission")))
+                Log.LogWarning("RETAIL_STAT_BUFF_ADMISSION_COMPAT npc={Npc} skill={Skill} effect={Effect} source={Source}; constant5.8 numeric program selected; existing4.8 cast admission retained and unverified",
+                    caster.GetNpcId(), effect.GetSkillId(), template.GetPosition(), source.Sha256);
+        }
         Log.LogDebug("RETAIL_STAT_BUFF npc={Npc} target={Target} skill={Skill} level={Level} numericLevel={NumericLevel} effect={Effect} source={Source} channels={Channels} binding={Binding}",
             caster.GetNpcId(),target.GetNpcId(),effect.GetSkillId(),effect.GetSkillLevel(),numericLevel,program.Position,source.Sha256,program.Parts.Length,
-            lineage.Length==0?"declared":string.Join(",",lineage.Select(p=>$"{p.ParentId}/{p.Position}>{p.ChildId}")));
+            retainedHostAdmission ? "retained-host-constant" : lineage.Length==0?"declared":string.Join(",",lineage.Select(p=>$"{p.ParentId}/{p.Position}>{p.ChildId}")));
         return selected;
     }
     private sealed class Boundary(string message):Exception(message);

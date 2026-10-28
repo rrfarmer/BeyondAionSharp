@@ -60,6 +60,29 @@ internal static partial class RetailNpcStatCatalog
         level = levels[0]; return true;
     }
 
+    // Correct the numeric program of an existing 4.8 cast without claiming
+    // retail AI admission. The source program must be constant at every legal
+    // level, entirely supported, and joined to this exact host entry/stack.
+    // Do not add skills, infer a missing source level, or authorize scripted
+    // injections merely because the skill exists in the global source table.
+    internal static bool TryGetRetainedHostBuff(Npc caster, SkyTempleNpcProfile profile, int id, int hostLevel,
+        out RetailNpcStatBuffs.Source source)
+    {
+        source = null!;
+        if (hostLevel is < 0 or > short.MaxValue || !profile.StatisticsOnly
+            || !TryGet(caster, out var current) || !ReferenceEquals(current, profile)
+            || Volatile.Read(ref active) is not { } package || !package.Buffs.TryGetValue(id, out var candidate)
+            || !RetailNpcStatTriggeredBuffs.IsConstant(candidate)) return false;
+        var template = DataManager.SKILL_DATA.GetSkillTemplate(id);
+        if (template is null || template.GetSkillId() != candidate.Id
+            || !package.TriggeredBuffs.MatchesStack(id, template.GetStack())) return false;
+        var host = DataManager.NPC_SKILL_DATA.GetOrCreateNpcSkillList(caster.GetNpcId());
+        if (!Enumerable.Range(0, host.Size()).Select(host.GetSkillOnPosition)
+            .Any(s => s.GetSkillId() == id && s.GetSkillLevel() == hostLevel)) return false;
+        source = candidate;
+        return true;
+    }
+
     internal static bool MatchesDeclaredSkillBinding(SkyTempleNpcProfile profile, int id, int level, int sourceId, string sourceName)
 
     {

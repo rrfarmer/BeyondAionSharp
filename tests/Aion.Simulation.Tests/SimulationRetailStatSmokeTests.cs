@@ -5,6 +5,7 @@ using Aion.GameServer.Controllers.Attack.RetailNpc;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Retail;
 using Aion.GameServer.SkillEngine.Effects;
@@ -43,13 +44,21 @@ public sealed partial class SimulationFastScenarioTests
         Assert.False(player.IsStaff());
         var rows = new List<object>();
         var boundaries = new List<object>();
-        int triggers = 0, scannedProfiles = 0;
-        foreach (var group in RetailNpcStatCatalog.Members.Where(m => m.MapId is 220010000 or 220030000 or 320050000).GroupBy(m => m.MapId))
+        int triggers = 0, expectedTriggers = 0, scannedProfiles = 0;
+        var maps = (Environment.GetEnvironmentVariable("AION_RETAIL_STATS_SIM_MAPS") ?? "220010000,220030000,320050000")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(int.Parse).ToHashSet();
+        var members = RetailNpcStatCatalog.Members.Where(m => maps.Contains(m.MapId)).ToArray();
+        Assert.NotEmpty(members);
+        Assert.All(maps, map => Assert.Contains(members, m => m.MapId == map));
+        foreach (var group in members.GroupBy(m => m.MapId))
         {
             var map = fixture.World.GetWorldMap(group.Key);
             var instance = map.GetMainWorldMapInstance();
             foreach (var old in instance.GetNpcs().ToArray()) old.GetController().Delete();
-            var spot = DataManager.SPAWNS_DATA.GetSpawnsByWorldId(group.Key).SelectMany(g => g.GetSpawnTemplates()).First();
+            var spot = DataManager.SPAWNS_DATA.GetSpawnsByWorldId(group.Key).SelectMany(g => g.GetSpawnTemplates()).FirstOrDefault()
+                ?? Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(group.Key, group.First().Profile.NpcId,
+                    Math.Max(64, map.GetWorldSize() / 2f), Math.Max(64, map.GetWorldSize() / 2f),
+                    Math.Max(map.GetWaterLevel(), map.GetDeathLevel()) + 100, 0);
             await TeleportForSetupAsync(session, player, group.Key, spot.GetX() + .5f, spot.GetY(), spot.GetZ(), token);
             await session.SynchronizeAsync(token);
             foreach (var member in group)
@@ -67,21 +76,26 @@ public sealed partial class SimulationFastScenarioTests
                         var entry = npc.GetSkillList().GetSkillOnPosition(i);
                         var template = DataManager.SKILL_DATA.GetSkillTemplate(entry.GetSkillId());
                         int level = entry.GetSkillLevel();
+                        bool retainedHostAdmission = false;
                         if (!RetailNpcStatCatalog.TryGetBuff(p, entry.GetSkillId(), level, out var source))
                         {
                             if (!RetailNpcStatCatalog.TryGetBuffNumericLevel(npc, p, entry.GetSkillId(), level, out level)
                                 || !RetailNpcStatCatalog.TryGetBuff(p, entry.GetSkillId(), level, out source))
                             {
-                                if (template.GetEffects()?.GetEffects().Any(e => e is StatupEffect) == true)
-                                    boundaries.Add(new { npc = p.NpcId, map = group.Key, skill = entry.GetSkillId(), reason = "missing-exact-source-binding" });
-                                continue;
+                                if (!RetailNpcStatCatalog.TryGetRetainedHostBuff(npc, p, entry.GetSkillId(), level, out source))
+                                {
+                                    if (template.GetEffects()?.GetEffects().Any(e => e is StatupEffect) == true)
+                                        boundaries.Add(new { npc = p.NpcId, map = group.Key, skill = entry.GetSkillId(), reason = "missing-exact-source-binding" });
+                                    continue;
+                                }
+                                retainedHostAdmission = true;
                             }
                         }
                         foreach (var program in source.Programs)
                         {
                             if (!program.Supported)
                             {
-                                boundaries.Add(new { npc = p.NpcId, skill = source.Id, program.Position, program.UnsupportedReason });
+                                boundaries.Add(new { npc = p.NpcId, map = group.Key, skill = source.Id, program.Position, program.UnsupportedReason });
                                 continue;
                             }
                             var et = Assert.IsType<StatupEffect>(template.GetEffectTemplate(program.Position));
@@ -106,7 +120,7 @@ public sealed partial class SimulationFastScenarioTests
                                     var seed = p.ScalarInputs.Fields[field]; var spec = seed.Specification;
                                     long expected = Math.Clamp(seed.Value + seed.Value * percent / 100 + flat, spec.Minimum!.Value, spec.Maximum!.Value);
                                     int actual = npc.GetGameStats().GetStat(stat, p.Values[field]).GetCurrent();
-                                    Assert.Equal((int)(float)expected, actual);
+                                    Assert.Equal(stat == StatEnum.MAXHP ? (int)expected : (int)(float)expected, actual);
                                     observed.Add(new { stat = stat.ToString(), basis = seed.Value, percent, flat, expected, actual });
                                 }
                             }
@@ -117,16 +131,23 @@ public sealed partial class SimulationFastScenarioTests
                                 await session.AdvanceAsync(TimeSpan.FromSeconds(3), token);
                                 await session.SendPacketAsync(session.Api.Revive(), token);
                                 await session.SynchronizeAsync(token);
+                                // Revive may move the character to its bind map.
+                                // Restore the labelled component-test stand before
+                                // asking for a same-world retail normal calculation.
+                                await TeleportForSetupAsync(session, player, group.Key, spot.GetX() + .5f, spot.GetY(), spot.GetZ(), token);
+                                await session.SynchronizeAsync(token);
                             }
                             Assert.False(player.IsDead());
                             if (player.IsProtectionActive()) player.GetController().StopProtectionActiveTask();
+                            npc.UnsetState(CreatureState.RESTING);
                             int playerBefore = player.GetLifeStats().GetCurrentHp(), logStart = fixture.LogCapture.Entries.Count;
                             npc.GetController().AttackTarget(player, 0, false);
                             int playerAfter = player.GetLifeStats().GetCurrentHp();
                             var normalEvents = fixture.LogCapture.Entries.Skip(logStart).Select(e => e.Message)
                                 .Where(m => m.StartsWith("RETAIL_STAT_NORMAL_INPUT ") || m.StartsWith("RETAIL_SKYTEMPLE_HP ")).ToArray();
                             var inputs = normalEvents.Where(m => m.StartsWith("RETAIL_STAT_NORMAL_INPUT ")).ToArray();
-                            Assert.Equal(p.HasNormalAttackCorrection, inputs.Length > 0);
+                            Assert.True(p.HasNormalAttackCorrection == (inputs.Length > 0),
+                                $"NPC {p.NpcId} normal trace missing/mismatched: source map {npc.GetWorldId()}, target map {player.GetWorldId()}");
                             foreach (string message in inputs)
                             {
                                 using var input = JsonDocument.Parse(message["RETAIL_STAT_NORMAL_INPUT ".Length..]);
@@ -151,11 +172,12 @@ public sealed partial class SimulationFastScenarioTests
                                 else Assert.Equal(new(0, 0), RetailNpcStatNormalInputs.CurrentModifiers(npc, stat == StatEnum.PHYSICAL_ATTACK));
                             }
                             rows.Add(new { npc = p.NpcId, map = group.Key, skill = source.Id, level, program.Position, source.Sha256,
-                                profile = p.SourceRecordSha256, observed, playerBefore, playerAfter, normalEvents, removed = true });
+                                profile = p.SourceRecordSha256, retainedHostAdmission, observed, playerBefore, playerAfter, normalEvents, removed = true });
                         }
                     }
                     if (p.NpcId is 210407 or 210409)
                     {
+                        expectedTriggers++;
                         int parentId = p.NpcId == 210407 ? 16394 : 16856;
                         var entry = Enumerable.Range(0, npc.GetSkillList().Size()).Select(npc.GetSkillList().GetSkillOnPosition)
                             .Single(s => s.GetSkillId() == parentId);
@@ -180,8 +202,8 @@ public sealed partial class SimulationFastScenarioTests
                 finally { npc.GetController().Delete(); }
             }
         }
-        Assert.Equal(2, triggers);
-        Assert.NotEmpty(rows);
+        Assert.Equal(expectedTriggers, triggers);
+        Assert.Equal(members.Length, scannedProfiles);
         await File.WriteAllTextAsync(Path.Combine(output, "buff-smoke.json"), JsonSerializer.Serialize(new { scannedProfiles, rows, boundaries, triggers,
             scope = "Production numeric Effect application/removal and parent observer triggers; supplied effect admission, no natural AI/proc probability claim" }), token);
         policy.AssertClean();

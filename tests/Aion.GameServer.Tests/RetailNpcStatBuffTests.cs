@@ -7,6 +7,22 @@ namespace Aion.GameServer.Tests;
 
 public sealed class RetailNpcStatBuffTests
 {
+    [Theory]
+    [InlineData("ActiveDefend")]
+    [InlineData("activedefend")]
+    public void ActiveDefenseExpandsToAllThreeNativeWriterDestinations(string attribute)
+    {
+        byte[] raw = Encoding.Unicode.GetBytes($"<skill_base><id>1</id><name>Fixture</name><effect1_type>StatUp</effect1_type>"
+            + $"<effect1_reserved13>{attribute}</effect1_reserved13><effect1_reserved1>2</effect1_reserved1>"
+            + "<effect1_reserved2>35</effect1_reserved2><effect1_reserved6>1</effect1_reserved6></skill_base>");
+        var source = RetailNpcStatBuffs.Parse(raw, Convert.ToHexStringLower(SHA256.HashData(raw)));
+        var program = Assert.Single(source.Programs);
+        Assert.True(program.Supported, program.UnsupportedReason);
+        Assert.Equal(new[] { StatEnum.EVASION, StatEnum.PARRY, StatEnum.BLOCK }, program.Parts.Select(p => p.Stat));
+        Assert.All(program.Parts, part => { Assert.True(part.Percent); Assert.Equal(49, RetailNpcStatBuffs.Value(part, 7)); });
+        Assert.False(RetailNpcStatTriggeredBuffs.IsConstant(source));
+    }
+
     [Fact]
     public void GeneralResistanceDescriptorRequiresThePlayerResistanceParser()
     {

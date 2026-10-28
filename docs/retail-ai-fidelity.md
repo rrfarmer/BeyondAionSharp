@@ -41711,3 +41711,33 @@ fight, not a world being torn down. `PatternAi.HandleDespawned` now runs the des
 instance is still in its map; a despawn in a live instance, or anywhere in the open world, is as before. Pins:
 `DestroyedInstanceDespawnTests` (the add appears when a key despawns in a live temple, and nothing runs or is logged when
 the temple is destroyed).
+
+## 2026-10-28 — Constant retail numeric programs for retained host buff entries
+
+The maintainer authorized the Asmodian/Three Keys stat SIM work and local commits.
+Selected ordinary NPCs may now use a pinned retail numeric StatUp program for an
+existing host NPC-skill entry even when its cast is absent from the retail NPC's
+declared skill list. This corrects, for example, Dragon's Blessing's missing dark
+and light defense modifiers. It does not establish retail cast admission.
+
+Admission compatibility is explicit: the exact existing host NPC skill ID and
+level must match; the host stack must join the pinned retail name/group; every
+source StatUp program must be supported and have zero level deltas. Existing
+reserved-target and conditional-host guards remain. Ownership retirement still
+removes the selected modifiers. Unknown, level-dependent or unsupported recipes
+retain their visible compatibility boundary. No skill is added or removed.
+
+This intentionally departs from Java BufEffect's host numeric descriptors and
+extends the earlier per-NPC declared-root numeric gate. It retains Java's cast,
+duration, shield and lifecycle owners, with a bounded admission warning. No
+routing, speed, bots, quests, gear or player/PvP behavior is changed.
+
+The native ActiveDefend composite is also projected to evasion, parry and
+block. The retained attribute98 dispatch and all13 instructions at14035c19f
+were rechecked against the pinned MainServer64.exe bytes; this resolves eight
+focused defensive-buff cases without touching speed or attack timing.
+
+Native writer/descriptor proof remains in the external stats-only-20261025-01
+combat-worker/statup-review records. Package-full-12 identity is unchanged.
+Focused source review, tests, failed setup attempts and SIM receipts are retained
+in C:/Users/ryanf/Documents/Aion-NPC-Discovery/implementation/asmodian-stat-smoke-20261028-02.
