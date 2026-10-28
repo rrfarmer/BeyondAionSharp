@@ -159,7 +159,7 @@ public class AttackUtil
         return hitCount;
     }
 
-    private static void AmplifyDamageByAdditionalHitCount(Creature attacker, AttackStatus status, List<AttackResult> attackList)
+    internal static void AmplifyDamageByAdditionalHitCount(Creature attacker, AttackStatus status, List<AttackResult> attackList)
     {
         int[] hitCount = CalculateAdditionalHitCount(attacker, status, attackList);
         for (int i = 0; i < hitCount[0] + hitCount[1]; i++)
@@ -234,7 +234,7 @@ public class AttackUtil
         return damage * coeficient;
     }
 
-    private static float GetWeaponMultiplier(ItemGroup group)
+    internal static float GetWeaponMultiplier(ItemGroup group)
     {
         return group switch
         {
@@ -593,7 +593,7 @@ public class AttackUtil
         return AttackStatus.NORMALHIT;
     }
 
-    private static ItemGroup? GetWeaponGroup(Creature effector, bool mainHand)
+    internal static ItemGroup? GetWeaponGroup(Creature effector, bool mainHand)
     {
         if (effector is Player)
         {

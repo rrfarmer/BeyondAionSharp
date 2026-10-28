@@ -320,3 +320,41 @@ boosts are not replayed. Unmatched, owned/scaled and full-behavior NPC receiver
 packages are not admitted through this statistics-only branch. Offline cohort
 checks use neutral AI and ordinary states; they do not certify active scripts,
 player weapon calculations or gameplay.
+
+## Player normal attacks against selected NPCs
+
+Statistics-only NPC targets now consume the same verified level, armor-ratio,
+elemental-floor and chance helpers through `RetailNpcPlayerNormal`. Player
+weapon/stat damage, movement input, weapon critical coefficients and additional-hit
+programs remain the existing4.8 source calculations. Neither PvP nor an unmatched
+NPC enters this adapter. Optional pilot/skill code stays outside this commit; its
+working normal wrapper forwards to this implementation instead of duplicating it.
+
+NPC dodge/block/parry eligibility and level adjustment share the ordinary NPC
+receiver helper. Both block and parry retain0.9 of post-defense damage before
+critical. Critical chance consumes the NPC's resistance and stat ratio. Critical
+damage retains the current player weapon coefficient and applies the NPC's
+reduction: the native User main subtracts it, while physical User offhand adds it.
+That unusual offhand sign is retained from Main0x14036b0e7..0x14036b23e; the NPC
+attacker's1.5/1.0 coefficients must not replace player weapon calculations.
+Source weapon/class tables and native Player override memory are compatibility
+inputs, not a new claim of complete5.8 player-source reconstruction.
+
+The fixed `physical_damage_trim`/`magical_damage_trim` fields belong to the damaged
+NPC. Main0x14036b6bf..0x14036b80a consumes target virtual slots0x5d8/0x5e0. Complete
+NPC getters0x1400bc290/0x1400bc2a0 read template+0x3f4/+0x3f8; User getters return0.
+Nonzero trims replace positive reached damage late, after ordinary damage/PvE,
+before protection. Every selected nonzero value is1. The shared normal trim helper
+applies per record in both NPC-to-NPC and Player-to-NPC directions, retaining the
+existing host AI/additional-record owners. It does not revive misses, cap outgoing
+NPC damage, or guarantee1HP loss after protection. One-damage compatibility hooks
+also skip terminal misses. Existing debug operands distinguish AI, trim and
+protection results without re-reading callbacks.
+
+The external `player-receiver-01` evidence rechecks all1,092 instructions/4,819 bytes
+of the complete normal consumer and the four complete target getter leaves against
+the pinned supplied Main. Ordinary stance0 and managed effect/pose mappings retain
+the earlier explicit compatibility assumptions. Unknown incoming script owners,
+owned/scaled actors and player critical inputs outside the ordinary word domain
+remain visible compatibility boundaries. Skills, transformations, rare Player
+overrides and active script states are not certified by the normal-stat fixtures.

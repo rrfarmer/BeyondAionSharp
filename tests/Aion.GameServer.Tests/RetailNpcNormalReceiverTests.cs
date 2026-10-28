@@ -54,6 +54,7 @@ public sealed class RetailNpcNormalReceiverTests
         using var installed=RetailNpcStatCatalog.InstallForTests(bytes,pin,directory);
         var member=RetailNpcStatCatalog.Members.First(m=>m.MapId!=0 && m.Profile.MinDamage>100
             && m.Profile.HasNormalAttackCorrection && !SkyTempleNpcCombat.RequiresEquipmentResponse(m.Profile)
+            && m.Profile.PhysicalDamageTrim==0 && m.Profile.MagicalDamageTrim==0
             && !m.Profile.Attacks.IsEmpty
             && m.Profile.Attacks.All(a=>(SkyTempleCombatInputs.Element(a.Type)!=SkillElement.NONE)==elemental)
             && (m.Profile.Source.Integers["dual"].ParsedValue is not (null or 0))==dual);
@@ -160,7 +161,8 @@ public sealed class RetailNpcNormalReceiverTests
                             damage*=1f-Math.Max(-1300,(int)(resist/(p.StatRatio/1000f)))/1300f;
                         }
                         if(AttackStatusExtensions.GetBaseStatus(status) is AttackStatus.PARRY or AttackStatus.BLOCK) damage*=.9f;
-                        return Math.Max(1f,damage);
+                        int trim=physical?p.PhysicalDamageTrim:p.MagicalDamageTrim;
+                        return trim!=0?trim:Math.Max(1f,damage);
                     }
                     foreach(var result in results)
                     {
