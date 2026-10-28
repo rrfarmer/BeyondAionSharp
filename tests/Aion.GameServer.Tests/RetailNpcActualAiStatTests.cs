@@ -93,6 +93,43 @@ public sealed class RetailNpcActualAiStatTests
         }
     }
 
+    [SkippableFact]
+    public void SelectedRiftAndThunderShieldProfilesKeepTheirCompleteRetailHp()
+    {
+        var (bytes, pin, directory) = RetailNpcRuntimeGetterTests.ProfileFixture();
+        int[] ids = [281931, 281932, 281933, 219874, 219887, 219906, 219913];
+        var baseline = new Dictionary<int, int>();
+        Assert.False(RetailNpcStatCatalog.Enabled);
+        using (var h = BossAiHarness.For(120010000).WithAi(typeof(RiftProtectorAI), typeof(SematariuxThunderShieldAI)).Build())
+        {
+            foreach (int id in ids)
+            {
+                var npc = Create(120010000, id);
+                Assert.Null(npc.GetGameStats().StatisticsProfile);
+                baseline.Add(id, npc.GetLifeStats().GetMaxHp());
+            }
+            Assert.Empty(h.Clock.Faults);
+        }
+        using var installed = RetailNpcStatCatalog.InstallForTests(bytes, pin, directory);
+        var members = RetailNpcStatCatalog.Members.Where(m => m.MapId != 0 && ids.Contains(m.Profile.NpcId)).ToArray();
+        Assert.Equal(7, members.Length);
+        foreach (var member in members)
+        {
+            using var h = BossAiHarness.For(member.MapId).WithAi(typeof(RiftProtectorAI), typeof(SematariuxThunderShieldAI)).Build();
+            var npc = Create(member.MapId, member.Profile.NpcId);
+            Assert.True(npc.GetAi() is RiftProtectorAI or SematariuxThunderShieldAI);
+            Assert.NotNull(npc.GetGameStats().StatisticsProfile);
+            Assert.Equal(member.Profile.MaxHp, npc.GetLifeStats().GetMaxHp());
+            Assert.Equal(member.Profile.MaxHp, npc.GetLifeStats().GetCurrentHp());
+            // Ownership is outside this fresh-profile correction. Retiring the
+            // profile must retain the existing actual-AI compatibility result.
+            npc.SetCreatorId(42);
+            Assert.Null(npc.GetGameStats().StatisticsProfile);
+            Assert.Equal(baseline[member.Profile.NpcId], npc.GetLifeStats().GetMaxHp());
+            Assert.Empty(h.Clock.Faults);
+        }
+    }
+
     private static Npc Create(int map, int id)
     {
         var spawn = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(map, id, 100, 100, 200, 0);

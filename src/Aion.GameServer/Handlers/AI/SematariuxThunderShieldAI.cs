@@ -65,7 +65,9 @@ public class SematariuxThunderShieldAI : AggressiveNpcAI, INpcMessageListener
 
     public override void ModifyOwnerStat(Stat2 stat)
     {
-        if (stat.GetStat() == StatEnum.MAXHP)
+        // Selected retail profiles already provide the complete base HP.
+        // Keep Java's ten-percent tuning only for unselected/owned contexts.
+        if (stat.GetStat() == StatEnum.MAXHP && GetOwner().GetGameStats()?.StatisticsProfile is null)
             stat.SetBaseRate(0.1f);
     }
 

@@ -272,3 +272,13 @@ active spawn overrides, phases or every custom script. NPC-to-NPC normal attacks
 still use the legacy attack branch with selected defensive getters; retail parity
 for that target branch is unverified. The exact per-NPC boundaries and source pins
 remain in the external reconciled coverage table.
+
+## Selected rift-protector and thunder-shield HP
+
+Java permanently multiplies MAXHP by 0.1 for `rift_protector` and
+`sematariux_thunder_shield`. For the seven matched fresh/unowned memberships,
+that replaces the selected 5.8 constructed HP with another ten-percent value.
+These AI hooks now retain the complete selected profile HP. Unselected or owned
+actors retain their existing Java rate; no phase, damage or lifecycle code changes.
+The actual-AI offline gate checks all seven max/current HP values and retirement
+back to the captured unselected result. No new per-NPC HP literal is introduced.
