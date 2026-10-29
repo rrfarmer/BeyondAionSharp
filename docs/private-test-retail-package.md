@@ -60,6 +60,13 @@ hosts were stopped afterward and the original ignored override bytes restored.
 Live containers and their configuration were unchanged. The selected package
 persists for the next explicit private-host launch.
 
+On 2026-10-29, focused controlled SIM checks used this same package selection
+for Haramel, NTC, Fire Temple, Three Keys, Ishalgen and Altgard. All 502 HP/profile
+cases and 103 buff cases passed; all 489 authored normal-attack profiles caused
+final HP loss. Thirteen profiles have no authored normal. No server fix was
+needed. This is separate from the socket-host startup check above; see
+[the smoke results and limits](retail-stat-smoke.md#package13-smoke-of-six-requested-areas-2026-10-29).
+
 ## Verify or roll back selection
 
 `python scripts/private-test/retail_package.py` checks the selected manifest's

@@ -206,3 +206,63 @@ copies and unchanged normal-account gear were used; originals were preserved.
 Revert the scoped closure commit for code rollback. No database migration, push
 or deployment was performed. Runtime package changes/restarts require separate
 deployment authorization; see the existing rollback instructions above.
+
+## Package13 smoke of six requested areas (2026-10-29)
+
+The maintainer authorized another focused stat gameplay smoke with the private
+server's selected package 13. Two fresh private GS copies ran the controlled
+full-bootstrap SIM fixtures separately, using the production statistics loader
+and the checked-in `scripts/private-test/retail-package.json` selection.
+The ordinary level 38 gladiator's bases, equipment, skills and quests were retained.
+
+| Area | HP/profile cases | Authored normals causing HP loss | Buff cases |
+| --- | ---: | ---: | ---: |
+| Haramel | 29 | 27 | 24 |
+| NTC | 19 | 18 | 8 |
+| Fire Temple | 37 | 36 | 12 |
+| Three Keys | 25 | 25 | 4 |
+| Ishalgen | 103 | 101 | 10 |
+| Altgard | 289 | 282 | 45 |
+| Total | 502 | 489 | 103 |
+
+All 502 profile identities, exact HP and defensive getters passed. All 489
+profiles with authored normals caused final HP loss. The other 13 have no
+authored normal and correctly produced none; no attack was invented. All 3,312
+selected shipped-spawn census rows had their expected HP. The controlled actor
+died 30 times and used the existing revive path; gear and stats were not raised.
+
+All 103 buff cases across 86 NPC types passed numeric application and removal,
+including the two Ishalgen parent-observer triggers. The 101 direct cases checked
+the production normal modifiers and final HP delivery. There were zero buff
+boundaries and zero retained-host admission cases in this requested subset.
+The receipt audit reconciled 666 normal input traces and 1,168 HP events, plus 101
+buff input traces/HP events. It checked source and generation hashes, sampled
+ranges, attack-profile modifiers, exact integer HP and damage delivered to HP.
+Both tests passed without skips. No production server defect was exposed.
+
+The runtime evidence streams had no warnings or exceptions. Global bootstrap
+still recorded two existing admission-compatibility messages for NPC 216840,
+outside these six areas; they were retained and are not counted as a numeric
+failure or silently suppressed. This controlled fixture supplies buff admission
+and isolates stat arithmetic from encounter AI. It does not certify natural AI
+cast choices, every skill family, level-appropriate balance, routing or rendered
+client gameplay. The read-only monitor was enabled during each combat phase.
+
+The first attempt stopped before test execution when the pinned SDK 10.0.301
+stopped resolving after the successful build. The two successful runs directly
+used the installed SDK 10.0.403's VSTest 18.7 console on the freshly built assemblies;
+`global.json` and runtime source were unchanged. The failed setup, runner hash,
+build log and successful TRX files remain separate. For this machine's exact
+repeat command, use the external `run-smoke.py` and invocation receipts rather
+than changing the repository SDK pin. A normal future build still requires its
+pinned SDK to resolve.
+
+Evidence, per-NPC absence list and rollback notes are under
+`C:\Users\ryanf\Documents\Aion-NPC-Discovery\implementation\package 13-focused-smoke-20261029-01`.
+Successful runs are `runs/attempt-03` (HP/normals) and `runs/attempt-04` (buffs).
+Each uses its own retained private database. Source/assembly identities match
+across both runs, all pre-existing dirty file bytes were preserved, and DLL
+ownership marks cleared afterward. Live container identities/configuration and
+the selected package were unchanged. Only verification documentation changed;
+there is no runtime fix or schema migration to roll back. No routing changes,
+push or live deployment occurred.
