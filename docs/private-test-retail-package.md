@@ -67,6 +67,12 @@ final HP loss. Thirteen profiles have no authored normal. No server fix was
 needed. This is separate from the socket-host startup check above; see
 [the smoke results and limits](retail-stat-smoke.md#package13-smoke-of-six-requested-areas-2026-10-29).
 
+The remaining 11 maps in the Asmodian inventory subsequently passed the same
+checks, starting with Morheim: 3,371 HP/profile cases, 3,181 authored normal
+attackers and 1,140 buff cases. All 64 original numeric buff boundaries were
+covered with no remaining numeric gap. Existing cast-admission compatibility
+remains explicit. See [the per-map results](retail-stat-smoke.md#package13-remaining-asmodian-maps-2026-10-29).
+
 ## Verify or roll back selection
 
 `python scripts/private-test/retail_package.py` checks the selected manifest's

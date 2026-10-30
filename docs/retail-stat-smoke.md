@@ -266,3 +266,55 @@ ownership marks cleared afterward. Live container identities/configuration and
 the selected package were unchanged. Only verification documentation changed;
 there is no runtime fix or schema migration to roll back. No routing changes,
 push or live deployment occurred.
+
+## Package13 remaining Asmodian maps (2026-10-29)
+
+The same controlled private SIM checks started with Morheim, then covered the
+other ten maps in the existing Asmodian coverage inventory. Four separate
+processes/private GS copies passed without skips: Morheim HP/normals and buffs,
+then the remaining maps' HP/normals and buffs. The selected package, runtime/test
+source bytes and compiled assemblies matched the preceding six-area smoke;
+the installed VSTest runner was reused without rebuilding or changing the SDK pin.
+
+| Map | HP/profile checks | Authored normals causing HP loss | Buff cases |
+| --- | ---: | ---: | ---: |
+| Morheim | 687 | 671 | 204 |
+| Beluslan | 616 | 598 | 162 |
+| Brusthonin | 302 | 292 | 51 |
+| Gelkmaros | 918 | 814 | 280 |
+| Enshar | 561 | 540 | 378 |
+| Habrok | 1 | 1 | 0 |
+| Idian Depths | 85 | 84 | 56 |
+| Pandaemonium | 123 | 108 | 6 |
+| Convent of Marchutan | 9 | 9 | 0 |
+| Marchutan Priory | 2 | 2 | 0 |
+| Pernon | 67 | 62 | 3 |
+| Total | 3,371 | 3,181 | 1,140 |
+
+The other 190 profiles have no authored normal and correctly caused none.
+Fatebound Abbey 140010000 and alternate Pernon 730010000 have no selected combat
+profiles in this package; neither is counted as an empty passing map. All 31,663
+selected shipped-spawn census rows matched expected HP. Receipt audits checked
+3,411 normal input traces/6,746 HP events and 1,136 buff traces/1,128 HP events,
+including source identities, attack profiles, modifiers and final HP delivery.
+All 64 original buff-boundary cases matched passing rows, including effect
+positions where recorded. Numeric buff boundaries: zero. No server fix was needed.
+
+The 62 existing retained-host admission cases passed their pinned numeric
+programs and retain explicit warnings: this does not establish retail AI cast
+admission. Each normal-test bootstrap also recorded two existing messages for
+Gelkmaros NPC 216840, now included in the verified cohort. No runtime-log error,
+exception or numeric fallback warning occurred. The unchanged level 38 character
+used normal revive after 1,592 fixture deaths; this is not a balance test for
+that character's level. Natural AI, every skill family, routing and rendered
+client gameplay remain outside these controlled stat checks.
+
+Evidence and per-NPC results:
+`C:\Users\ryanf\Documents\Aion-NPC-Discovery\implementation\package13-asmodian-smoke-20261029-02`.
+Successful runs are `attempt-01/02` (Morheim) and `attempt-03/04` (remaining maps).
+Only verification documentation changed; package selection, routing, player
+gear/quests and live container identities/configuration were unchanged. Private
+processes exited and DLL ownership marks cleared. No push or live deployment.
+Together with the six-area run, the package13 smoke now covers 3,873 profiles,
+3,670 authored normal-attack profiles and 1,243 buff cases across the 17 selected
+maps. This is the verified inventory, not a claim about every world/skill family.
