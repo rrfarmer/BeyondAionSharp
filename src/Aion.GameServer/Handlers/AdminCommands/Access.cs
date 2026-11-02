@@ -18,8 +18,8 @@ public class Access : AdminCommand
             add <player name> <command name> - Grants the player access to the given chat command.
             remove <player name> <command name> - Removes the player's access to the given chat command.
             removeall <player name> - Removes all granted accesses.
-            level <number> - Temporarily sets your accesslevel to a given lower value (for test purposes).
-            level reset - Resets your accesslevel to the original value.
+            level <number> - Temporarily sets your access level to a given lower value (for test purposes).
+            level reset - Resets your access level to the original value.
             """)
     {
     }
@@ -51,7 +51,14 @@ public class Access : AdminCommand
                     return;
                 }
                 if (cmd.Equals("add"))
+                {
+                    if (!ChatProcessor.GetInstance().IsCommandAllowed(admin, commandName))
+                    {
+                        SendInfo(admin, "You cannot grant access to a command that you do not have access to yourself.");
+                        return;
+                    }
                     CommandsAccessService.GiveAccess(admin, pcd.GetPlayerObjId(), commandName);
+                }
                 else
                     CommandsAccessService.RemoveAccess(admin, pcd.GetPlayerObjId(), commandName);
                 break;

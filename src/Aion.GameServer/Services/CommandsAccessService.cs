@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Aion.GameServer.Dao;
 using Aion.GameServer.Model.GameObjects.Players;
@@ -32,6 +33,7 @@ public class CommandsAccessService
 
     private static void GiveAccess(Player admin, int playerId, string command, bool isTemporary)
     {
+        command = ToAlias(command);
         if (HasAccess(playerId, command))
         {
             PacketSendUtility.SendMessage(admin, "This player already has access on command " + command);
@@ -54,6 +56,7 @@ public class CommandsAccessService
 
     public static void RemoveAccess(Player admin, int playerId, string command)
     {
+        command = ToAlias(command);
         if (!HasAccess(playerId, command))
         {
             PacketSendUtility.SendMessage(admin, "This player has no access on command " + command);
@@ -75,6 +78,16 @@ public class CommandsAccessService
             return true;
         }
         return false;
+    }
+
+    /// <summary>
+    /// The access of a command is stored and checked without the <c>//</c> prefix of admin commands, so the alias has to be
+    /// normalized before it is compared with a grant.
+    /// </summary>
+    private static string ToAlias(string command)
+    {
+        string alias = command.StartsWith(AdminCommand.PREFIX, StringComparison.Ordinal) ? command.Substring(AdminCommand.PREFIX.Length) : command;
+        return alias.ToLower();
     }
 
     public static bool HasAccess(int playerId, string command)

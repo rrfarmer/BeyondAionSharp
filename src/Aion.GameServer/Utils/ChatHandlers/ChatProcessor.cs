@@ -104,9 +104,19 @@ public class ChatProcessor : GameEngine
         return Regex.Split(paramsStr.Trim(), " +(?=[^\\]]*(?:\\[|$))");
     }
 
+    /// <summary>
+    /// Command keys are registered with their prefix (<c>//</c> for admin, <c>.</c> for player commands, none for console), while
+    /// configs and stored accesses use the bare alias, so an alias without prefix also resolves to its command.
+    /// </summary>
     private ChatCommand GetCommand(string alias)
     {
-        return commandHandlers.GetValueOrDefault(alias.ToLower());
+        ChatCommand command = commandHandlers.GetValueOrDefault(alias.ToLower());
+        if (command != null)
+            return command;
+        foreach (ChatCommand candidate in commandHandlers.Values)
+            if (string.Equals(candidate.GetAlias(), alias, StringComparison.OrdinalIgnoreCase))
+                return candidate;
+        return null;
     }
 
     /// <summary>
@@ -133,9 +143,10 @@ public class ChatProcessor : GameEngine
         return command != null && command.ValidateAccess(executor);
     }
 
+    /// <summary>True if a command with this alias exists, with or without its prefix.</summary>
     public bool IsCommandExists(string alias)
     {
-        return commandHandlers.ContainsKey(alias.ToLower());
+        return GetCommand(alias) != null;
     }
 
     public static ChatProcessor GetInstance()
