@@ -48,7 +48,7 @@ public class DecomposeAction : AbstractItemAction
                 PacketSendUtility.SendPacket(player, new SM_SHOW_DECOMPOSABLE(parentItem.GetObjectId(), set.GetItems()));
             return;
         }
-        int castingDelay = parentItem.GetItemTemplate().GetCastingDelay();
+        int castingDelay = player.GetItemUseDelay(parentItem.GetItemTemplate().GetCastingDelay());
         if (castingDelay <= 0)
         {
             FinishUse(player, parentItem, targetItem, decomposableItem);

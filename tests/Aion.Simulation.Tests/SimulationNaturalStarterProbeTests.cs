@@ -1296,7 +1296,7 @@ public sealed partial class SimulationFastScenarioTests
 		const int fire = 3707, earth = 3645, fireNpc = 833344, earthNpc = 833288;
 		int[] summons = [3707, 3709, 3711, 3713, 3645, 3647, 3649, 3685, 3687, 3689, 3665, 3667];
 		static string Said(IReadOnlyList<StarterTraceRecord> records) => string.Join(" ", records
-			.Where(record => record is { Direction: "<", Packet: "SM_SUMMON_PANEL" or "SM_SUMMON_PANEL_REMOVE" or "SM_SUMMON_OWNER_REMOVE" })
+			.Where(record => record is { Direction: "<", Packet: "SM_SUMMON_PANEL" or "SM_RESET_SKILL_COOLDOWN" or "SM_SUMMON_OWNER_REMOVE" })
 			.Select(record => record.Packet));
 		int? Seen() => probe.World.Summon is { } spirit ? probe.World.Objects.GetValueOrDefault(spirit.ObjectId)?.TemplateId : null;
 		string Out() => probe.World.Summon is { } spirit ? $"{Seen()} with {spirit.CurrentHp}/{spirit.MaxHp} HP" : "none";

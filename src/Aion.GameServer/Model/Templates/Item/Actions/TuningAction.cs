@@ -46,10 +46,11 @@ public class TuningAction : AbstractItemAction
 
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
+        int useDelay = player.GetItemUseDelay(5000);
         int tuningScrollItemId = parentItem.GetItemId();
         int tuningScrollObjectId = parentItem.GetObjectId();
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
-            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), tuningScrollObjectId, tuningScrollItemId, 5000, ItemUseAnimation.REIDENTIFY_START), true);
+            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), tuningScrollObjectId, tuningScrollItemId, useDelay, ItemUseAnimation.REIDENTIFY_START), true);
         ItemUseObserver observer = new TuneUseObserver(player, parentItem, targetItem, tuningScrollItemId, tuningScrollObjectId);
         player.GetObserveController().AddObserver(observer);
         player.GetController().AddTask(Aion.GameServer.Model.TaskId.ITEM_USE, Aion.GameServer.Utils.ThreadPoolManager.GetInstance().Schedule(ct =>
@@ -84,7 +85,7 @@ public class TuningAction : AbstractItemAction
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_TUNE_RESULT(targetItem, tuningScrollItemId, result));
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_ITEM_REIDENTIFY_SUCCEED(targetItem.GetL10n()));
             return ValueTask.CompletedTask;
-        }, TimeSpan.FromMilliseconds(5000)));
+        }, TimeSpan.FromMilliseconds(useDelay)));
     }
 
     public static int GetRandomStatBonusIdFor(Item item)

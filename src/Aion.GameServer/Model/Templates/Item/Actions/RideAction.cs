@@ -63,7 +63,7 @@ public class RideAction : AbstractItemAction
             player.UnsetPlayerMode(PlayerMode.RIDE);
             return;
         }
-        int castingDelay = parentItem.GetItemTemplate().GetCastingDelay();
+        int castingDelay = player.GetItemUseDelay(parentItem.GetItemTemplate().GetCastingDelay());
         if (castingDelay <= 0)
         {
             FinishUse(player, parentItem);

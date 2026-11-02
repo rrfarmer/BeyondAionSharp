@@ -22,7 +22,7 @@ public class ReadAction : AbstractItemAction
         if (parentItem.GetItemTemplate().GetActions().GetItemActions().Any(a => a is QuestStartAction))
             return;
 
-        int castingDelay = parentItem.GetItemTemplate().GetCastingDelay();
+        int castingDelay = player.GetItemUseDelay(parentItem.GetItemTemplate().GetCastingDelay());
         if (castingDelay <= 0)
         {
             FinishUse(player, parentItem);

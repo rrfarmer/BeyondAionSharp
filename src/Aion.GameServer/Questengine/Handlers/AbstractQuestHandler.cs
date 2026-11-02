@@ -1130,7 +1130,8 @@ public abstract class AbstractQuestHandler
 
         if (qs.GetQuestVarById(varNum) == step)
         {
-            PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.ObjectId, objectId, itemId, 3000, ItemUseAnimation.USE_START), true);
+            int useDelay = player.GetItemUseDelay(3000);
+            PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.ObjectId, objectId, itemId, useDelay, ItemUseAnimation.USE_START), true);
             ThreadPoolManager.GetInstance().Schedule(ct =>
             {
                 PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.ObjectId, objectId, itemId, 0, ItemUseAnimation.USE_SUCCESS), true);
@@ -1149,7 +1150,7 @@ public abstract class AbstractQuestHandler
                 }
                 ChangeQuestStep(env, step, nextStep, reward, varNum);
                 return ValueTask.CompletedTask;
-            }, TimeSpan.FromMilliseconds(3000));
+            }, TimeSpan.FromMilliseconds(useDelay));
             return true;
         }
         return false;

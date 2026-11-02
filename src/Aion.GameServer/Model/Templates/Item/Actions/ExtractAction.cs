@@ -34,7 +34,8 @@ public class ExtractAction : AbstractItemAction
 
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 5000, ItemUseAnimation.USE_START));
+        int useDelay = player.GetItemUseDelay(5000);
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), useDelay, ItemUseAnimation.USE_START));
         ItemUseObserver observer = new ExtractUseObserver(player, parentItem, targetItem);
         player.GetObserveController().AddObserver(observer);
         player.GetController().AddTask(Aion.GameServer.Model.TaskId.ITEM_USE, Aion.GameServer.Utils.ThreadPoolManager.GetInstance().Schedule(ct =>
@@ -47,7 +48,7 @@ public class ExtractAction : AbstractItemAction
                 player.StartCooldown(parentItem);
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, result ? ItemUseAnimation.USE_SUCCESS : ItemUseAnimation.USE_FAIL));
             return ValueTask.CompletedTask;
-        }, TimeSpan.FromMilliseconds(5000)));
+        }, TimeSpan.FromMilliseconds(useDelay)));
     }
 
     // Java parity: anonymous ItemUseObserver in act().

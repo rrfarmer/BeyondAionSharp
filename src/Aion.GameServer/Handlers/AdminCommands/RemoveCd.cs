@@ -28,13 +28,7 @@ public class RemoveCd : AdminCommand
         Player target = admin.GetTarget() is Player p ? p : admin;
         if (paramsArr.Length == 0)
         {
-            if (target.GetSkillCoolDowns() != null)
-            {
-                long nowMillis = SystemClock.CurrentMillis();
-                List<int> cooldownIds = target.GetSkillCoolDowns().Where(e => e.Value > nowMillis).Select(e => e.Key).ToList();
-                PacketSendUtility.SendPacket(target, new SM_SKILL_COOLDOWN(target, cooldownIds));
-                target.GetSkillCoolDowns().Clear();
-            }
+            RemoveSkillCooldowns(target);
             RemoveItemCooldowns(target);
             target.GetHouseObjectCooldowns().Clear();
             if (target.Equals(admin))
@@ -80,8 +74,20 @@ public class RemoveCd : AdminCommand
         }
     }
 
+    public static void RemoveSkillCooldowns(Player player)
+    {
+        if (player.GetSkillCoolDowns() == null || player.GetSkillCoolDowns().Count == 0)
+            return;
+        long nowMillis = SystemClock.CurrentMillis();
+        List<int> cooldownIds = player.GetSkillCoolDowns().Where(e => e.Value > nowMillis).Select(e => e.Key).ToList();
+        PacketSendUtility.SendPacket(player, new SM_SKILL_COOLDOWN(player, cooldownIds));
+        player.GetSkillCoolDowns().Clear();
+    }
+
     public static void RemoveItemCooldowns(Player player)
     {
+        if (player.GetItemCoolDowns().Count == 0)
+            return;
         Dictionary<int, ItemCooldown> dummyCds = new Dictionary<int, ItemCooldown>(); // 4.8 client ignores reuseTime <= currentTime, but sending old cds + useDelay 0 works
         foreach (KeyValuePair<int, ItemCooldown> en in player.GetItemCoolDowns())
         {

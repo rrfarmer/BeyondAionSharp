@@ -76,7 +76,7 @@ public class EnchantItemAction : AbstractItemAction
             return;
 
         bool isEnchantmentStone = parentItem.GetItemTemplate().GetItemGroup() == ItemGroup.ENCHANTMENT;
-        int enchantDurationMillis = isEnchantmentStone ? 4000 : 2000;
+        int enchantDurationMillis = player.GetItemUseDelay(isEnchantmentStone ? 4000 : 2000);
 
         var observer = new EnchantItemUseObserver(player, parentItem, targetItem, isEnchantmentStone);
         player.GetObserveController().AddObserver(observer);

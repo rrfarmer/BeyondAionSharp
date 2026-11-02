@@ -118,8 +118,9 @@ public class ApExtractAction : AbstractItemAction
 
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
+        int castingDelay = player.GetItemUseDelay(CASTING_DELAY);
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
-            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), CASTING_DELAY, ItemUseAnimation.USE_START), true);
+            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), castingDelay, ItemUseAnimation.USE_START), true);
 
         var observer = new ApExtractObserver(player, parentItem, targetItem);
         player.GetObserveController().AddObserver(observer);
@@ -128,7 +129,7 @@ public class ApExtractAction : AbstractItemAction
             player.GetObserveController().RemoveObserver(observer);
             FinishUse(player, parentItem, targetItem);
             return System.Threading.Tasks.ValueTask.CompletedTask;
-        }, System.TimeSpan.FromMilliseconds(CASTING_DELAY)));
+        }, System.TimeSpan.FromMilliseconds(castingDelay)));
     }
 
     // Java parity: anonymous ItemUseObserver in act.

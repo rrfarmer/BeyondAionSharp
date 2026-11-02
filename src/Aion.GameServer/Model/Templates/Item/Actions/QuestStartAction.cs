@@ -20,7 +20,7 @@ public class QuestStartAction : AbstractItemAction
 
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
-        int castingDelay = parentItem.GetItemTemplate().GetCastingDelay();
+        int castingDelay = player.GetItemUseDelay(parentItem.GetItemTemplate().GetCastingDelay());
         if (castingDelay <= 0)
         {
             FinishUse(player, parentItem);

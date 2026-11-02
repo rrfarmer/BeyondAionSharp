@@ -92,7 +92,7 @@ public sealed partial class BotServerPacketDecoder
 			[typeof(SM_SKILL_ACTIVATION)] = DecodeSkillActivation,
 			[typeof(SM_RIDE_ROBOT)] = DecodeRideRobot,
 			[typeof(SM_SUMMON_PANEL)] = DecodeSummonPanel,
-			[typeof(SM_SUMMON_PANEL_REMOVE)] = DecodeSummonPanelRemove,
+			[typeof(SM_RESET_SKILL_COOLDOWN)] = DecodeResetSkillCooldown,
 			[typeof(SM_SUMMON_OWNER_REMOVE)] = DecodeSummonOwnerRemove,
 			[typeof(SM_SUMMON_USESKILL)] = DecodeSummonUseSkill,
 			[typeof(SM_RECIPE_LIST)] = DecodeRecipeList,
@@ -977,12 +977,14 @@ public sealed partial class BotServerPacketDecoder
 			("physicalDefence", physicalDefence), ("magicalDefence", magicalDefence), ("liveTime", liveTime));
 	}
 
-	// Java SM_SUMMON_PANEL_REMOVE.writeImpl: the skill that summoned the spirit that is gone, and 1 when it names one.
-	private static IReadOnlyDictionary<string, object?> DecodeSummonPanelRemove(ReadOnlySpan<byte> body)
+	// Java SM_RESET_SKILL_COOLDOWN.writeImpl: the skill whose cooldown is reset, and 1 when it names one. Upstream
+	// 9b15b6df8 renamed the packet from SM_SUMMON_PANEL_REMOVE: its only caller is the summon service, which resets the
+	// summoning skill's cooldown when the spirit goes away, but the packet itself resets any skill's cooldown.
+	private static IReadOnlyDictionary<string, object?> DecodeResetSkillCooldown(ReadOnlySpan<byte> body)
 	{
 		var r = new PacketBodyReader(body);
 		var result = Fields(("skillId", r.ReadUInt16()), ("named", r.ReadByte() != 0));
-		if (body.Length != 3) throw new InvalidDataException("SM_SUMMON_PANEL_REMOVE must contain exactly three bytes.");
+		if (body.Length != 3) throw new InvalidDataException("SM_RESET_SKILL_COOLDOWN must contain exactly three bytes.");
 		return result;
 	}
 

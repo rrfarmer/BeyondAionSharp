@@ -324,7 +324,7 @@ public sealed partial class BotWorldModel
 			ApplyCreatureEffects(packet);
 		else if (type == typeof(SM_SUMMON_PANEL))
 			ApplySummonPanel(packet);
-		else if (type == typeof(SM_SUMMON_PANEL_REMOVE))
+		else if (type == typeof(SM_RESET_SKILL_COOLDOWN))
 			ForgetSummon();
 		else if (type == typeof(SM_SUMMON_OWNER_REMOVE))
 			ApplySummonOwnerRemove(packet);

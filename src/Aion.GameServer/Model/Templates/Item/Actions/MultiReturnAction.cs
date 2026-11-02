@@ -21,7 +21,7 @@ public class MultiReturnAction : AbstractItemAction
 
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item item, Item targetItem, params object[] @params)
     {
-        int castingDelay = item.GetItemTemplate().GetCastingDelay();
+        int castingDelay = player.GetItemUseDelay(item.GetItemTemplate().GetCastingDelay());
         Aion.GameServer.Model.Templates.Items.ReturnLocList loc = GetReturnLoc((int)@params[0]);
         if (castingDelay <= 0)
         {

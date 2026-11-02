@@ -16,7 +16,7 @@ public sealed partial class BotWorldModel
 
 	/// <summary>
 	/// NR-110a: the spirit the bot has out; null for none. Java SummonsService.createSummon 29-40 tells the master of a
-	/// new spirit with SM_SUMMON_PANEL, and its ReleaseSummonTask tells it with SM_SUMMON_PANEL_REMOVE and
+	/// new spirit with SM_SUMMON_PANEL, and its ReleaseSummonTask tells it with SM_RESET_SKILL_COOLDOWN and
 	/// SM_SUMMON_OWNER_REMOVE of every end: the spirit's death, the master's death, a release, a master that went out
 	/// of the spirit's sight, a timer. A new login starts with none: PlayerLeaveWorldService 117 releases it. Which
 	/// spirit it is, is the template of the object with this id.

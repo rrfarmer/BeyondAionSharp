@@ -25,9 +25,10 @@ public class TamperingAction : AbstractItemAction
 
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
+        int useDelay = player.GetItemUseDelay(5000);
         int parentItemId = parentItem.GetItemId();
         int parntObjectId = parentItem.GetObjectId();
-        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItemId, 5000, ItemUseAnimation.USE_START), true);
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItemId, useDelay, ItemUseAnimation.USE_START), true);
         ItemUseObserver observer = new TamperUseObserver(player, parentItem, targetItem, parentItemId, parntObjectId);
         player.GetObserveController().AddObserver(observer);
         player.GetController().AddTask(Aion.GameServer.Model.TaskId.ITEM_USE, Aion.GameServer.Utils.ThreadPoolManager.GetInstance().Schedule(ct =>
@@ -96,7 +97,7 @@ public class TamperingAction : AbstractItemAction
                 }
             }
             return ValueTask.CompletedTask;
-        }, TimeSpan.FromMilliseconds(5000)));
+        }, TimeSpan.FromMilliseconds(useDelay)));
     }
 
     public static void SetTemperingLevel(Item item, Aion.GameServer.Model.GameObjects.Players.Player player, int temperingLevel)

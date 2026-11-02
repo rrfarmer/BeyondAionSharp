@@ -416,7 +416,7 @@ public class Skill
     private int CalculateCastDuration()
     {
         if (itemTemplate != null)
-            return itemTemplate.IsCombatActivated() ? baseCastDuration : itemTemplate.GetCastingDelay();
+            return itemTemplate.IsCombatActivated() ? baseCastDuration : ((Player)effector).GetItemUseDelay(itemTemplate.GetCastingDelay());
         // 2nd+ time of multicast-skill activation
         if (GetMultiCastCount() > 0)
             return 0;

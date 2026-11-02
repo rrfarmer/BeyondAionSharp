@@ -31,8 +31,9 @@ public class PolishAction : AbstractItemAction
 
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
+        int useDelay = player.GetItemUseDelay(5000);
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
-            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 5000, ItemUseAnimation.USE_START), true);
+            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), useDelay, ItemUseAnimation.USE_START), true);
         ItemUseObserver observer = new PolishUseObserver(player, parentItem, targetItem);
         player.GetObserveController().AddObserver(observer);
         player.GetController().AddTask(Aion.GameServer.Model.TaskId.ITEM_USE, Aion.GameServer.Utils.ThreadPoolManager.GetInstance().Schedule(ct =>
@@ -77,7 +78,7 @@ public class PolishAction : AbstractItemAction
             }
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_INVENTORY_UPDATE_ITEM(player, targetItem));
             return ValueTask.CompletedTask;
-        }, TimeSpan.FromMilliseconds(5000)));
+        }, TimeSpan.FromMilliseconds(useDelay)));
     }
 
     // Java parity: anonymous ItemUseObserver in act().

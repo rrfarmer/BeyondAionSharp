@@ -59,7 +59,7 @@ public sealed class BotServerPacketDecoderTests
 		Assert.Contains(typeof(SM_SKILL_ACTIVATION), decoder.PacketTypes);
 		Assert.Contains(typeof(SM_RIDE_ROBOT), decoder.PacketTypes);
 		Assert.Contains(typeof(SM_SUMMON_PANEL), decoder.PacketTypes);
-		Assert.Contains(typeof(SM_SUMMON_PANEL_REMOVE), decoder.PacketTypes);
+		Assert.Contains(typeof(SM_RESET_SKILL_COOLDOWN), decoder.PacketTypes);
 		Assert.Contains(typeof(SM_SUMMON_OWNER_REMOVE), decoder.PacketTypes);
 		Assert.Contains(typeof(SM_SUMMON_USESKILL), decoder.PacketTypes);
 		Assert.Contains(typeof(SmAttackStatus), decoder.PacketTypes);

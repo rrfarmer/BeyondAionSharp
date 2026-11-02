@@ -130,7 +130,7 @@ public sealed class GoldenPacketFixtureTests
 	[InlineData("SM_RECIPE_DELETE.json")]
 	[InlineData("SM_LEARN_RECIPE.json")]
 	[InlineData("SM_SUMMON_OWNER_REMOVE.json")]
-	[InlineData("SM_SUMMON_PANEL_REMOVE.json")]
+	[InlineData("SM_RESET_SKILL_COOLDOWN.json")]
 	[InlineData("SM_DP_INFO.json")]
 	// ----- Batch 10: pure scalar / simple-DTO con-null-safe SM_* packets -----
 	[InlineData("SM_CHARACTER_SELECT.json")]
@@ -287,7 +287,7 @@ public sealed class GoldenPacketFixtureTests
 		"SM_RECIPE_DELETE" => new SM_RECIPE_DELETE(inputs.GetProperty("recipeId").GetInt32()),
 		"SM_LEARN_RECIPE" => new SM_LEARN_RECIPE(inputs.GetProperty("recipeId").GetInt32(), 0),
 		"SM_SUMMON_OWNER_REMOVE" => new SM_SUMMON_OWNER_REMOVE(inputs.GetProperty("summonObjId").GetInt32()),
-		"SM_SUMMON_PANEL_REMOVE" => new SM_SUMMON_PANEL_REMOVE(inputs.GetProperty("skillId").GetInt32()),
+		"SM_RESET_SKILL_COOLDOWN" => new SM_RESET_SKILL_COOLDOWN(inputs.GetProperty("skillId").GetInt32()),
 		"SM_DP_INFO" => new SM_DP_INFO(inputs.GetProperty("playerObjectId").GetInt32(), inputs.GetProperty("currentDp").GetInt32()),
 		"SM_STATUPDATE_EXP" => new SM_STATUPDATE_EXP(inputs.GetProperty("currentExp").GetInt64(), inputs.GetProperty("recoverableExp").GetInt64(), inputs.GetProperty("maxExp").GetInt64(), inputs.GetProperty("rep1").GetInt64(), inputs.GetProperty("rep2").GetInt64()),
 		// ----- Batch 10 -----

@@ -18,6 +18,8 @@ public enum CustomPlayerState
     ENEMY_OF_ALL_PLAYERS,
     NEUTRAL_TO_ALL_NPCS,
     NEUTRAL_TO_ALL_PLAYERS,
+    NO_ITEM_COOLDOWN_MODE,
+    NO_ITEM_USE_GAUGE_MODE,
     ENEMY_OF_EVERYONE,
     NEUTRAL_TO_EVERYONE
 }
@@ -36,6 +38,8 @@ public static class CustomPlayerStateExtensions
         CustomPlayerState.ENEMY_OF_ALL_PLAYERS => 1 << 7,
         CustomPlayerState.NEUTRAL_TO_ALL_NPCS => 1 << 8,
         CustomPlayerState.NEUTRAL_TO_ALL_PLAYERS => 1 << 9,
+        CustomPlayerState.NO_ITEM_COOLDOWN_MODE => 1 << 10,
+        CustomPlayerState.NO_ITEM_USE_GAUGE_MODE => 1 << 11,
         CustomPlayerState.ENEMY_OF_EVERYONE => (1 << 6) | (1 << 7),
         CustomPlayerState.NEUTRAL_TO_EVERYONE => (1 << 8) | (1 << 9),
         _ => throw new ArgumentOutOfRangeException(),

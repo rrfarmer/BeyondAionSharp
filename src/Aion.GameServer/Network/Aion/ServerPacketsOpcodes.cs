@@ -82,7 +82,7 @@ public class ServerPacketsOpcodes
         AddPacketOpcode(70, typeof(SM_ACTION_ANIMATION));
         AddPacketOpcode(71, typeof(SM_QUEST_LIST));
         AddPacketOpcode(72, typeof(SM_KEY));
-        AddPacketOpcode(73, typeof(SM_SUMMON_PANEL_REMOVE));
+        AddPacketOpcode(73, typeof(SM_RESET_SKILL_COOLDOWN));
         AddPacketOpcode(74, typeof(SM_EXCHANGE_REQUEST));
         AddPacketOpcode(75, typeof(SM_EXCHANGE_ADD_ITEM));
         AddPacketOpcode(77, typeof(SM_EXCHANGE_ADD_KINAH));

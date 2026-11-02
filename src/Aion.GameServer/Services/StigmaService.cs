@@ -421,8 +421,9 @@ public class StigmaService
 
         int parentItemId = stigma.GetItemId();
         int parentObjectId = stigma.GetObjectId();
+        int useDelay = player.GetItemUseDelay(5000);
         PacketSendUtility.BroadcastPacket(player,
-            new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentObjectId, chargeStone.GetObjectId(), parentItemId, 5000, ItemUseAnimation.USE_START), true);
+            new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentObjectId, chargeStone.GetObjectId(), parentItemId, useDelay, ItemUseAnimation.USE_START), true);
         ItemUseObserver observer = new ChargeStigmaObserver(player, stigma, chargeStone, parentObjectId, parentItemId);
         player.GetObserveController().AddObserver(observer);
         player.GetController().AddTask(TaskId.ITEM_USE, ThreadPoolManager.GetInstance().Schedule(ct =>
@@ -459,7 +460,7 @@ public class StigmaService
                 }
             }
             return ValueTask.CompletedTask;
-        }, TimeSpan.FromMilliseconds(5000)));
+        }, TimeSpan.FromMilliseconds(useDelay)));
     }
 
     // Java parity: anonymous ItemUseObserver in chargeStigma().

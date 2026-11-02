@@ -198,9 +198,16 @@ public partial class Player
         return itemCoolDowns;
     }
 
+    /// <summary>The use time an item's animation and task should take: zero while the no-gauge GM mode is on.</summary>
+    public int GetItemUseDelay(int useDelayMillis)
+    {
+        return IsInCustomState(Aion.GameServer.Model.GameObjects.Players.CustomPlayerState.NO_ITEM_USE_GAUGE_MODE) ? 0 : useDelayMillis;
+    }
+
     public void AddItemCoolDown(int delayId, long time, int useDelay)
     {
-        itemCoolDowns[delayId] = new Aion.GameServer.Model.Items.ItemCooldown(time, useDelay);
+        if (!IsInCustomState(Aion.GameServer.Model.GameObjects.Players.CustomPlayerState.NO_ITEM_COOLDOWN_MODE))
+            itemCoolDowns[delayId] = new Aion.GameServer.Model.Items.ItemCooldown(time, useDelay);
     }
 
     public void RemoveItemCoolDown(int delayId)

@@ -45,7 +45,7 @@ public class InstanceTimeClear : AbstractItemAction
 
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
-        int castingDelay = parentItem.GetItemTemplate().GetCastingDelay();
+        int castingDelay = player.GetItemUseDelay(parentItem.GetItemTemplate().GetCastingDelay());
         int syncId = (int)@params[0];
         if (castingDelay <= 0)
         {

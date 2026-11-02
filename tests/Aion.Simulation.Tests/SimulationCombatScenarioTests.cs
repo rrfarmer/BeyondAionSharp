@@ -666,7 +666,7 @@ public sealed partial class SimulationFastScenarioTests
 		await session.SendPacketAsync(
 			session.Api.SummonCommand((byte)SummonMode.RELEASE, targetObjectId: 0), token);
 		await session.AdvanceAsync(TimeSpan.FromMilliseconds(3_001), token);
-		await session.WaitForPacketAsync(typeof(SM_SUMMON_PANEL_REMOVE), token);
+		await session.WaitForPacketAsync(typeof(SM_RESET_SKILL_COOLDOWN), token);
 		Assert.Null(player.GetSummon());
 		Assert.Null(fixture.World.FindVisibleObject(firstSummonId));
 
@@ -683,7 +683,7 @@ public sealed partial class SimulationFastScenarioTests
 			await session.AdvanceAsync(TimeSpan.FromMilliseconds(2_500), token);
 		}
 		Assert.True(doomedSummon.IsDead());
-		await session.WaitForPacketAsync(typeof(SM_SUMMON_PANEL_REMOVE), token);
+		await session.WaitForPacketAsync(typeof(SM_RESET_SKILL_COOLDOWN), token);
 		Assert.Null(player.GetSummon());
 		Assert.Null(fixture.World.FindVisibleObject(doomedSummonId));
 		policy.AssertClean();

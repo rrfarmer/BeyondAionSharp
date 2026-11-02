@@ -199,8 +199,9 @@ public class ItemSocketService
 
         player.GetObserveController().AddObserver(observer);
 
+        int useDelay = player.GetItemUseDelay(2000);
         PacketSendUtility.BroadcastPacketAndReceive(player,
-            new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), stoneId, itemTemplate.GetTemplateId(), 2000, ItemUseAnimation.USE_START));
+            new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), stoneId, itemTemplate.GetTemplateId(), useDelay, ItemUseAnimation.USE_START));
 
         player.GetController().AddTask(TaskId.ITEM_USE, ThreadPoolManager.GetInstance().Schedule(ct =>
         {
@@ -217,7 +218,7 @@ public class ItemSocketService
 
             ItemPacketService.UpdateItemAfterInfoChange(player, weapon);
             return ValueTask.CompletedTask;
-        }, TimeSpan.FromMilliseconds(2000)));
+        }, TimeSpan.FromMilliseconds(useDelay)));
     }
 
     private sealed class GodstoneUseObserver : ItemUseObserver

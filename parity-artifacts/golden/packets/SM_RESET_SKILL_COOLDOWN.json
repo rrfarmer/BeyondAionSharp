@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "packet": "SM_SUMMON_PANEL_REMOVE",
+  "packet": "SM_RESET_SKILL_COOLDOWN",
   "opcode": null,
   "source": "Java",
   "cases": [
