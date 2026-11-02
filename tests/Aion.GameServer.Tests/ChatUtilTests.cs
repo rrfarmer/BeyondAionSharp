@@ -67,7 +67,8 @@ public sealed class ChatUtilTests
 
 		Assert.Equal(2, parts.Count);
 		Assert.Equal(message[..1019], parts[0]);
-		Assert.Equal(message[1020..], parts[1]);
+		// upstream 92da2dd62 prefixes every part after the first with the zero-width continuation mark
+		Assert.Equal("\u200B" + message[1020..], parts[1]);
 	}
 
 	[Fact]
@@ -81,7 +82,7 @@ public sealed class ChatUtilTests
 
 		Assert.Equal(2, parts.Count);
 		Assert.Equal(message[..526], parts[0]);
-		Assert.Equal(message[527..], parts[1]);
+		Assert.Equal("\u200B" + message[527..], parts[1]);
 	}
 
 	// --- Genderize ---

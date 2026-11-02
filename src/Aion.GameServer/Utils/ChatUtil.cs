@@ -250,6 +250,7 @@ public static class ChatUtil
 
 	private const char AsmoNamePrefix = '';
 	private const char ElyosNamePrefix = '';
+	private const char ContinuationMark = '\u200B'; // zero-width space, which our client mod detects to skip the chat time prefix
 
 	/// <summary>Java parity: utils/ChatUtil.getRealCharName(String) — character name without custom tags.</summary>
 	public static string GetRealCharName(string name)
@@ -319,7 +320,10 @@ public static class ChatUtil
 		for (int start = 0, length = chatMessage.Length; start < length;)
 		{
 			int splitIndex = FindSplitIndex(chatMessage, start, length);
-			parts.Add(chatMessage.Substring(start, splitIndex - start));
+			string messagePart = chatMessage.Substring(start, splitIndex - start);
+			if (start > 0)
+				messagePart = ContinuationMark + messagePart;
+			parts.Add(messagePart);
 			start = splitIndex;
 			if (start < length)
 			{
@@ -333,7 +337,8 @@ public static class ChatUtil
 
 	private static int FindSplitIndex(string chatMessage, int startIndex, int endIndex)
 	{
-		int estimatedDisplayLength = 0;
+		// account for the length of the ContinuationMark if this is a subsequent part (startIndex > 0)
+		int estimatedDisplayLength = startIndex > 0 ? 1 : 0;
 		int lastNewLineIndex = -1;
 		int lastSpaceIndex = -1;
 		for (int i = startIndex; i < endIndex; i++)
