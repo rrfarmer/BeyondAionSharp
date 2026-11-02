@@ -20,14 +20,29 @@ public class PlayerTeamCommandService
         switch (command)
         {
             case TeamCommand.GROUP_BAN_MEMBER:
+            {
+                if (!team.IsLeader(player))
+                    return;
                 PlayerGroupService.BanPlayer(FindMember(team, player, memberObjId), player);
                 break;
+            }
             case TeamCommand.GROUP_SET_LEADER:
-                PlayerGroupService.ChangeLeader(FindMember(team, player, memberObjId));
+            {
+                if (!team.IsLeader(player))
+                    return;
+                Player newLeader = FindMember(team, player, memberObjId);
+                if (!team.IsLeader(newLeader))
+                    PlayerGroupService.ChangeLeader(newLeader);
                 break;
+            }
             case TeamCommand.GROUP_REMOVE_MEMBER:
+            {
+                // This is the client's "leave group"; kicking another member is GROUP_BAN_MEMBER.
+                if (memberObjId != 0 && memberObjId != player.GetObjectId())
+                    return;
                 PlayerGroupService.RemovePlayer(FindMember(team, player, memberObjId));
                 break;
+            }
             case TeamCommand.GROUP_START_MENTORING:
                 PlayerGroupService.StartMentoring(player);
                 break;
@@ -38,11 +53,19 @@ public class PlayerTeamCommandService
                 PlayerAllianceService.RemovePlayer(player);
                 break;
             case TeamCommand.ALLIANCE_BAN_MEMBER:
+            {
                 PlayerAllianceService.BanPlayer(FindMember(team, player, memberObjId), player);
                 break;
+            }
             case TeamCommand.ALLIANCE_SET_CAPTAIN:
-                PlayerAllianceService.ChangeLeader(FindMember(team, player, memberObjId));
+            {
+                if (!team.IsLeader(player))
+                    return;
+                Player newCaptain = FindMember(team, player, memberObjId);
+                if (!team.IsLeader(newCaptain))
+                    PlayerAllianceService.ChangeLeader(newCaptain);
                 break;
+            }
             case TeamCommand.ALLIANCE_CHECKREADY_CANCEL:
             case TeamCommand.ALLIANCE_CHECKREADY_START:
             case TeamCommand.ALLIANCE_CHECKREADY_AUTOCANCEL:
@@ -51,21 +74,35 @@ public class PlayerTeamCommandService
                 PlayerAllianceService.CheckReady(player, command);
                 break;
             case TeamCommand.ALLIANCE_SET_VICECAPTAIN:
-                PlayerAllianceService.ChangeViceCaptain(FindMember(team, player, memberObjId), AssignViceCaptainEvent.AssignType.PROMOTE);
-                break;
             case TeamCommand.ALLIANCE_UNSET_VICECAPTAIN:
-                PlayerAllianceService.ChangeViceCaptain(FindMember(team, player, memberObjId), AssignViceCaptainEvent.AssignType.DEMOTE);
+            {
+                if (!team.IsLeader(player))
+                    return;
+                PlayerAllianceService.ChangeViceCaptain(FindMember(team, player, memberObjId),
+                    command == TeamCommand.ALLIANCE_SET_VICECAPTAIN ? AssignViceCaptainEvent.AssignType.PROMOTE : AssignViceCaptainEvent.AssignType.DEMOTE);
                 break;
+            }
             case TeamCommand.LEAGUE_LEAVE:
-                LeagueService.RemoveAlliance(player.GetPlayerAlliance());
+            {
+                // Only the leader of the alliance may take it out of the league.
+                PlayerAlliance alliance = player.GetPlayerAlliance();
+                if (!team.IsLeader(player) || alliance == null || alliance.GetLeague() == null)
+                    return;
+                LeagueService.RemoveAlliance(alliance);
                 break;
+            }
             case TeamCommand.LEAGUE_EXPEL:
                 LeagueService.ExpelAlliance(FindLeagueAlliance(team, player, memberObjId), player);
                 break;
             case TeamCommand.LEAGUE_SET_LEADER:
+            {
+                PlayerAlliance ownAlliance = player.GetPlayerAlliance();
+                if (ownAlliance == null || ownAlliance.GetLeague() == null || !ownAlliance.GetLeague().IsLeader(ownAlliance))
+                    return;
                 PlayerAlliance leagueAlliance = FindLeagueAlliance(team, player, memberObjId).GetObject();
                 LeagueService.SetLeader(player, leagueAlliance.GetLeaderObject());
                 break;
+            }
         }
     }
 
