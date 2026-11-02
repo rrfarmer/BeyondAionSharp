@@ -251,6 +251,19 @@ public class SkillTemplate : L10n
 
     public ActivationAttribute GetActivationAttribute() => activationAttribute;
 
+    /// <summary>
+    /// True if the client may cast this skill; retail allows only the activation types 1, 2, 4 and 32 (toggle, active,
+    /// maintain, charge).
+    /// </summary>
+    public bool IsCastableByClient()
+    {
+        return activationAttribute switch
+        {
+            ActivationAttribute.TOGGLE or ActivationAttribute.ACTIVE or ActivationAttribute.MAINTAIN or ActivationAttribute.CHARGE => true,
+            _ => false,
+        };
+    }
+
     public bool IsPassive() => activationAttribute == ActivationAttribute.PASSIVE;
 
     public bool IsToggle() => activationAttribute == ActivationAttribute.TOGGLE;

@@ -91,7 +91,7 @@ public class CM_CASTSPELL : AionClientPacket
         }
 
         SkillTemplate template = DataManager.SKILL_DATA.GetSkillTemplate(spellid);
-        if (template == null || template.IsPassive())
+        if (template == null || !template.IsCastableByClient())
             return;
 
         if (player.IsProtectionActive())
