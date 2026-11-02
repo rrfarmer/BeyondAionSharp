@@ -454,6 +454,13 @@ public class TeleportService
 
     public static void ChangeChannel(Player player, int channel)
     {
+        Aion.GameServer.World.WorldMap map = player.GetWorldMapInstance().GetParent();
+        // Channels exist only in open worlds; on instance maps the number would select another group's instance.
+        if (map.IsInstanceType() || map.GetWorldMapInstance(channel + 1) == null)
+        {
+            AuditLogger.Log(player, "tried to change to invalid channel " + channel + " of map " + player.GetWorldId() + " at " + player.GetPosition());
+            return;
+        }
         World.World.GetInstance().SetPosition(player, player.GetWorldId(), channel + 1, player.GetX(), player.GetY(), player.GetZ(), player.GetHeading());
         player.GetController().StartProtectionActiveTask();
         PacketSendUtility.SendPacket(player, new SM_CHANNEL_INFO(player.GetPosition()));
