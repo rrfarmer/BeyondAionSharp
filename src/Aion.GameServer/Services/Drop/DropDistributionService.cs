@@ -28,6 +28,8 @@ public class DropDistributionService
         DropNpc dropNpc = DropRegistrationService.GetInstance().GetDropRegistrationMap().GetValueOrDefault(npcObjId);
         if (dropNpc == null)
             return;
+        if (!dropNpc.ContainsPlayerStatus(player)) // only players the item was offered to may roll or bid (also covers a repeated roll)
+            return;
         HashSet<DropItem> dropItems = DropRegistrationService.GetInstance().GetCurrentDropMap().GetValueOrDefault(npcObjId);
         if (dropItems == null)
             return;
