@@ -200,6 +200,7 @@ public class CustomInstanceBossAI : GeneralNpcAI
                     || (skillI.GetSkillTemplate().GetType_() == SkillType.MAGICAL && GetEffectController().IsAbnormalSet(AbnormalState.SILENCE))
                     || (skillI.GetSkillTemplate().GetType_() == SkillType.PHYSICAL && GetEffectController().IsAbnormalSet(AbnormalState.BIND))
                     || skillI.GetSkillTemplate().IsCharge() || skillI.IsPointSkill()
+                    || skillI.GetSkillTemplate().HasAnyEffect(EffectType.SUMMON)
                     || (cdID != -1 && GetOwner().GetSkillCoolDown(cdID) > SystemClock.CurrentMillis()))
                     output[i] = -1d; // -1 = minimum probability
             }
