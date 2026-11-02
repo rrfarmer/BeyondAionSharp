@@ -17,10 +17,6 @@ public abstract class FeedItemGroup
 
     public List<ItemRaceEntry> GetItems()
     {
-        if (items == null)
-        {
-            items = new List<ItemRaceEntry>();
-        }
-        return this.items;
+        return items == null ? new List<ItemRaceEntry>() : items;
     }
 }

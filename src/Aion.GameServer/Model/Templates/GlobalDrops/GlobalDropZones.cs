@@ -7,5 +7,5 @@ namespace Aion.GameServer.Model.Templates.GlobalDrops;
 public class GlobalDropZones
 {
     [XmlElement("gd_zone")] public List<GlobalDropZone>? GdZones { get; set; }
-    public List<GlobalDropZone> GetGlobalDropZones() => GdZones ??= [];
+    public List<GlobalDropZone> GetGlobalDropZones() => GdZones ?? [];
 }

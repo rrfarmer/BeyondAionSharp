@@ -144,12 +144,6 @@ public class PanesterraTeam
         return teamMembers.Contains(playerId);
     }
 
-    public void RemoveTeamMember(int playerId)
-    {
-        if (teamMembers.Contains(playerId))
-            teamMembers.RemoveAt(playerId); // Java List<Integer>.remove(int) resolves to remove-by-index (int-overload pitfall) - preserved literally
-    }
-
     public bool IsEliminated()
     {
         return isEliminated;

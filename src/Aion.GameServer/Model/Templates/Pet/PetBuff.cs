@@ -24,8 +24,6 @@ public class PetBuff
 
     public List<ModifiersTemplate> GetModifiers()
     {
-        if (modifiers == null)
-            modifiers = new List<ModifiersTemplate>();
         return modifiers;
     }
 }

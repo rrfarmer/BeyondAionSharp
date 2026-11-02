@@ -13,21 +13,11 @@ public class ShoutGroup
 
     public List<ShoutList> GetShoutNpcs()
     {
-        if (shoutNpcs == null)
-        {
-            shoutNpcs = new List<ShoutList>();
-        }
-        return this.shoutNpcs;
+        return shoutNpcs == null ? new List<ShoutList>() : shoutNpcs;
     }
 
     public string GetClientAi()
     {
         return clientAi;
-    }
-
-    public void MakeNull()
-    {
-        this.shoutNpcs = null;
-        this.clientAi = null;
     }
 }

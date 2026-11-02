@@ -13,9 +13,7 @@ public class RouteParent
 
     public List<RouteVersion> GetRouteVersion()
     {
-        if (versions == null)
-            versions = new List<RouteVersion>();
-        return this.versions;
+        return versions == null ? new List<RouteVersion>() : versions;
     }
 
     public string GetId()

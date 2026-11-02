@@ -24,36 +24,25 @@ public class NpcShoutData
                 ShoutList shoutList = group.GetShoutNpcs()[i];
                 int worldId = shoutList.GetRestrictWorld();
 
-                Dictionary<int, List<NpcShout>> worldShouts = shoutsByWorldNpcs.TryGetValue(worldId, out var ws) ? ws : null;
-                if (worldShouts == null)
+                // Java parity: computeIfAbsent for the world and the npc, and the parsed lists are left untouched.
+                if (!shoutsByWorldNpcs.TryGetValue(worldId, out Dictionary<int, List<NpcShout>>? worldShouts) || worldShouts == null)
                 {
                     worldShouts = new Dictionary<int, List<NpcShout>>();
                     this.shoutsByWorldNpcs[worldId] = worldShouts;
                 }
-
                 this.count += shoutList.GetNpcShouts().Count;
                 for (int j = shoutList.GetNpcIds().Count - 1; j >= 0; j--)
                 {
                     int npcId = shoutList.GetNpcIds()[j];
-                    List<NpcShout> shouts = new List<NpcShout>();
-                    shouts.AddRange(shoutList.GetNpcShouts());
-                    if (!worldShouts.TryGetValue(npcId, out var existing))
+                    if (!worldShouts.TryGetValue(npcId, out List<NpcShout>? shouts) || shouts == null)
                     {
+                        shouts = new List<NpcShout>();
                         worldShouts[npcId] = shouts;
                     }
-                    else
-                    {
-                        existing.AddRange(shouts);
-                    }
-                    shoutList.GetNpcIds().RemoveAt(j);
+                    shouts.AddRange(shoutList.GetNpcShouts());
                 }
-                shoutList.GetNpcShouts().Clear();
-                shoutList.MakeNull();
-                group.GetShoutNpcs().RemoveAt(i);
             }
-            group.MakeNull();
         }
-        this.shoutGroups.Clear();
         this.shoutGroups = null;
     }
 

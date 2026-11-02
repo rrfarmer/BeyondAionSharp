@@ -7,5 +7,5 @@ namespace Aion.GameServer.Model.Templates.GlobalDrops;
 public class GlobalDropTribes
 {
     [XmlElement("gd_tribe")] public List<GlobalDropTribe>? GdTribes { get; set; }
-    public List<GlobalDropTribe> GetGlobalDropTribes() => GdTribes ??= [];
+    public List<GlobalDropTribe> GetGlobalDropTribes() => GdTribes ?? [];
 }

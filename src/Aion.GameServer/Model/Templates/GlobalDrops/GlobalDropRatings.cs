@@ -7,5 +7,5 @@ namespace Aion.GameServer.Model.Templates.GlobalDrops;
 public class GlobalDropRatings
 {
     [XmlElement("gd_rating")] public List<GlobalDropRating>? GdRatings { get; set; }
-    public List<GlobalDropRating> GetGlobalDropRatings() => GdRatings ??= [];
+    public List<GlobalDropRating> GetGlobalDropRatings() => GdRatings ?? [];
 }

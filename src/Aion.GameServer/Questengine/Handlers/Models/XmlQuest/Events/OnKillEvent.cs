@@ -18,11 +18,7 @@ public class OnKillEvent : QuestEvent
 
     public List<Monster> GetMonsters()
     {
-        if (monster == null)
-        {
-            monster = new List<Monster>();
-        }
-        return this.monster;
+        return monster == null ? new List<Monster>() : monster;
     }
 
     public override bool Operate(QuestEnv env)

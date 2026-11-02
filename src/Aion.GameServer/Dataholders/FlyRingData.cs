@@ -12,29 +12,11 @@ public class FlyRingData
 
     public int Size()
     {
-        if (flyRingTemplates == null)
-        {
-            flyRingTemplates = new List<FlyRingTemplate>();
-            return 0;
-        }
-        return flyRingTemplates.Count;
+        return GetFlyRingTemplates().Count;
     }
 
     public List<FlyRingTemplate> GetFlyRingTemplates()
     {
-        if (flyRingTemplates == null)
-        {
-            return new List<FlyRingTemplate>();
-        }
-        return flyRingTemplates;
-    }
-
-    public void AddAll(ICollection<FlyRingTemplate> templates)
-    {
-        if (flyRingTemplates == null)
-        {
-            flyRingTemplates = new List<FlyRingTemplate>();
-        }
-        flyRingTemplates.AddRange(templates);
+        return flyRingTemplates == null ? new List<FlyRingTemplate>() : flyRingTemplates;
     }
 }

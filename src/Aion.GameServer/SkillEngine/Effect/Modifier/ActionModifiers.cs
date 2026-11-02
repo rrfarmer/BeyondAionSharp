@@ -17,13 +17,8 @@ public class ActionModifiers
     [XmlElement("targetclass", typeof(TargetClassDamageModifier))]
     public List<ActionModifier>? actionModifiers;
 
-    /// <summary>Gets the action modifiers (live list; lazily created). Java parity: getActionModifiers().</summary>
     public List<ActionModifier> GetActionModifiers()
     {
-        if (actionModifiers == null)
-        {
-            actionModifiers = new List<ActionModifier>();
-        }
-        return actionModifiers;
+        return actionModifiers == null ? new List<ActionModifier>() : actionModifiers;
     }
 }

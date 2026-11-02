@@ -20,7 +20,6 @@ public class PetBuffsData
         foreach (PetBuff buff in buffs)
             petBuffsById[buff.GetId()] = buff;
 
-        buffs.Clear();
         buffs = null;
     }
 

@@ -19,11 +19,7 @@ public class PetFlavour
 
     public List<PetRewards> GetFood()
     {
-        if (food == null)
-        {
-            food = new List<PetRewards>();
-        }
-        return this.food;
+        return food == null ? new List<PetRewards>() : food;
     }
 
     /// <summary>Returns a food group for the itemId. Null if doesn't match.</summary>

@@ -13,11 +13,7 @@ public class InstanceBonusAttr
     /// <summary>Gets the value of the penaltyAttr property.</summary>
     public List<InstancePenaltyAttr> GetPenaltyAttr()
     {
-        if (penaltyAttr == null)
-        {
-            penaltyAttr = new List<InstancePenaltyAttr>();
-        }
-        return this.penaltyAttr;
+        return penaltyAttr == null ? new List<InstancePenaltyAttr>() : penaltyAttr;
     }
 
     /// <summary>Gets the value of the buffId property.</summary>
@@ -26,9 +22,4 @@ public class InstanceBonusAttr
         return buffId;
     }
 
-    /// <summary>Sets the value of the buffId property.</summary>
-    public void SetBuffId(int value)
-    {
-        this.buffId = value;
-    }
 }

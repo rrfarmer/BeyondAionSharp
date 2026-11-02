@@ -13,7 +13,6 @@ public class ShoutList
     // Java parity: @XmlAttribute List<Integer> npc_ids — space-separated.
     [XmlIgnore] protected List<int> npcIds;
 
-    // Java parity: nullable Integer; getter collapses null→0, so plain int (attribute absent→0) is behaviorally faithful.
     [XmlAttribute("restrict_world")] public int restrictWorld;
 
     [XmlAttribute("npc_ids")]
@@ -32,31 +31,16 @@ public class ShoutList
 
     public List<NpcShout> GetNpcShouts()
     {
-        if (npcShouts == null)
-        {
-            npcShouts = new List<NpcShout>();
-        }
-        return this.npcShouts;
+        return npcShouts == null ? new List<NpcShout>() : npcShouts;
     }
 
     public List<int> GetNpcIds()
     {
-        if (npcIds == null)
-        {
-            npcIds = new List<int>();
-        }
-        return this.npcIds;
+        return npcIds == null ? new List<int>() : npcIds;
     }
 
     public int GetRestrictWorld()
     {
         return restrictWorld;
-    }
-
-    public void MakeNull()
-    {
-        this.npcIds = null;
-        this.npcShouts = null;
-        this.restrictWorld = 0;
     }
 }

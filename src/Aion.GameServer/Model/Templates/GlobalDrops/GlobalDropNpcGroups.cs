@@ -7,5 +7,5 @@ namespace Aion.GameServer.Model.Templates.GlobalDrops;
 public class GlobalDropNpcGroups
 {
     [XmlElement("gd_npc_group")] public List<GlobalDropNpcGroup>? GdNpcGroups { get; set; }
-    public List<GlobalDropNpcGroup> GetGlobalDropNpcGroups() => GdNpcGroups ??= [];
+    public List<GlobalDropNpcGroup> GetGlobalDropNpcGroups() => GdNpcGroups ?? [];
 }

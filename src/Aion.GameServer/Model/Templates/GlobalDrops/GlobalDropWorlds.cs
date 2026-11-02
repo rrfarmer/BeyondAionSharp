@@ -7,5 +7,5 @@ namespace Aion.GameServer.Model.Templates.GlobalDrops;
 public class GlobalDropWorlds
 {
     [XmlElement("gd_world")] public List<GlobalDropWorld>? GdWorlds { get; set; }
-    public List<GlobalDropWorld> GetGlobalDropWorlds() => GdWorlds ??= [];
+    public List<GlobalDropWorld> GetGlobalDropWorlds() => GdWorlds ?? [];
 }

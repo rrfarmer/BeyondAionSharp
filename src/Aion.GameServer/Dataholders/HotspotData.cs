@@ -13,21 +13,7 @@ public class HotspotData
 
     public int Size()
     {
-        if (hotspotTemplates == null)
-        {
-            hotspotTemplates = new List<HotspotTemplate>();
-            return 0;
-        }
         return hotspotTemplates.Count;
-    }
-
-    public List<HotspotTemplate> GetHotspotTemplates()
-    {
-        if (hotspotTemplates == null)
-        {
-            return new List<HotspotTemplate>();
-        }
-        return hotspotTemplates;
     }
 
     public HotspotTemplate GetHotspotTemplateById(int id)

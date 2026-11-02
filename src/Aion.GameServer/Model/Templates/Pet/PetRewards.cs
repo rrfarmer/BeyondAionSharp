@@ -14,11 +14,7 @@ public class PetRewards
 
     public List<PetFeedResult> GetResults()
     {
-        if (results == null)
-        {
-            results = new List<PetFeedResult>();
-        }
-        return this.results;
+        return results == null ? new List<PetFeedResult>() : results;
     }
 
     public FoodType GetType_()

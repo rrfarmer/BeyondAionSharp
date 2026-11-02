@@ -27,8 +27,6 @@ public class QuestKill
     [XmlAttribute("var")] public int var;
     [XmlAttribute("step")] public int step;
 
-    [XmlIgnore] private List<int> npcIdSet;
-
     public int GetSequenceNumber()
     {
         return seq;
@@ -51,14 +49,6 @@ public class QuestKill
 
     public List<int> GetNpcIds()
     {
-        if (npcIdSet == null)
-            npcIdSet = new List<int>();
-        if (npcIds != null)
-        {
-            npcIdSet.AddRange(npcIds);
-            npcIds.Clear();
-            npcIds = null;
-        }
-        return npcIdSet;
+        return npcIds;
     }
 }

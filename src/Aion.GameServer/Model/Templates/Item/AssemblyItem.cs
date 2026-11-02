@@ -24,5 +24,4 @@ public class AssemblyItem
     }
 
     public int GetId() => Id;
-    public void SetId(int value) => Id = value;
 }

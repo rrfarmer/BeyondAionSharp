@@ -15,10 +15,6 @@ public class Actions
 
     public List<Action> GetActions()
     {
-        if (actions == null)
-        {
-            actions = new List<Action>();
-        }
-        return this.actions;
+        return actions == null ? new List<Action>() : actions;
     }
 }

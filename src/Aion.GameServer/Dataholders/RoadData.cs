@@ -13,29 +13,11 @@ public class RoadData
 
     public int Size()
     {
-        if (roadTemplates == null)
-        {
-            roadTemplates = new List<RoadTemplate>();
-            return 0;
-        }
-        return roadTemplates.Count;
+        return GetRoadTemplates().Count;
     }
 
     public List<RoadTemplate> GetRoadTemplates()
     {
-        if (roadTemplates == null)
-        {
-            return new List<RoadTemplate>();
-        }
-        return roadTemplates;
-    }
-
-    public void AddAll(ICollection<RoadTemplate> templates)
-    {
-        if (roadTemplates == null)
-        {
-            roadTemplates = new List<RoadTemplate>();
-        }
-        roadTemplates.AddRange(templates);
+        return roadTemplates == null ? new List<RoadTemplate>() : roadTemplates;
     }
 }

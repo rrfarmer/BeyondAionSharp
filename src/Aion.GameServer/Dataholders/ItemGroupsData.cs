@@ -87,7 +87,8 @@ public class ItemGroupsData
             petFood[foodType] = itemIds;
             if (foodType != FoodType.EXCLUDES && foodType != FoodType.STINKY)
                 petFoodCount += itemIds.Count;
-            food.Clear();
+            if (food.Count > 0)
+                food.Clear();
         }
     }
 

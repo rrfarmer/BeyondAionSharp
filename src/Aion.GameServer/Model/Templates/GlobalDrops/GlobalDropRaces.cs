@@ -7,5 +7,5 @@ namespace Aion.GameServer.Model.Templates.GlobalDrops;
 public class GlobalDropRaces
 {
     [XmlElement("gd_race")] public List<GlobalDropRace>? GdRaces { get; set; }
-    public List<GlobalDropRace> GetGlobalDropRaces() => GdRaces ??= [];
+    public List<GlobalDropRace> GetGlobalDropRaces() => GdRaces ?? [];
 }

@@ -11,9 +11,6 @@ public class StreamLocations
 
     public List<Location2D> GetLocation()
     {
-        if (location == null)
-            location = new List<Location2D>();
-
-        return this.location;
+        return location == null ? new List<Location2D>() : location;
     }
 }

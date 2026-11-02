@@ -33,10 +33,6 @@ public abstract class QuestEvent
 
     public List<int> GetIds()
     {
-        if (ids == null)
-        {
-            ids = new List<int>();
-        }
-        return this.ids;
+        return ids == null ? new List<int>() : ids;
     }
 }
