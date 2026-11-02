@@ -1,90 +1,102 @@
+﻿using System;
 using System.Threading.Tasks;
 using Aion.GameServer.Ai;
-using Aion.GameServer.Controllers.Attack;
+using Aion.GameServer.Ai.Poll;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.Templates.Npcskill;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// @author Luzien
+/// Java parity: ai/instance/empyreanCrucible/PriestPreceptorAI (@author Luzien, w4terbomb).
+/// The 80 and 30 thresholds are retail's, from pattern IDArena_S7_Named_4; upstream 1af948baf adopted them in place of its own 75/25.
+/// See docs/retail-ai-fidelity.md.
 /// </summary>
 [AIName("priest_preceptor")]
-public class PriestPreceptorAI : AggressiveNpcAI, HpPhases.PhaseHandler
+public class PriestPreceptorAI : CrucibleBossAI
 {
-    /// <summary>
-    /// Retail thresholds, from pattern IDArena_S7_Named_4: a skill at 80% and the add wave at
-    /// 30%, where we had an invented 75/25. See docs/retail-ai-fidelity.md.
-    /// </summary>
-    private readonly HpPhases hpPhases = new HpPhases(80, 30);
+    private readonly int[] helpers; // warrior, ranger, mage
 
     public PriestPreceptorAI(Npc owner) : base(owner)
     {
+        if (owner.GetNpcId() == 217581) // Thrasymedes
+            helpers = new int[] { 282366, 282367, 282368 }; // Boreas, Jumentis, Charna
+        else // Freyr
+            helpers = new int[] { 282369, 282370, 282371 }; // Traufnir, Sigyn, Sif
     }
 
-    protected override void HandleSpawned()
+    private bool IsLight()
     {
-        base.HandleSpawned();
-        ThreadPoolManager.GetInstance().Schedule(_ => { SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 19612, 15, GetOwner()).UseNoAnimationSkill(); return ValueTask.CompletedTask; }, 1000L);
+        return GetNpcId() == 217581;
     }
 
-    protected override void HandleBackHome()
+    protected override void OnFightStart()
     {
-        base.HandleBackHome();
-        hpPhases.Reset();
+        Say(IsLight() ? 1500219 : 1500221);
+        Cast(19612, 10, NpcSkillTargetAttribute.ME);
     }
 
-    protected override void HandleAttack(Creature creature)
+    protected override void OnFightTick(int seconds, int hp)
     {
-        base.HandleAttack(creature);
-        hpPhases.TryEnterNextPhase(this);
-    }
-
-    public void HandleHpPhase(int phaseHpPercent)
-    {
-        switch (phaseHpPercent)
+        if (Every(seconds, 10, 15))
         {
-            case 80:
-                SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 19611, 10, GetRandomTarget()).UseNoAnimationSkill();
-                break;
-            case 30:
-                StartEvent();
-                break;
+            Cast(19587, 10);
+            Cast(19588, 15);
+        }
+        if (Every(seconds, 50, 60))
+            Cast(19613, 10, NpcSkillTargetAttribute.RANDOM);
+        if (Passed(80))
+            Cast(19611, 10);
+        if (Passed(30))
+        {
+            Cast(19610, 10, NpcSkillTargetAttribute.ME);
+            Cast(19614, 10, NpcSkillTargetAttribute.ME);
+            WorldPosition p = GetPosition();
+            for (int i = 0; i < helpers.Length; i++)
+            {
+                if (Spawn(helpers[i], p.GetX(), p.GetY(), p.GetZ(), (sbyte)p.GetHeading()) is Npc helper)
+                {
+                    int sicknessLevel = i == 0 ? 1 : i == 1 ? 2 : 4;
+                    ThreadPoolManager.GetInstance().Schedule(_ =>
+                    {
+                        helper.QueueSkill(19594, sicknessLevel, -1, NpcSkillTargetAttribute.ME);
+                        return ValueTask.CompletedTask;
+                    }, TimeSpan.FromMilliseconds(1000));
+                }
+            }
         }
     }
 
-    private void StartEvent()
+    protected override void HandleDied()
     {
-        SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 19610, 10, GetOwner()).UseNoAnimationSkill();
-        ThreadPoolManager.GetInstance().Schedule(_ =>
+        Say(IsLight() ? 1500220 : 1500222);
+        // the warrior and the mage go with the priest, the ranger only runs for 10 seconds and then fights on
+        foreach (Npc npc in GetPosition().GetWorldMapInstance().GetNpcs(helpers[0], helpers[2]))
+            npc.GetController().DeleteIfAliveOrCancelRespawn();
+        Npc ranger = GetPosition().GetWorldMapInstance().GetNpc(helpers[1]);
+        if (ranger != null && !ranger.IsDead() && ranger.GetAi() is NpcAI rangerAi)
         {
-            SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 19614, 10, GetOwner()).UseNoAnimationSkill();
-
-            ThreadPoolManager.GetInstance().Schedule(_ =>
-            {
-                WorldPosition p = GetPosition();
-                ApplySoulSickness((Npc)Spawn(282366, p.GetX(), p.GetY(), p.GetZ(), (sbyte)p.GetHeading()));
-                ApplySoulSickness((Npc)Spawn(282367, p.GetX(), p.GetY(), p.GetZ(), (sbyte)p.GetHeading()));
-                ApplySoulSickness((Npc)Spawn(282368, p.GetX(), p.GetY(), p.GetZ(), (sbyte)p.GetHeading()));
-                return ValueTask.CompletedTask;
-            }, 5000L);
-            return ValueTask.CompletedTask;
-        }, 2000L);
+            Aion.GameServer.SkillEngine.SkillEngine.GetInstance().GetSkill(ranger, 19604, 1, ranger).UseNoAnimationSkill();
+            CrucibleRun.Start(rangerAi, null, 10000, null);
+        }
+        base.HandleDied();
     }
 
-    private Creature GetRandomTarget()
+    protected override void OnFightEnd()
     {
-        return GetAggroList().GetTarget(AggroTarget.RANDOM, 25);
+        if (!IsDead())
+            foreach (Npc npc in GetPosition().GetWorldMapInstance().GetNpcs(helpers))
+                npc.GetController().DeleteIfAliveOrCancelRespawn();
     }
 
-    private void ApplySoulSickness(Npc npc)
+    public override bool Ask(AIQuestion question)
     {
-        ThreadPoolManager.GetInstance().Schedule(_ =>
+        return question switch
         {
-            npc.GetLifeStats().SetCurrentHpPercent(50); // TODO: remove this, fix max hp debuffs not reducing current hp properly
-            SkillEngine.SkillEngine.GetInstance().GetSkill(npc, 19594, 4, npc).UseNoAnimationSkill();
-            return ValueTask.CompletedTask;
-        }, 1000L);
+            AIQuestion.REWARD_LOOT or AIQuestion.ALLOW_DECAY => false,
+            _ => base.Ask(question),
+        };
     }
 }

@@ -1,94 +1,49 @@
-using System;
-using System.Threading.Tasks;
-using Aion.GameServer.Ai;
-using Aion.GameServer.Controllers.Attack;
+﻿using Aion.GameServer.Ai;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Utils;
+using Aion.GameServer.Model.Templates.Npcskill;
 
 namespace Aion.GameServer.Handlers.AI;
 
-/// <summary>
-/// @author Luzien
-/// </summary>
+/// <summary>Java parity: ai/instance/empyreanCrucible/WarriorPreceptorAI (@author Luzien, w4terbomb).</summary>
 [AIName("warrior_preceptor")]
-public class WarriorPreceptorAI : AggressiveNpcAI
+public class WarriorPreceptorAI : CrucibleBossAI
 {
-    private AtomicBoolean isHome = new AtomicBoolean(true);
-    private ScheduledTask task;
-
     public WarriorPreceptorAI(Npc owner) : base(owner)
     {
     }
 
-    protected override void HandleDespawned()
+    private bool IsLight()
     {
-        CancelTask();
-        base.HandleDespawned();
+        return GetNpcId() == 217578;
+    }
+
+    protected override void OnFightStart()
+    {
+        Say(IsLight() ? 1500207 : 1500209);
+        Cast(19576, 10);
+        Cast(19577, 10);
+    }
+
+    protected override void OnFightTick(int seconds, int hp)
+    {
+        if (Every(seconds, 30, 40))
+            Cast(19595, 10, NpcSkillTargetAttribute.RANDOM);
+        if (Every(seconds, 37, 40))
+            Cast(19596, 15, NpcSkillTargetAttribute.ME);
+        if (Every(seconds, 10, 15))
+            Cast(19598, 15, NpcSkillTargetAttribute.ME);
+        if (seconds % 10 == 0)
+        {
+            if (Passed(80) || Passed(40))
+                Cast(19597, 10);
+            if (Passed(60) || Passed(20))
+                Cast(19599, 10, NpcSkillTargetAttribute.ME);
+        }
     }
 
     protected override void HandleDied()
     {
-        CancelTask();
-        PacketSendUtility.BroadcastMessage(GetOwner(), 1500208);
+        Say(IsLight() ? 1500208 : 1500210);
         base.HandleDied();
-    }
-
-    protected override void HandleBackHome()
-    {
-        CancelTask();
-        isHome.Set(true);
-        base.HandleBackHome();
-    }
-
-    protected override void HandleAttack(Creature creature)
-    {
-        base.HandleAttack(creature);
-        if (isHome.CompareAndSet(true, false))
-        {
-            StartSkillTask();
-        }
-    }
-
-    private void StartSkillTask()
-    {
-        task = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(_ =>
-        {
-            if (IsDead())
-            {
-                CancelTask();
-            }
-            else
-            {
-                StartSkillEvent();
-            }
-            return ValueTask.CompletedTask;
-        }, TimeSpan.FromMilliseconds(30000), TimeSpan.FromMilliseconds(30000));
-    }
-
-    private void CancelTask()
-    {
-        if (task != null && !task.IsCancelled)
-        {
-            task.Cancel(true);
-        }
-    }
-
-    private void StartSkillEvent()
-    {
-        PacketSendUtility.BroadcastMessage(GetOwner(), 1500207);
-        SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 19595, 10, GetRandomTarget()).UseNoAnimationSkill(); // Divine Grasp II
-        ThreadPoolManager.GetInstance().Schedule(_ =>
-        {
-            if (!IsDead())
-            {
-                SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 19596, 15, GetOwner()).UseNoAnimationSkill(); // Wrathful Wave II
-            }
-            return ValueTask.CompletedTask;
-        }, 6000L);
-    }
-
-    private Creature GetRandomTarget()
-    {
-        return GetAggroList().GetTarget(AggroTarget.RANDOM, 15);
     }
 }

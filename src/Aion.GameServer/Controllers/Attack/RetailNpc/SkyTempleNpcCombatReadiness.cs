@@ -15,7 +15,10 @@ namespace Aion.GameServer.Controllers.Attack.RetailNpc;
 /// assert that a live actor, client, effect, RNG seed or native cache was observed.</summary>
 internal static class SkyTempleNpcCombatReadiness
 {
-    private const string HostSkillsSha256="e06ee05fa4f56bc4107c1be929dc0fecb8ec8a8dfbeaf26a235446461a14ace0";
+    // Upstream 1af948baf dropped the now-unused distance attribute from eleven targetteleport effects in
+    // this file, none of them among the twenty-two records read below: each of those is byte-identical to
+    // the content this hash was reviewed against. Rehashed for the new file, profiles unreviewed.
+    private const string HostSkillsSha256="254889556686e503b791a6805201a378e83b121d600182eacbe6e50325c119fa";
     private static readonly int[] NpcIds=[212761,212762,212763,212764,212765,212766,212767,212768,212769,
         212770,212771,212772,212773,212774,212775,212776,212777,212778,212779,212780,212781,212782,212833,212835,212876];
 

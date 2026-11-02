@@ -107,6 +107,8 @@ public class PortalService
         }
         else if (player.GetWorldId() != mapId || player.GetInstanceId() != instance.GetInstanceId())
         {
+            if (!instance.GetInstanceHandler().CanEnter(player))
+                return;
             reenter = true;
         }
 

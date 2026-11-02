@@ -41801,3 +41801,32 @@ C:/Users/ryanf/Documents/Aion-NPC-Discovery/implementation/buff-closeout-2026102
 Revert this scoped local commit to roll back code; no schema migration applies.
 A runtime package rollback requires separately authorized manifest deselection
 and normal restart. No push or deployment was performed.
+
+## Upstream adopted most of the Crucible retail corrections, and one it did not
+
+Upstream Java `1af948baf` ("Fix EmpyreanCrucibleInstance (#5)") rewrote every Empyrean Crucible boss
+onto a fight clock, "matched the stage flow, the bosses and the bonus stages to the retail AI patterns
+and a live run". Porting it replaced four classes this port had corrected by hand — `KingConsierdAI`,
+`QueenAlukinaAI`, `RM1337AI` and `TakunGojiraAI` — and in almost every particular upstream had arrived
+at the same retail facts independently:
+
+- **Consierd:** the 80/55/25 bands, two condors every thirty seconds with `spawn_range=10`, nothing
+  below twenty-five per cent, and their ten-minute life.
+- **Alukina:** the same bands and the blobbles' thirty seconds on death.
+- **RM-1337:** both rungs changing pace at half health, and the spark field as a fixed shape — four or
+  eight close in, five or ten further out, five dropped on attackers when enraged — rather than a roll.
+- **The three Preceptors:** upstream now ships the retail thresholds themselves, 60/30 for the Mage
+  (`IDArena_S7_Named_3`) and 80/30 for the Priest (`IDArena_S7_Named_4`), in place of its own 75/50/25
+  and 75/25. The two earlier entries above recording those as corrections are now upstream's own
+  behaviour; nothing is ported back.
+
+**The one disagreement is Consierd's first condor wave.** Retail's rung at the 55 % boundary only
+*arms* `BTIMERI_INDEX_4`; the spawn hangs off the timer, so the first pair lands thirty seconds after
+the crossing. Upstream's `Passed(55)` branch calls a wave at the crossing as well, which gives four
+condors in the first thirty-five seconds where retail gives two — caught by three of the five pins in
+`KingConsierdCondorTests`, which failed on the verbatim port and say so precisely.
+
+**The maintainer kept retail (2026-11-02):** the port takes upstream's whole rewrite and drops the
+`callBabies()` call from that branch, leaving `cycleIn = 30`. Everything else in the rewrite is
+upstream's. The pins are unchanged. This is a deviation from Java to report upstream, not a correction
+to port back.

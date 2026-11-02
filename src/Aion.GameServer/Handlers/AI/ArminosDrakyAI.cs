@@ -16,7 +16,6 @@ namespace Aion.GameServer.Handlers.AI;
 public class ArminosDrakyAI : GeneralNpcAI
 {
     private string walkerId = "300300001";
-    private bool isStart = true;
 
     public ArminosDrakyAI(Npc owner) : base(owner)
     {
@@ -34,16 +33,11 @@ public class ArminosDrakyAI : GeneralNpcAI
     protected override void HandleMoveArrived()
     {
         base.HandleMoveArrived();
-        if (GetOwner().GetMoveController().GetCurrentStep().IsLastStep()) // circle twice
+        if (GetOwner().GetMoveController().GetCurrentStep().IsLastStep()) // the route already circles the arena twice
         {
-            if (!isStart)
-            {
-                GetSpawnTemplate().SetWalkerId(null);
-                WalkManager.StopWalking(this);
-                AIActions.DeleteOwner(this);
-            }
-            else
-                isStart = false;
+            GetSpawnTemplate().SetWalkerId(null);
+            WalkManager.StopWalking(this);
+            AIActions.DeleteOwner(this);
         }
     }
 

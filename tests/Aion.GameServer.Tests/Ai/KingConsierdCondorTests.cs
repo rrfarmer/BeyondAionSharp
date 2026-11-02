@@ -70,7 +70,7 @@ public sealed class KingConsierdCondorTests
 		var (harness, _) = Wounded(54);
 		using BossAiHarness _h = harness;
 
-		Assert.Equal(KingConsierdAI.CondorsPerWave, harness.WatchNew(35, null, Condor).Total);
+		Assert.Equal(2, harness.WatchNew(35, null, Condor).Total);
 	}
 
 	/// <summary>
@@ -126,7 +126,7 @@ public sealed class KingConsierdCondorTests
 		harness.Clock.Advance(TimeSpan.FromSeconds(35));
 
 		List<Npc> condors = harness.LiveNpcs().Where(n => n.GetNpcId() == Condor).ToList();
-		Assert.Equal(KingConsierdAI.CondorsPerWave, condors.Count);
+		Assert.Equal(2, condors.Count);
 		Assert.All(condors, c =>
 			Assert.NotEqual(0d, Math.Sqrt(Math.Pow(c.GetX() - boss.GetX(), 2) + Math.Pow(c.GetY() - boss.GetY(), 2)), 3));
 	}

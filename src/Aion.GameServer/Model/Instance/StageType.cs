@@ -18,7 +18,7 @@ public enum StageType
     START_STAGE_10, START_STAGE_10_ROUND_1, START_STAGE_10_ROUND_2, START_STAGE_10_ROUND_3, START_STAGE_10_ROUND_4, START_STAGE_10_ROUND_5,
     PASS_STAGE_1, PASS_STAGE_2, PASS_STAGE_4, PASS_STAGE_5, PASS_STAGE_6,
     PASS_GROUP_STAGE_1, PASS_GROUP_STAGE_2, PASS_GROUP_STAGE_3, PASS_GROUP_STAGE_4, PASS_GROUP_STAGE_5, PASS_GROUP_STAGE_6, PASS_GROUP_STAGE_7, PASS_GROUP_STAGE_8, PASS_GROUP_STAGE_9, PASS_GROUP_STAGE_10,
-    START_BONUS_STAGE_2, START_BONUS_STAGE_3, START_BONUS_STAGE_4, START_BONUS_STAGE_6,
+    START_BONUS_STAGE_2, START_BONUS_STAGE_3, START_BONUS_STAGE_4, START_BONUS_STAGE_6, START_BONUS_STAGE_9,
     PVP_STAGE_1, PVP_STAGE_2, PVP_STAGE_3, PVP_STAGE_4, PVP_STAGE_5, PVP_STAGE_6, PVP_STAGE_OVER
 }
 
@@ -111,14 +111,15 @@ public static class StageTypeExtensions
         [StageType.PASS_GROUP_STAGE_4] = new StageData(38569, 1),
         [StageType.PASS_GROUP_STAGE_5] = new StageData(8497, 3),
         [StageType.PASS_GROUP_STAGE_6] = new StageData(43961, 4),
-        [StageType.PASS_GROUP_STAGE_7] = new StageData(13789, 6),
-        [StageType.PASS_GROUP_STAGE_8] = new StageData(49253, 7),
-        [StageType.PASS_GROUP_STAGE_9] = new StageData(19181, 9),
-        [StageType.PASS_GROUP_STAGE_10] = new StageData(54645, 10),
+        [StageType.PASS_GROUP_STAGE_7] = new StageData(13889, 6),
+        [StageType.PASS_GROUP_STAGE_8] = new StageData(49353, 7),
+        [StageType.PASS_GROUP_STAGE_9] = new StageData(19281, 9),
+        [StageType.PASS_GROUP_STAGE_10] = new StageData(23673, 12),
         [StageType.START_BONUS_STAGE_2] = new StageData(36470, 1),
         [StageType.START_BONUS_STAGE_3] = new StageData(37470, 1),
         [StageType.START_BONUS_STAGE_4] = new StageData(38470, 1),
         [StageType.START_BONUS_STAGE_6] = new StageData(43862, 4),
+        [StageType.START_BONUS_STAGE_9] = new StageData(19182, 9),
         [StageType.PVP_STAGE_1] = new StageData(1, 0),
         [StageType.PVP_STAGE_2] = new StageData(2, 0),
         [StageType.PVP_STAGE_3] = new StageData(3, 0),

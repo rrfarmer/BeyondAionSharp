@@ -59,8 +59,11 @@ public sealed class RM1337AiTests
 	/// <b>Above half health it is nine sparks: four near and five far.</b>
 	/// </summary>
 	/// <remarks>
-	/// The fire lands four seconds after the rung fires, and each spark lives five, so a reading at
-	/// thirty-six seconds catches the whole set standing.
+	/// The fire lands five seconds after the rung fires, at thirty-five. Upstream 1af948baf added a
+	/// single follow-up spark eight seconds after each attack, and in both bands one of those is standing
+	/// whenever the wave is — so these two pins count sparks as they <i>arrive</i> over a two-second
+	/// window around the wave rather than counting what stands, which is the wave's own shape and
+	/// nothing else. A standing count would read the follow-up as a tenth spark.
 	/// </remarks>
 	[Fact]
 	public void AboveHalfHealthNineSparksLand()
@@ -68,9 +71,9 @@ public sealed class RM1337AiTests
 		using BossAiHarness harness = NewHarness();
 		Engaged(harness);
 
-		harness.Clock.Advance(TimeSpan.FromSeconds(36));
+		harness.Clock.Advance(TimeSpan.FromSeconds(34));
 
-		Assert.Equal(9, Sparks(harness));
+		Assert.Equal(9, harness.WatchNew(1, null, Spark).Total);
 	}
 
 	/// <summary>
@@ -79,6 +82,12 @@ public sealed class RM1337AiTests
 	/// <remarks>
 	/// Eight near, ten far, and five on one random attacker — the third drop exists only in this band,
 	/// which is what makes crossing half a change in kind rather than degree.
+	/// <para>
+	/// Counted as they arrive, for the reason given on the band above. The count is twenty-four, not
+	/// twenty-three: upstream 1af948baf casts 19550 at the wave in this band, and that skill drops a
+	/// spark of its own. The eight-ten-five shape is what the arithmetic below names; the sibling pin
+	/// holds the third drop on a player.
+	/// </para>
 	/// </remarks>
 	[Fact]
 	public void BelowHalfHealthTwentyThreeSparksLand()
@@ -88,9 +97,9 @@ public sealed class RM1337AiTests
 
 		BossAiHarness.SetHpPercent(boss, 40);
 		BossAiHarness.Rehate(boss, player);
-		harness.Clock.Advance(TimeSpan.FromSeconds(36));
+		harness.Clock.Advance(TimeSpan.FromSeconds(34));
 
-		Assert.Equal(23, Sparks(harness));
+		Assert.Equal(8 + 10 + 5 + 1, harness.WatchNew(1, null, Spark).Total);
 	}
 
 	/// <summary>

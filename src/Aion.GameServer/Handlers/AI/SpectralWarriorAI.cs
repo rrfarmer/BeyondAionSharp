@@ -1,3 +1,6 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Aion.GameServer.Ai;
 using Aion.GameServer.Model.GameObjects;
@@ -6,15 +9,35 @@ using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Handlers.AI;
 
-/// <summary>Java parity: ai/instance/empyreanCrucible/SpectralWarriorAI (Luzien).</summary>
+/// <summary>Java parity: ai/instance/empyreanCrucible/SpectralWarriorAI (@author Luzien, w4terbomb).</summary>
 [AIName("spectral_warrior")]
 public class SpectralWarriorAI : AggressiveNpcAI, HpPhases.PhaseHandler
 {
     private readonly HpPhases hpPhases = new HpPhases(50);
+    private ScheduledTask? attackTask;
 
     public SpectralWarriorAI(Npc owner)
         : base(owner)
     {
+    }
+
+    protected override void HandleDespawned()
+    {
+        CancelTask();
+        base.HandleDespawned();
+    }
+
+    protected override void HandleDied()
+    {
+        CancelTask();
+        base.HandleDied();
+    }
+
+    protected override void HandleBackHome()
+    {
+        CancelTask();
+        base.HandleBackHome();
+        hpPhases.Reset();
     }
 
     protected override void HandleAttack(Creature creature)
@@ -26,31 +49,44 @@ public class SpectralWarriorAI : AggressiveNpcAI, HpPhases.PhaseHandler
     public void HandleHpPhase(int phaseHpPercent)
     {
         GetPosition().GetWorldMapInstance().GetInstanceHandler().OnChangeStage(StageType.START_STAGE_6_ROUND_5);
-        ThreadPoolManager.GetInstance().Schedule(_ =>
+        GetOwner().QueueSkill(19546, 10);
+        List<Npc> raised = ResurrectAllies();
+        attackTask = ThreadPoolManager.GetInstance().Schedule(_ =>
         {
-            ResurrectAllies();
+            if (IsDead() || !(GetTarget() is Creature target))
+                return ValueTask.CompletedTask;
+            foreach (Npc npc in raised.Where(npc => !npc.IsDead()))
+                npc.GetAggroList().AddHate(target, 1000);
             return ValueTask.CompletedTask;
-        }, System.TimeSpan.FromMilliseconds(2000));
+        }, TimeSpan.FromMilliseconds(10000));
     }
 
-    private void ResurrectAllies()
+    private List<Npc> ResurrectAllies()
     {
+        List<Npc> raised = new List<Npc>();
         GetKnownList().ForEachNpc(npc =>
         {
             if (npc.IsDead())
                 return;
-
-            switch (npc.GetNpcId())
+            int raisedNpcId = npc.GetNpcId() switch
             {
-                case 205413:
-                    Spawn(217576, npc.GetX(), npc.GetY(), npc.GetZ(), (sbyte)npc.GetHeading());
-                    npc.GetController().Delete();
-                    break;
-                case 205414:
-                    Spawn(217577, npc.GetX(), npc.GetY(), npc.GetZ(), (sbyte)npc.GetHeading());
-                    npc.GetController().Delete();
-                    break;
-            }
+                205413 => 217576,
+                205414 => 217577,
+                _ => 0,
+            };
+            if (raisedNpcId == 0)
+                return;
+            VisibleObject spawned = Spawn(raisedNpcId, npc.GetX(), npc.GetY(), npc.GetZ(), (sbyte)npc.GetHeading());
+            npc.GetController().Delete();
+            if (spawned is Npc raisedNpc)
+                raised.Add(raisedNpc);
         });
+        return raised;
+    }
+
+    private void CancelTask()
+    {
+        if (attackTask != null && !attackTask.IsDone())
+            attackTask.Cancel(true);
     }
 }

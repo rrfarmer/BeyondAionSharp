@@ -1,211 +1,125 @@
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Aion.GameServer.Ai;
+using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.SkillEngine;
+using Aion.GameServer.Model.Templates.Npcskill;
 using Aion.GameServer.Utils;
-using Aion.GameServer.World;
 
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// King Consierd, Empyrean Crucible. Retail pattern <c>IDArena_S9_Named_2</c>.
+/// Java parity: ai/instance/empyreanCrucible/KingConsierdAI (@author Luzien, w4terbomb).
+/// Retail pattern <c>IDArena_S9_Named_2</c>. Upstream 1af948baf rewrote this onto the fight clock and arrived at the same retail facts this
+/// port had corrected by hand: the 80/55/25 bands, two condors every thirty seconds with <c>spawn_range=10</c> and nothing below 25 %, and
+/// their ten-minute life. See docs/retail-ai-fidelity.md.
 /// </summary>
-/// <remarks>
-/// Java parity: ai/instance/empyreanCrucible/KingConsierdAI (@author Luzien). Retail-sourced
-/// corrections below; see docs/retail-ai-fidelity.md. Found by <c>audit_hp_phases.py</c>.
-/// <para>
-/// <b>His condors were on the wrong clock, at the wrong threshold, with no floor.</b> Retail gives
-/// them a battle timer of their own — <c>BTIMERI_INDEX_4</c>, re-armed at <b>30000</b>, guarded by
-/// <c>is_hp_in_boundary larger_than=26 less_than=100</c> — which is first armed by the rung that fires
-/// when he drops below <b>55</b>. So they start at fifty-five per cent, come every thirty seconds, and
-/// <b>stop below twenty-six</b>.
-/// </para>
-/// <para>
-/// This class hung them off its own twenty-five-second skill task with an <c>hp &lt;= 50</c> test
-/// inside it, so they arrived <b>five per cent late, a fifth too often, and never stopped</b> — the
-/// last quarter of the fight, which retail deliberately leaves clear, had condors in it throughout.
-/// </para>
-/// <para>
-/// <b>And both landed on his exact point.</b> Retail's <c>spawn_range</c> is ten.
-/// </para>
-/// <para>
-/// <b>Not translated.</b> Almost everything else: six battle timers of skill indices, the
-/// <c>ATTACKERI_THIRD_HATING</c> and <c>ATTACKERI_HAS_LOWEST_HP</c> target switches that go with them,
-/// and the three health bands (81-100, 56-80, 26-55) that pick which cast rotation he is running. The
-/// 75 in <see cref="hpPhases"/> is this port's own and starts our skill task; retail's band edge there
-/// is 80.
-/// </para>
-/// </remarks>
 [AIName("king_consierd")]
-public class KingConsierdAI : AggressiveNpcAI, HpPhases.PhaseHandler
+public class KingConsierdAI : CrucibleBossAI
 {
-    private readonly HpPhases hpPhases = new HpPhases(75, 55, 25);
+    private const int BABY_CONSIERD = 282378; // IDArena_Summon_Condor_55_An
+    private int cycleIn, frenzyStep;
 
-    /// <summary>
-    /// Retail's condor rung: <c>BTIMERI_INDEX_4</c> at <b>30000</b>, two birds, <c>spawn_range=10</c>,
-    /// <c>live_time=600</c>, while his health is above twenty-six per cent.
-    /// </summary>
-    public const long CondorRepeatMillis = 30_000L;
-    public const int CondorsPerWave = 2;
-    public const float CondorSpread = 10f;
-    public const int CondorFloorPercent = 26;
-
-    /// <summary>The health at which the timer is first armed, from the rung that arms it.</summary>
-    public const int CondorStartPercent = 55;
-
-    private ScheduledTask? condorTask;
-    private readonly AtomicBoolean isHome = new AtomicBoolean(true);
-    private ScheduledTask? eventTask;
-    private ScheduledTask? skillTask;
-
-    public KingConsierdAI(Npc owner)
-        : base(owner)
+    public KingConsierdAI(Npc owner) : base(owner)
     {
     }
 
-    protected override void HandleDespawned()
+    protected override void OnFightStart()
     {
-        CancelTasks();
-        base.HandleDespawned();
+        Cast(19691, 1);
+        Cast(17954, 29);
+        cycleIn = 25;
+        frenzyStep = 0;
     }
 
-    /// <summary>Retail <c>IDArena_Summon_Condor_55_An</c> stands ten minutes.</summary>
-    /// <remarks>
-    /// Despawned here on death and on going home, which bounds them after the fight and not during it.
-    /// </remarks>
-    private const int CondorLife = 600;
-
-    protected override void HandleDied()
+    protected override void OnFightTick(int seconds, int hp)
     {
-        CancelTasks();
-        DespawnNpcs(GetPosition().GetWorldMapInstance().GetNpcs(282378));
-        base.HandleDied();
-    }
-
-    protected override void HandleBackHome()
-    {
-        CancelTasks();
-        DespawnNpcs(GetPosition().GetWorldMapInstance().GetNpcs(282378));
-        base.HandleBackHome();
-        hpPhases.Reset();
-    }
-
-    protected override void HandleAttack(Creature creature)
-    {
-        base.HandleAttack(creature);
-        hpPhases.TryEnterNextPhase(this);
-        if (isHome.CompareAndSet(true, false))
+        if (seconds == 240)
+            Cast(19624, 10, NpcSkillTargetAttribute.ME);
+        if (Passed(80))
         {
-            StartBloodThirstTask();
-
-            ThreadPoolManager.GetInstance().Schedule(_ =>
+            StunAndTurn();
+            cycleIn = 25;
+        }
+        else if (Passed(55))
+        {
+            // Retail only arms BTIMERI_INDEX_4 here, so the first wave lands thirty seconds later; upstream 1af948baf
+            // also calls one at the crossing. The maintainer kept retail (2026-11-02), see docs/retail-ai-fidelity.md.
+            cycleIn = 30;
+        }
+        else if (Passed(25))
+        {
+            Cast(19690, 1);
+            SwitchTarget(WeakestAttacker());
+            cycleIn = 12;
+            frenzyStep = 0;
+        }
+        else if (--cycleIn <= 0)
+        {
+            if (hp > 80)
             {
-                SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 19691, 1, GetTarget()).UseNoAnimationSkill();
+                Cast(17950, 29);
+                cycleIn = 20;
+            }
+            else if (hp > 55)
+            {
+                StunAndTurn();
+                cycleIn = 25;
+            }
+            else if (hp > 25)
+            {
+                CallBabies();
+                cycleIn = 30;
+            }
+            else
+            {
+                if (frenzyStep % 2 == 0)
+                {
+                    Cast(17957, 29);
+                    Cast(17954, 29);
+                }
+                else
+                {
+                    Cast(19691, 1);
+                    Cast(17956, 29);
+                    SwitchTarget(WeakestAttacker());
+                    Cast(17956, 29);
+                }
+                frenzyStep++;
+                cycleIn = frenzyStep % 2 == 1 ? 25 : 20; // after 12 s the two steps alternate 25 s and 20 s apart
+            }
+        }
+    }
+
+    private void StunAndTurn()
+    {
+        Cast(17951, 29);
+        SwitchTarget(Attacker(AggroTarget.THIRD_MOST_HATED));
+        Cast(17952, 29);
+        Cast(17954, 29);
+    }
+
+    private void CallBabies()
+    {
+        Cast(17951, 29);
+        for (int i = 0; i < 2; i++)
+        {
+            if (RndSpawnInRange(BABY_CONSIERD, 1, 10) is Npc baby)
                 ThreadPoolManager.GetInstance().Schedule(_ =>
                 {
-                    SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 17954, 29, GetTarget()).UseNoAnimationSkill();
+                    baby.GetController().DeleteIfAliveOrCancelRespawn();
                     return ValueTask.CompletedTask;
-                }, 4000L);
-                return ValueTask.CompletedTask;
-            }, 2000L);
+                }, TimeSpan.FromMilliseconds(600000));
         }
+        SwitchTarget(Attacker(AggroTarget.THIRD_MOST_HATED));
+        Cast(17952, 29);
     }
 
-    public void HandleHpPhase(int phaseHpPercent)
+    protected override void OnFightEnd()
     {
-        switch (phaseHpPercent)
-        {
-            case 75:
-                StartSkillTask();
-                break;
-            case CondorStartPercent:
-                StartCondorTask();
-                break;
-            case 25:
-                SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 19690, 1, GetTarget()).UseNoAnimationSkill();
-                break;
-        }
-    }
-
-    private void StartBloodThirstTask()
-    {
-        eventTask = ThreadPoolManager.GetInstance().Schedule(_ =>
-        {
-            SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 19624, 10, GetOwner()).UseNoAnimationSkill();
-            return ValueTask.CompletedTask;
-        }, 180 * 1000L); // 3min, need confirm
-    }
-
-    private void StartSkillTask()
-    {
-        skillTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(_ =>
-        {
-            if (IsDead())
-            {
-                CancelTasks();
-                return ValueTask.CompletedTask;
-            }
-            SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 17951, 29, GetTarget()).UseNoAnimationSkill();
-            // The condors used to be spawned from here, on this task's twenty-five second period and
-            // behind an hp <= 50 test. They are retail's own timer now; see StartCondorTask.
-            ThreadPoolManager.GetInstance().Schedule(_ =>
-            {
-                ThreadPoolManager.GetInstance().Schedule(_ => { SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 17952, 29, GetTarget()).UseNoAnimationSkill(); return ValueTask.CompletedTask; }, 2000L);
-                return ValueTask.CompletedTask;
-            }, 3500L);
-            return ValueTask.CompletedTask;
-        }, TimeSpan.FromMilliseconds(0), TimeSpan.FromMilliseconds(25000));
-    }
-
-    /// <summary>
-    /// Retail's <c>BTIMERI_INDEX_4</c>: two condors every thirty seconds until he is under twenty-six
-    /// per cent, scattered ten metres about him.
-    /// </summary>
-    /// <remarks>
-    /// The floor is checked when the timer fires rather than when it is armed, which is retail's shape:
-    /// the guard is on the rung, so the timer keeps running and simply stops matching.
-    /// </remarks>
-    private void StartCondorTask()
-    {
-        condorTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(
-            _ =>
-            {
-                if (IsDead() || GetLifeStats().GetHpPercentage() <= CondorFloorPercent)
-                    return ValueTask.CompletedTask;
-
-                for (int i = 0; i < CondorsPerWave; i++)
-                    RndSpawnInRange(282378, 1, CondorSpread);
-
-                return ValueTask.CompletedTask;
-            },
-            TimeSpan.FromMilliseconds(CondorRepeatMillis),
-            TimeSpan.FromMilliseconds(CondorRepeatMillis));
-    }
-
-    private void CancelTasks()
-    {
-        if (condorTask != null && !condorTask.IsDone())
-        {
-            condorTask.Cancel(true);
-        }
-
-        if (eventTask != null && !eventTask.IsDone())
-        {
-            eventTask.Cancel(true);
-        }
-        if (skillTask != null && !skillTask.IsCancelled)
-        {
-            skillTask.Cancel(true);
-        }
-    }
-
-    private void DespawnNpcs(List<Npc> npcs)
-    {
-        foreach (Npc npc in npcs)
-        {
+        foreach (Npc npc in GetPosition().GetWorldMapInstance().GetNpcs(BABY_CONSIERD))
             npc.GetController().Delete();
-        }
+        if (!IsDead())
+            CastOnSelf(19160, 1);
     }
 }

@@ -29,7 +29,7 @@ public class ActionItemNpcAI : NpcAI
             HandleUseItemStart(player);
     }
 
-    protected void HandleUseItemStart(Player player)
+    protected virtual void HandleUseItemStart(Player player)
     {
         int talkDelayInMs = GetTalkDelayInMs();
         if (talkDelayInMs > 0)

@@ -4,7 +4,7 @@ using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Handlers.AI;
 
-/// <summary>Java parity: ai/instance/empyreanCrucible/SparkOfDarknessAI (@author Luzien).</summary>
+/// <summary>Java parity: ai/instance/empyreanCrucible/SparkOfDarknessAI (@author Luzien, w4terbomb).</summary>
 [AIName("spark_of_darkness")]
 public class SparkOfDarknessAI : GeneralNpcAI
 {
@@ -28,7 +28,7 @@ public class SparkOfDarknessAI : GeneralNpcAI
         ThreadPoolManager.GetInstance().Schedule(_ =>
         {
             if (!IsDead())
-                SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 19554, 1, GetOwner()).UseNoAnimationSkill();
+                GetOwner().QueueSkill(19554, 1);
             return System.Threading.Tasks.ValueTask.CompletedTask;
         }, 500L);
     }
@@ -40,5 +40,10 @@ public class SparkOfDarknessAI : GeneralNpcAI
             AIActions.DeleteOwner(this);
             return System.Threading.Tasks.ValueTask.CompletedTask;
         }, SparkLifeMillis);
+    }
+
+    public override bool IsMoveSupported()
+    {
+        return false;
     }
 }

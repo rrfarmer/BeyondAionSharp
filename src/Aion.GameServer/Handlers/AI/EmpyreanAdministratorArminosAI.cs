@@ -26,22 +26,16 @@ public class EmpyreanAdministratorArminosAI : NpcAI
             case 217744:
                 PacketSendUtility.BroadcastMessage(GetOwner(), 1500247, 8000);
                 PacketSendUtility.BroadcastMessage(GetOwner(), 1500250, 20000);
-                PacketSendUtility.BroadcastMessage(GetOwner(), 1500251, 60000);
+                PacketSendUtility.BroadcastMessage(GetOwner(), 1500251, 92000);
                 break;
             case 217749:
                 PacketSendUtility.BroadcastMessage(GetOwner(), 1500252, 8000);
                 PacketSendUtility.BroadcastMessage(GetOwner(), 1500253, 16000);
-                PacketSendUtility.BroadcastToMap(GetOwner(), 1400982, 25000);
-                PacketSendUtility.BroadcastToMap(GetOwner(), 1400988, 27000);
-                PacketSendUtility.BroadcastToMap(GetOwner(), 1400989, 29000);
-                PacketSendUtility.BroadcastToMap(GetOwner(), 1400990, 31000);
-                PacketSendUtility.BroadcastToMap(GetOwner(), 1401013, 93000);
-                PacketSendUtility.BroadcastToMap(GetOwner(), 1401014, 113000);
-                PacketSendUtility.BroadcastToMap(GetOwner(), 1401015, 118000);
-                PacketSendUtility.BroadcastMessage(GetOwner(), 1500255, 118000);
+                PacketSendUtility.BroadcastToMap(GetOwner(), 1400982, 24000);
+                PacketSendUtility.BroadcastToMap(GetOwner(), 1400988, 26000);
+                PacketSendUtility.BroadcastToMap(GetOwner(), 1400989, 28000);
+                PacketSendUtility.BroadcastToMap(GetOwner(), 1400990, 30000);
                 break;
-            // case
-            // despawn after 1min
         }
     }
 }

@@ -1,135 +1,117 @@
+using System;
 using System.Threading.Tasks;
 using Aion.GameServer.Ai;
+using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.Templates.Npcskill;
 using Aion.GameServer.Utils;
+using Aion.GameServer.World;
 
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// Queen Alukina, Empyrean Crucible. Retail pattern <c>IDArena_S8_Named_3</c>.
+/// Java parity: ai/instance/empyreanCrucible/QueenAlukinaAI (@author Luzien, w4terbomb).
+/// Retail pattern <c>IDArena_S8_Named_3</c>. Upstream 1af948baf rewrote this onto the fight clock and kept the retail facts this port had
+/// corrected by hand: the 80/55/25 bands and the blobbles' thirty seconds. See docs/retail-ai-fidelity.md.
 /// </summary>
-/// <remarks>
-/// Retail-sourced; see docs/retail-ai-fidelity.md. Two corrections against the pattern: her phase steps
-/// are 80/55/25 rather than 75/50/25, and killing her bursts seven azure blobbles — which our server
-/// spawned nowhere at all.
-/// <para>
-/// Her rotation is left alone. The pattern addresses seven indices against our seven skills and carries
-/// no branch comments, so nothing corroborates which index is which; see the skill-index rule in the
-/// fidelity doc. The phase thresholds and the death spawn need no such mapping, which is why they are
-/// the parts translated.
-/// </para>
-/// </remarks>
 [AIName("alukina_emp")]
-public class QueenAlukinaAI : AggressiveNpcAI, HpPhases.PhaseHandler
+public class QueenAlukinaAI : CrucibleBossAI
 {
-    /// <summary>
-    /// Retail's steps, read off the boundaries its once-only branches guard: 56-80, 26-55, below 25.
-    /// </summary>
-    private readonly HpPhases hpPhases = new HpPhases(80, 55, 25);
-
-    private const int AzureBlobble = 280713;
-
-    /// <summary>Retail <c>IDArena_S8_Named_3</c> gives the blobbles thirty seconds.</summary>
-    private const int BlobbleLife = 30;
-    private const int BlobblesOnDeath = 7;
-
-    private ScheduledTask? task;
+    private const int FIRST_PIERCE = 12, PIERCE_WITH_SHOUT = 25, PIERCE_QUIET = 9;
+    private int cycleIn, pierceStep;
 
     public QueenAlukinaAI(Npc owner) : base(owner)
     {
     }
 
-    protected override void HandleDespawned()
+    protected override void OnFightStart()
     {
-        CancelTask();
-        base.HandleDespawned();
+        Cast(19687, 1);
+        Say(341124);
+        Cast(17928, 41);
+        cycleIn = 18;
+        pierceStep = 0;
+    }
+
+    protected override void OnFightTick(int seconds, int hp)
+    {
+        if (Passed(80))
+        {
+            Cast(19687, 1);
+            Say(341125);
+            Cast(17899, 41);
+            Cast(17900, 41);
+            SwitchTarget(RandomAttacker());
+            cycleIn = 25;
+        }
+        else if (Passed(55))
+        {
+            Cast(17899, 41);
+            Cast(19687, 1);
+            Say(341126);
+            Cast(17280, 41);
+            SwitchTarget(RandomAttacker());
+            cycleIn = FIRST_PIERCE;
+            pierceStep = 0;
+        }
+        else if (Passed(25))
+        {
+            Cast(17899, 41);
+            Cast(17901, 41);
+            Cast(17902, 41, NpcSkillTargetAttribute.RANDOM);
+            SwitchTarget(WeakestAttacker());
+            Cast(17902, 41);
+            cycleIn = 20;
+        }
+        else if (--cycleIn <= 0)
+        {
+            if (hp > 80)
+            {
+                Cast(17928, 41);
+                cycleIn = 18;
+            }
+            else if (hp > 55)
+            {
+                Say(340487);
+                Cast(17900, 41);
+                Cast(17900, 41);
+                SwitchTarget(WeakestAttacker());
+                Cast(17899, 41);
+                cycleIn = 25;
+            }
+            else if (hp > 25)
+            {
+                bool shout = pierceStep % 2 == 1; // after 12 s the pierces alternate 25 s (with the shout) and 9 s
+                if (shout)
+                    Say(341126);
+                Cast(17280, 41);
+                SwitchTarget(RandomAttacker());
+                pierceStep++;
+                cycleIn = pierceStep % 2 == 1 ? PIERCE_WITH_SHOUT : PIERCE_QUIET;
+            }
+            else
+            {
+                Cast(17901, 41);
+                Cast(17902, 41);
+                Cast(17902, 41);
+                Cast(17902, 41);
+                cycleIn = 20;
+            }
+        }
     }
 
     protected override void HandleDied()
     {
-        CancelTask();
-        BurstIntoBlobbles();
-        base.HandleDied();
-    }
-
-    /// <summary>Seven azure blobbles scatter from her body and live thirty seconds.</summary>
-    /// <remarks>
-    /// The pattern hangs this on <c>on_killed_by_user</c>, so it is a reward for the kill rather than
-    /// cleanup on any despawn -- which is why it sits here and not in <c>HandleDespawned</c>.
-    /// </remarks>
-    private void BurstIntoBlobbles()
-    {
-        for (int i = 0; i < BlobblesOnDeath; i++)
+        WorldPosition p = GetPosition();
+        for (int i = 0; i < 7; i++)
         {
-            // Behaviourally identical to the hand-written schedule it replaces, which predated
-            // SpawnFor. Retail's own thirty seconds, now expressed the same way as everywhere else.
-            Expire(RndSpawnInRange(AzureBlobble, 2f), BlobbleLife);
-        }
-    }
-
-    protected override void HandleBackHome()
-    {
-        CancelTask();
-        base.HandleBackHome();
-        hpPhases.Reset();
-    }
-
-    protected override void HandleAttack(Creature creature)
-    {
-        base.HandleAttack(creature);
-        hpPhases.TryEnterNextPhase(this);
-    }
-
-    public void HandleHpPhase(int phaseHpPercent)
-    {
-        SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 17899, 41, GetTarget()).UseNoAnimationSkill();
-
-        switch (phaseHpPercent)
-        {
-            case 80:
-                ScheduleSkill(17900, 4500);
-                PacketSendUtility.BroadcastMessage(GetOwner(), 340487, 10000);
-                ScheduleSkill(17899, 14000);
-                ScheduleSkill(17900, 18000);
-                break;
-            case 55:
-                ScheduleSkill(17280, 4500);
-                ScheduleSkill(17902, 8000);
-                break;
-            case 25:
-                task = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(_ =>
+            if (Spawn(280713, p.GetX() + Rnd.Get(-5, 5), p.GetY() + Rnd.Get(-5, 5), p.GetZ(), (sbyte)p.GetHeading()) is Npc spawnling)
+                ThreadPoolManager.GetInstance().Schedule(_ =>
                 {
-                    if (IsDead())
-                    {
-                        CancelTask();
-                    }
-                    else
-                    {
-                        SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 17901, 41, GetTarget()).UseNoAnimationSkill();
-                        ScheduleSkill(17902, 5500);
-                        ScheduleSkill(17902, 7500);
-                    }
+                    spawnling.GetController().DeleteIfAliveOrCancelRespawn();
                     return ValueTask.CompletedTask;
-                }, System.TimeSpan.FromMilliseconds(4500), System.TimeSpan.FromMilliseconds(20000));
-                break;
+                }, TimeSpan.FromMilliseconds(30000));
         }
-    }
-
-    private void CancelTask()
-    {
-        if (task != null && !task.IsCancelled)
-            task.Cancel(true);
-    }
-
-    private void ScheduleSkill(int skill, int delay)
-    {
-        ThreadPoolManager.GetInstance().Schedule(_ =>
-        {
-            if (!IsDead())
-            {
-                SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), skill, 41, GetTarget()).UseNoAnimationSkill();
-            }
-            return ValueTask.CompletedTask;
-        }, delay);
+        base.HandleDied();
     }
 }

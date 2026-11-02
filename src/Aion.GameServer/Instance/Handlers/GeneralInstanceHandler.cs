@@ -84,7 +84,12 @@ public class GeneralInstanceHandler : IInstanceHandler
 
     protected virtual VisibleObject Spawn(int npcId, float x, float y, float z, byte heading)
     {
-        SpawnTemplate template = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(mapId, npcId, x, y, z, heading);
+        return Spawn(npcId, x, y, z, heading, (string?)null);
+    }
+
+    protected virtual VisibleObject Spawn(int npcId, float x, float y, float z, byte heading, string? aiName)
+    {
+        SpawnTemplate template = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(mapId, npcId, x, y, z, heading, null, aiName);
         return Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(template, instance.GetInstanceId());
     }
 
