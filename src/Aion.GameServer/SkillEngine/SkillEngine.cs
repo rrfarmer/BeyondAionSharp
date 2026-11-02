@@ -43,12 +43,9 @@ public class SkillEngine
     /// <summary>This method is used for skills that were learned by player</summary>
     public Skill GetSkillFor(Player player, SkillTemplate template, VisibleObject firstTarget)
     {
-        // player doesn't have such skill and ist not provoked
-        if (template.GetActivationAttribute() != ActivationAttribute.PROVOKED)
-        {
-            if (!player.GetSkillList().IsSkillPresent(template.GetSkillId()))
-                return null;
-        }
+        // Only learned skills may be cast by the client; item, NPC and provoked skills are created with GetSkill(...).
+        if (!player.GetSkillList().IsSkillPresent(template.GetSkillId()))
+            return null;
 
         Creature target = null;
         if (firstTarget is Creature creature)
