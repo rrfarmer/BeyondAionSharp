@@ -15,6 +15,7 @@ public class _21249TheInvincibleStarket : AbstractQuestHandler
     public override void Register()
     {
         qe.RegisterQuestNpc(799416).AddOnQuestStart(questId);
+        qe.RegisterQuestNpc(799416).AddOnTalkEvent(questId);
         qe.RegisterQuestNpc(799529).AddOnTalkEvent(questId);
         qe.RegisterQuestNpc(799417).AddOnTalkEvent(questId);
     }

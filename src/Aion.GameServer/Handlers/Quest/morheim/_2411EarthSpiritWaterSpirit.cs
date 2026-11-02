@@ -17,6 +17,7 @@ public class _2411EarthSpiritWaterSpirit : AbstractQuestHandler
     public override void Register()
     {
         qe.RegisterQuestNpc(204369).AddOnQuestStart(questId);
+        qe.RegisterQuestNpc(204369).AddOnTalkEvent(questId);
         qe.RegisterQuestNpc(204366).AddOnTalkEvent(questId);
         qe.RegisterQuestNpc(204364).AddOnTalkEvent(questId);
     }

@@ -21,6 +21,7 @@ public class _2443TaisanMessage : AbstractQuestHandler
     public override void Register()
     {
         qe.RegisterQuestNpc(204403).AddOnQuestStart(questId);
+        qe.RegisterQuestNpc(204403).AddOnTalkEvent(questId);
         qe.RegisterQuestNpc(790016).AddOnTalkEvent(questId);
     }
 

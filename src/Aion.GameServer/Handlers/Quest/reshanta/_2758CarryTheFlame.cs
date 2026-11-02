@@ -19,6 +19,7 @@ public class _2758CarryTheFlame : AbstractQuestHandler
     public override void Register()
     {
         qe.RegisterQuestNpc(279000).AddOnQuestStart(questId);
+        qe.RegisterQuestNpc(279000).AddOnTalkEvent(questId);
         qe.RegisterQuestNpc(790016).AddOnTalkEvent(questId);
     }
 

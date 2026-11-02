@@ -17,6 +17,7 @@ public class _2448ChaomirkSendsForHelp : AbstractQuestHandler
     public override void Register()
     {
         qe.RegisterQuestNpc(798115).AddOnQuestStart(questId);
+        qe.RegisterQuestNpc(798115).AddOnTalkEvent(questId);
         qe.RegisterQuestNpc(798080).AddOnTalkEvent(questId);
         qe.RegisterQuestNpc(798079).AddOnTalkEvent(questId);
     }

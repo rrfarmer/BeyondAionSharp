@@ -17,6 +17,7 @@ public class _2367APrizedPossession : AbstractQuestHandler
     public override void Register()
     {
         qe.RegisterQuestNpc(204339).AddOnQuestStart(questId);
+        qe.RegisterQuestNpc(204339).AddOnTalkEvent(questId);
         qe.RegisterQuestNpc(798080).AddOnTalkEvent(questId);
         qe.RegisterQuestNpc(798079).AddOnTalkEvent(questId);
     }
