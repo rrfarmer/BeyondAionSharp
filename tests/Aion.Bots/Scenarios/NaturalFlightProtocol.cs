@@ -179,7 +179,9 @@ public static class NaturalFlightProtocol
 
 	/// <summary>Fall from where the bot hangs, the flight ended, to <paramref name="groundZ"/>: the client reports it with
 	/// CM_MOVE's FALL flag, a sample every 250 ms under gravity, and then the stop on the ground. Java's PlayerMoveController
-	/// adds up the height and deals the fall damage when the fall stops: all of the HP from 50 m (FallDamageConfig).</summary>
+	/// measures from where the fall started to where it stops and deals the damage there: none under 10 m, 1% of max HP per
+	/// meter plus 4 above it, and death from 50 m (upstream 82a5e0cf9; a sprinting player takes none). A fall that begins
+	/// right after a teleport or a flight path deals nothing, because those forget where the fall started.</summary>
 	public static async Task FallAsync(INaturalJourneySession session, BotPosition top, float groundZ, CancellationToken token)
 	{
 		if (groundZ >= top.Z) throw new ArgumentOutOfRangeException(nameof(groundZ));

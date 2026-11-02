@@ -73,7 +73,7 @@ public sealed partial class SimulationFastScenarioTests
             bool syntheticAnchor = spot is null;
             spot ??= Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(group.Key, group.First().Profile.NpcId,
                 Math.Max(64, map.GetWorldSize() / 2f), Math.Max(64, map.GetWorldSize() / 2f),
-                Math.Max(map.GetWaterLevel(), map.GetDeathLevel()) + 100, 0);
+                map.GetWaterLevel() + 100, 0);
             await TeleportForSetupAsync(session, player, group.Key, spot.GetX() + .5f, spot.GetY(), spot.GetZ(), token);
             await session.SynchronizeAsync(token);
             if (player.IsProtectionActive()) player.GetController().StopProtectionActiveTask();

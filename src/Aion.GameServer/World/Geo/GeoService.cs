@@ -70,6 +70,14 @@ public class GeoService : GameEngine
         return geoMaps[worldId].GetZ(x, y, zMax, zMin, instanceId);
     }
 
+    /// <summary>
+    /// The surface Z at the object's position, nearest to the given zMax, or NaN if not found / less than zMin / too steep to stand on.
+    /// </summary>
+    public float GetWalkableZ(VisibleObject obj, float zMax, float zMin)
+    {
+        return geoMaps[obj.GetWorldId()].GetZ(obj.GetX(), obj.GetY(), zMax, zMin, obj.GetInstanceId(), true);
+    }
+
     public CollisionResults GetCollisions(VisibleObject obj, float x, float y, float z, sbyte intentions, IgnoreProperties ignoreProperties)
     {
         return geoMaps[obj.GetWorldId()].GetCollisions(obj.GetX(), obj.GetY(), obj.GetZ() + GetSeeCheckOffset(obj), x, y, z,

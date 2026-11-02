@@ -34,13 +34,10 @@ namespace Aion.GameServer.Tests;
 [Xunit.Collection("GoldenDataManager")]
 public sealed class GoldenPlayerFormulaFixtureTests
 {
-    // Mirror the Java harness: pin the fall-damage config statics to their @Property defaults so the test is
-    // independent of any loaded properties file (the C# defaults must equal the Java @Property defaults).
+    // Upstream 82a5e0cf9 deleted FallDamageConfig: the fall-damage formula no longer reads any config,
+    // and the heights that gate it live in PlayerMoveController.
     static GoldenPlayerFormulaFixtureTests()
     {
-        FallDamageConfig.FALL_DAMAGE_PERCENTAGE = 1.0f;
-        FallDamageConfig.MINIMUM_DISTANCE_DAMAGE = 10;
-        FallDamageConfig.MAXIMUM_DISTANCE_DAMAGE = 50;
         EnsureDataManagerBridge();
     }
 
@@ -80,7 +77,7 @@ public sealed class GoldenPlayerFormulaFixtureTests
     {
         "StatFunctions.calculateFallDamage" => StatFunctions.CalculateFallDamage(
             BuildPlayer(inputs.GetProperty("player")),
-            ParseFloat(inputs.GetProperty("distance").GetRawText())),
+            ParseFloat(inputs.GetProperty("height").GetRawText())),
         "StatFunctions.calculateMagicalResistRate" => StatFunctions.CalculateMagicalResistRate(
             BuildPlayer(inputs.GetProperty("attacker")),
             BuildPlayer(inputs.GetProperty("attacked")),

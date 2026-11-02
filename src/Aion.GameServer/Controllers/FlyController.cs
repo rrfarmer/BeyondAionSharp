@@ -45,6 +45,7 @@ public class FlyController
         player.UnsetState(CreatureState.FLYING);
         player.UnsetState(CreatureState.GLIDING);
         player.UnsetState(CreatureState.FLOATING_CORPSE);
+        player.GetMoveController().RestartFalling(player.GetZ());
         player.GetGameStats().UpdateStatsAndSpeedVisually();
 
         if (broadcastPacket && player.IsSpawned())

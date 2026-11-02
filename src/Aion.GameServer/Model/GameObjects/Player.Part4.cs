@@ -384,6 +384,7 @@ public partial class Player
     {
         base.SetPosition(position);
         GetMoveController().ResetLastPositionFromClient(); // if we don't reset it, material collision handlers (such as shields) affect you on teleport
+        GetMoveController().ResetFalling();
         GetCommonData().SetMapId(position.GetMapId());
         GetCommonData().SetXYZH(position.GetX(), position.GetY(), position.GetZ(), position.GetHeading());
         GetCommonData().SetWorldOwnerId(position.GetMapRegion() == null ? 0 : position.GetWorldMapInstance().GetOwnerId());

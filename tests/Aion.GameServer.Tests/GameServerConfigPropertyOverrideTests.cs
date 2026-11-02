@@ -98,13 +98,12 @@ public sealed class GameServerConfigPropertyOverrideTests
 
             // Process the batch-C migrated holders against the real cascaded config/main/*.properties.
             ConfigurableProcessor.Process(props, typeof(AIConfig), typeof(CleaningConfig), typeof(CraftConfig),
-                typeof(FallDamageConfig), typeof(GeoDataConfig), typeof(GroupConfig), typeof(MembershipConfig),
+                typeof(GeoDataConfig), typeof(GroupConfig), typeof(MembershipConfig),
                 typeof(NameConfig), typeof(PeriodicSaveConfig));
 
             // Real file values flow into the static fields (these mirror the shipped config/main/*.properties).
             Assert.Equal("./data/handlers/ai", AIConfig.HANDLER_DIRECTORY);
             Assert.Equal(365, CleaningConfig.MIN_ACCOUNT_INACTIVITY_DAYS);
-            Assert.Equal(1.0f, FallDamageConfig.FALL_DAMAGE_PERCENTAGE);
             Assert.True(GeoDataConfig.MODE == GeoDataConfig.Mode.ON);
             Assert.Equal(new[] { "Premium" }, MembershipConfig.MEMBERSHIP_TYPES);
             Assert.NotNull(NameConfig.CHAR_NAME_PATTERN);
@@ -343,7 +342,7 @@ public sealed class GameServerConfigPropertyOverrideTests
     private static void RestoreBatchCDefaults()
     {
         ConfigurableProcessor.Process(new JavaProperties(), typeof(AIConfig), typeof(CleaningConfig),
-            typeof(CraftConfig), typeof(FallDamageConfig), typeof(GeoDataConfig), typeof(GroupConfig),
+            typeof(CraftConfig), typeof(GeoDataConfig), typeof(GroupConfig),
             typeof(MembershipConfig), typeof(NameConfig), typeof(PeriodicSaveConfig));
     }
 

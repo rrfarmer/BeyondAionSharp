@@ -35,8 +35,12 @@ public sealed record NaturalFlyZone(string Name, bool Forbids, IReadOnlyList<(fl
 
 	/// <summary>
 	/// NL-3: the zones a player flies in on one map: its zone file's, and on a map whose world flags hold FLY (Reshanta,
-	/// whose zone file has no FLY zone) the whole map from its death level up. The server resolves the map FLY
+	/// whose zone file has no FLY zone) the whole map from the world floor up. The server resolves the map FLY
 	/// attribute through Creature.isInsideFlyZone; this planning overlay keeps the same effective permission.
+	/// <para>
+	/// Upstream 82a5e0cf9 removed the per-map death levels this used to start from: the floor is now the one height
+	/// PlayerMoveController kills below, two meters under zero.
+	/// </para>
 	/// </summary>
 	public static IReadOnlyList<NaturalFlyZone> ForMap(string repoRoot, Aion.GameServer.Model.Templates.World.WorldMapTemplate? map, int mapId)
 	{
@@ -45,8 +49,11 @@ public sealed record NaturalFlyZone(string Name, bool Forbids, IReadOnlyList<(fl
 		if (map == null || !map.HasAttribute(Aion.GameServer.World.Zone.ZoneAttributes.Fly) || map.GetWorldSize() <= 0) return zones;
 		float size = map.GetWorldSize();
 		return [.. zones, new NaturalFlyZone($"WHOLE_MAP_{mapId}", false, [(0, 0), (size, 0), (size, size), (0, size)],
-			map.GetDeathLevel(), map.GetDeathLevel() + size)];
+			WorldFloorZ, WorldFloorZ + size)];
 	}
+
+	/// <summary>The lowest Z a player survives: PlayerMoveController kills below -2.</summary>
+	private const float WorldFloorZ = -2;
 
 	private static float Float(XElement node, string name) =>
 		float.Parse((string)node.Attribute(name)!, CultureInfo.InvariantCulture);

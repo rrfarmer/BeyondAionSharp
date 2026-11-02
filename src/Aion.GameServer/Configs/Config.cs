@@ -49,7 +49,7 @@ public static class Config
     {
         typeof(AdminConfig), typeof(CommandsConfig), typeof(AIConfig), typeof(AutoGroupConfig), typeof(CommonsConfig),
         typeof(CleaningConfig), typeof(CraftConfig), typeof(CustomConfig), typeof(DropConfig), typeof(EventsConfig),
-        typeof(FallDamageConfig), typeof(GSConfig), typeof(GeoDataConfig), typeof(GroupConfig), typeof(HousingConfig),
+        typeof(GSConfig), typeof(GeoDataConfig), typeof(GroupConfig), typeof(HousingConfig),
         typeof(HTMLConfig), typeof(InstanceConfig), typeof(LegionConfig), typeof(LoggingConfig),
         typeof(MembershipConfig), typeof(NameConfig), typeof(PeriodicSaveConfig), typeof(PlayerTransferConfig),
         typeof(PricesConfig), typeof(PunishmentConfig), typeof(RankingConfig), typeof(RatesConfig), typeof(SecurityConfig),
@@ -73,7 +73,6 @@ public static class Config
         typeof(CustomConfig),
         typeof(DropConfig),
         typeof(EventsConfig),
-        typeof(FallDamageConfig),
         typeof(GSConfig),
         typeof(GeoDataConfig),
         typeof(GroupConfig),

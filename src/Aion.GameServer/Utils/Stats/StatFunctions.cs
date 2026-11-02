@@ -610,19 +610,10 @@ public class StatFunctions
         return (int)Limit(StatEnum.MAGICAL_RESIST, resistRate);
     }
 
-    public static int CalculateFallDamage(Player player, float distance)
+    /// <summary>Damage of a non-lethal fall: 1% of max HP plus 4 per meter.</summary>
+    public static int CalculateFallDamage(Player player, float height)
     {
-        int fallDamage = 0;
-        if (distance >= FallDamageConfig.MAXIMUM_DISTANCE_DAMAGE)
-        {
-            fallDamage = player.GetLifeStats().GetCurrentHp();
-        }
-        else if (distance >= FallDamageConfig.MINIMUM_DISTANCE_DAMAGE)
-        {
-            float dmgPerMeter = player.GetLifeStats().GetMaxHp() * FallDamageConfig.FALL_DAMAGE_PERCENTAGE / 100f;
-            fallDamage = (int)(distance * dmgPerMeter);
-        }
-        return fallDamage;
+        return (int)(player.GetLifeStats().GetMaxHp() * height * 0.01f + height * 4);
     }
 
     // Java's authored combinations: forward loses defense penalties when combined with another direction.

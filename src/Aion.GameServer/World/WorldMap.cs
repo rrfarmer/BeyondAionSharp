@@ -45,11 +45,6 @@ public class WorldMap : IEnumerable<WorldMapInstance>
         return worldMapTemplate.GetWaterLevel();
     }
 
-    public int GetDeathLevel()
-    {
-        return worldMapTemplate.GetDeathLevel();
-    }
-
     public WorldType GetWorldType()
     {
         return worldMapTemplate.GetWorldType();

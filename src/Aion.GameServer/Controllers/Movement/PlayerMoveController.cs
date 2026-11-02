@@ -1,5 +1,4 @@
 using System;
-using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.Players;
@@ -7,6 +6,7 @@ using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Stats;
 using Aion.GameServer.World;
+using Aion.GameServer.World.Geo;
 using SM_ATTACK_STATUS = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
 
 namespace Aion.GameServer.Controllers.Movement;
@@ -14,8 +14,14 @@ namespace Aion.GameServer.Controllers.Movement;
 /// <summary>Java parity: controllers/movement/PlayerMoveController (ATracer) : PlayableMoveController&lt;Player&gt;. Fall-damage + last-client-position tracking. Nested SmAttackStatus.TYPE/LOG enums qualified; currentTimeMillis→SystemClock.CurrentMillis; super→base. Base members (Owner/getMovementMask/updateLastMove)/WorldPosition/StatFunctions red-tolerated.</summary>
 public class PlayerMoveController : PlayableMoveController<Player>
 {
-    private float fallDistance;
-    private float lastFallZ;
+    /// <summary>
+    /// Heights in meters: no damage up to the first, death from the second on. A fall in mid air with no ground near enough below is lethal
+    /// past the third, or the fourth in fly zones.
+    /// </summary>
+    private const float MIN_FALL_DAMAGE_HEIGHT = 10, LETHAL_FALL_HEIGHT = 50, MAX_MIDAIR_FALL_HEIGHT = 50, MAX_MIDAIR_FALL_HEIGHT_IN_FLY_ZONE = 100;
+
+    private float fallStartZ = float.NaN;
+    private float lastZ = float.NaN;
     private byte lastMovementMask;
     private long lastPositionFromClientMillis;
     private WorldPosition lastPositionFromClient;
@@ -23,12 +29,6 @@ public class PlayerMoveController : PlayableMoveController<Player>
 
     public PlayerMoveController(Player owner) : base(owner)
     {
-    }
-
-    public override void AbortMove()
-    {
-        base.AbortMove();
-        StopFalling(Owner.GetZ());
     }
 
     public byte GetLastMovementMask()
@@ -105,39 +105,95 @@ public class PlayerMoveController : PlayableMoveController<Player>
                 lastPositionFromClient.GetHeading());
     }
 
+    /// <summary>
+    /// Called for move packets in which the player falls. A fall packet that already touches the ground counts as landing.
+    /// </summary>
     public void UpdateFalling(float newZ)
     {
-        if (lastFallZ != 0)
+        if (!float.IsNaN(GeoService.GetInstance().GetZ(Owner, newZ + 0.3f, newZ - 0.3f)))
         {
-            fallDistance += lastFallZ - newZ;
-            if (fallDistance >= FallDamageConfig.MAXIMUM_DISTANCE_MIDAIR && Owner.GetController().Die(SmAttackStatus.TYPE.FALL_DAMAGE, SmAttackStatus.LOG.REGULAR, Owner))
+            StopFalling(newZ);
+            return;
+        }
+        if (IsBelowWorld(newZ))
+        {
+            DieFromFall();
+            return;
+        }
+        if (!float.IsNaN(fallStartZ) && newZ < lastZ)
+        {
+            float height = fallStartZ - newZ;
+            float maxHeight = Owner.IsInsideFlyZone() ? MAX_MIDAIR_FALL_HEIGHT_IN_FLY_ZONE : MAX_MIDAIR_FALL_HEIGHT;
+            if (height > maxHeight && float.IsNaN(GeoService.GetInstance().GetWalkableZ(Owner, newZ, newZ - 2 * maxHeight)))
             {
-                PlayerReviveService.ScheduleReviveAtBase(Owner, 1000, 0);
+                DieFromFall();
                 return;
             }
         }
-        lastFallZ = newZ;
+        lastZ = newZ;
         Owner.GetObserveController().NotifyMoveObservers();
     }
 
+    /// <summary>
+    /// Called for all other move packets: the player stands on the ground, flies or glides.
+    /// </summary>
     public void StopFalling(float newZ)
     {
-        if (lastFallZ == 0)
-            return;
-
-        if (!Owner.IsFlying() && !Owner.IsDead())
+        if (IsBelowWorld(newZ))
         {
-            fallDistance += lastFallZ - newZ;
-            int damage = StatFunctions.CalculateFallDamage(Owner, fallDistance);
-            if (damage > 0)
+            DieFromFall();
+            return;
+        }
+        float height = fallStartZ - newZ;
+        if (!Owner.IsFlying() && height > MIN_FALL_DAMAGE_HEIGHT)
+        {
+            if (height >= LETHAL_FALL_HEIGHT)
             {
-                Owner.GetLifeStats().ReduceHp(SmAttackStatus.TYPE.FALL_DAMAGE, damage, 0, SmAttackStatus.LOG.REGULAR, Owner);
+                DieFromFall();
+                return;
+            }
+            if (!Owner.IsInSprintMode())
+            {
+                Owner.GetLifeStats().ReduceHp(SmAttackStatus.TYPE.FALL_DAMAGE, StatFunctions.CalculateFallDamage(Owner, height), 0, SmAttackStatus.LOG.REGULAR, Owner);
                 Owner.GetObserveController().NotifyAttackedObservers(Owner, 0);
             }
         }
-        fallDistance = 0;
-        lastFallZ = 0;
+        fallStartZ = newZ;
+        lastZ = newZ;
         Owner.GetObserveController().NotifyMoveObservers();
+    }
+
+    /// <summary>
+    /// Lets the next fall start at the given height, as after leaving a windstream or landing from free flight.
+    /// </summary>
+    public void RestartFalling(float z)
+    {
+        fallStartZ = z;
+        lastZ = z;
+    }
+
+    /// <summary>
+    /// Forgets where the current fall started, so a teleport or a landing from a flight path doesn't count as one.
+    /// </summary>
+    public void ResetFalling()
+    {
+        fallStartZ = float.NaN;
+        lastZ = float.NaN;
+    }
+
+    /// <summary>True if the player is more than 2 m below z 0.</summary>
+    private static bool IsBelowWorld(float z)
+    {
+        return z < -2;
+    }
+
+    private void DieFromFall()
+    {
+        ResetFalling();
+        if (Owner.IsDead())
+            return;
+        if (Owner.GetController().Die(SmAttackStatus.TYPE.FALL_DAMAGE, SmAttackStatus.LOG.REGULAR, Owner))
+            PlayerReviveService.BindRevive(Owner);
     }
 
     public void SetHasMovedByRandomMoveLocEffect(Skill skill)

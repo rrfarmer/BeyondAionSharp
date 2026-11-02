@@ -713,6 +713,7 @@ public class PlayerController : CreatureController<Player>
         {
             return;
         }
+        player.GetMoveController().ResetFalling();
         player.SetFlightPath(null);
         if (flightPath.GetType_() == FlightPath.Type.FLIGHT_TRANSPORTER)
             Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnFlightPathEnd(new Aion.GameServer.QuestEngine.Model.QuestEnv(null, player, 0), flightPath.GetId());

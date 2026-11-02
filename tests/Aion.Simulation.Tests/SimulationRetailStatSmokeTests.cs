@@ -58,7 +58,7 @@ public sealed partial class SimulationFastScenarioTests
             var spot = DataManager.SPAWNS_DATA.GetSpawnsByWorldId(group.Key).SelectMany(g => g.GetSpawnTemplates()).FirstOrDefault()
                 ?? Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(group.Key, group.First().Profile.NpcId,
                     Math.Max(64, map.GetWorldSize() / 2f), Math.Max(64, map.GetWorldSize() / 2f),
-                    Math.Max(map.GetWaterLevel(), map.GetDeathLevel()) + 100, 0);
+                    map.GetWaterLevel() + 100, 0);
             await TeleportForSetupAsync(session, player, group.Key, spot.GetX() + .5f, spot.GetY(), spot.GetZ(), token);
             await session.SynchronizeAsync(token);
             foreach (var member in group)

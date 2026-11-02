@@ -93,6 +93,7 @@ public class CM_WINDSTREAM : AionClientPacket
                 player.SetState(CreatureState.ACTIVE);
                 player.UnsetFlyState(FlyState.FLYING);
                 player.UnsetFlyState(FlyState.GLIDING);
+                player.GetMoveController().RestartFalling(player.GetZ());
                 if (state == WindstreamState.LEAVE_GLIDING)
                     player.GetFlyController().SwitchToGliding();
                 else

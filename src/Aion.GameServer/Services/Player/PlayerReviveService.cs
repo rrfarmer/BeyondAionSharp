@@ -115,8 +115,7 @@ public class PlayerReviveService
             Revive(player, 100, 100, false, skillId);
         else
             Revive(player, 25, 25, true, skillId);
-        if (skillId > 0)
-            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_REBIRTH_MASSAGE_ME());
+        PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_REBIRTH_MASSAGE_ME());
         player.GetGameStats().UpdateStatsAndSpeedVisually();
         if (player.IsInPrison())
         {
@@ -166,9 +165,8 @@ public class PlayerReviveService
         if (kisk != null && kisk.IsActive())
         {
             kisk.ResurrectionUsed();
-            if (skillId > 0)
-                PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_REBIRTH_MASSAGE_ME());
             Revive(player, 30, 30, false, skillId);
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_REBIRTH_MASSAGE_ME());
             player.GetGameStats().UpdateStatsAndSpeedVisually();
             player.UnsetResPosState();
             TeleportService.TeleportTo(player, kisk.GetPosition());
@@ -193,9 +191,10 @@ public class PlayerReviveService
         if (player.GetPosition().GetWorldMapInstance().GetInstanceHandler().OnReviveEvent(player))
             return;
         WorldMap map = Aion.GameServer.World.World.GetInstance().GetWorldMap(player.GetWorldId());
-        if (map == null)
+        WorldPosition startPos = player.GetPosition().GetWorldMapInstance().GetStartPos();
+        if (map == null || !map.IsInstanceType() || startPos == null)
         {
-            BindRevive(player);
+            BindRevive(player, skillId);
             return;
         }
         Revive(player, 25, 25, true, skillId);
@@ -203,13 +202,7 @@ public class PlayerReviveService
         player.GetGameStats().UpdateStatsAndSpeedVisually();
         PacketSendUtility.SendPacket(player, new SM_PLAYER_INFO(player));
         PacketSendUtility.SendPacket(player, SM_MOTION.PlayerMotions(player));
-        if (map.IsInstanceType() && player.GetPosition().GetWorldMapInstance().GetStartPos() != null)
-        {
-            WorldPosition pos = player.GetPosition().GetWorldMapInstance().GetStartPos();
-            TeleportService.TeleportTo(player, pos.GetMapId(), pos.GetX(), pos.GetY(), pos.GetZ());
-        }
-        else
-            BindRevive(player);
+        TeleportService.TeleportTo(player, startPos.GetMapId(), startPos.GetX(), startPos.GetY(), startPos.GetZ());
         player.UnsetResPosState();
     }
 

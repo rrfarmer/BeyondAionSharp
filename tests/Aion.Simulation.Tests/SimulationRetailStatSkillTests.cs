@@ -126,7 +126,7 @@ public sealed partial class SimulationFastScenarioTests
                 ??DataManager.SPAWNS_DATA.GetSpawnsByWorldId(group.Key).SelectMany(s=>s.GetSpawnTemplates()).FirstOrDefault();
             bool syntheticAnchor=spot is null;
             spot??=Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(group.Key,group.First().Profile.NpcId,
-                Math.Max(64,map.GetWorldSize()/2f),Math.Max(64,map.GetWorldSize()/2f),Math.Max(map.GetWaterLevel(),map.GetDeathLevel())+100,0);
+                Math.Max(64,map.GetWorldSize()/2f),Math.Max(64,map.GetWorldSize()/2f),map.GetWaterLevel()+100,0);
             bool positioned=false;
             foreach(var c in group)
             {

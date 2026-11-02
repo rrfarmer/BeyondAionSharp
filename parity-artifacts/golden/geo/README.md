@@ -88,3 +88,8 @@ The generator and exact reference geo sources were compiled into ignored artifac
 keeping the Java checkout read-only. The removed shield input came from the retained
 oracle snapshot. Only the Ishalgen NPC XML hash changed; all 4,275 points, query
 counts, and `starter-queries.jsonl` bytes remain identical.
+
+Rehashed on 2026-11-02 for Java `82a5e0cf9`, which removed the per-map `death_level`
+attribute from every map. Only the `world_maps.xml` hash changed; the attribute is read
+by nothing in the geo path, and all 4,275 points, query counts, and
+`starter-queries.jsonl` bytes remain identical.

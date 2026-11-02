@@ -9,7 +9,7 @@ using SM_ATTACK_STATUS = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStat
 namespace Aion.GameServer.World.Zone;
 
 /// <summary>
-/// Java parity: world/zone/ZoneLevelService (ATracer). Checks water level (start drowning) and map death level (die).
+/// Java parity: world/zone/ZoneLevelService (ATracer). Checks water level (start drowning).
 /// Anonymous Runnable + scheduleAtFixedRate(0, period) -> ScheduleAtFixedRateTask(ct => {...; return ValueTask.CompletedTask;},
 /// TimeSpan, TimeSpan) per the reworked async ThreadPoolManager API. World.GetInstance/
 /// GetWorldMap red-tolerated (World is a partially-ported god class).
@@ -18,7 +18,7 @@ public class ZoneLevelService
 {
     private const long DROWN_PERIOD = 1000;
 
-    /// <summary>Check water level (start drowning) and map death level (die)</summary>
+    /// <summary>Check water level (start drowning)</summary>
     public static void CheckZoneLevels(Player player)
     {
         World world = Aion.GameServer.World.World.GetInstance();
@@ -26,12 +26,6 @@ public class ZoneLevelService
 
         if (player.IsDead())
             return;
-
-        if (z < world.GetWorldMap(player.GetWorldId()).GetDeathLevel())
-        {
-            player.GetController().Die();
-            return;
-        }
 
         float defaultEyeHeight = player.GetGender() == Gender.MALE ? 1.7f : 1.58f; // eye_height from client_PCRace.xml
         float eyeHeight = player.GetPlayerAppearance().GetHeightScale() * defaultEyeHeight;

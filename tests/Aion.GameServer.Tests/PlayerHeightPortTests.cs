@@ -43,7 +43,7 @@ public sealed class PlayerHeightPortTests
         using var fixture = Fixture();
         using var h = BossAiHarness.For().Build();
         var map = h.World.GetWorldMap(BossAiHarness.DefaultMapId).GetTemplate();
-        map.WaterLevel = 100; map.DeathLevel = -100;
+        map.WaterLevel = 100;
         var player = h.SpawnPlayer(z: 100);
         var cases = fixture.RootElement.GetProperty("cases");
         Assert.Equal(30, cases.GetArrayLength());

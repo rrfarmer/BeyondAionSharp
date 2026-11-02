@@ -90,7 +90,7 @@ public sealed partial class SimulationFastScenarioTests
             // combat context; it makes no placement, travel or collision claim.
             spot ??= Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(fixtureMap,group.First().Profile.NpcId,
                 Math.Max(64,map.GetWorldSize()/2f),Math.Max(64,map.GetWorldSize()/2f),
-                Math.Max(map.GetWaterLevel(),map.GetDeathLevel())+100,0);
+                map.GetWaterLevel()+100,0);
             bool positioned = false;
             foreach (var member in group)
             {

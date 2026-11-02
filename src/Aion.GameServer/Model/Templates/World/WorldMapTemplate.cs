@@ -18,7 +18,6 @@ public class WorldMapTemplate : IL10n
     [XmlAttribute("max_user")]   public int    MaxUser            { get; set; }
     [XmlAttribute("prison")]     public bool   Prison             { get; set; }
     [XmlAttribute("instance")]   public bool   Instance           { get; set; }
-    [XmlAttribute("death_level")] public int   DeathLevel         { get; set; }
     [XmlAttribute("water_level")] public int   WaterLevel         { get; set; } = 16;
     [XmlAttribute("world_type")] public WorldType WorldType       { get; set; } = WorldType.NONE;
     [XmlAttribute("world_size")] public int    WorldSize          { get; set; }
@@ -74,7 +73,6 @@ public class WorldMapTemplate : IL10n
     public bool   IsInstance()        => Instance;
     public bool   IsInstanceType()    => Instance;
     public int    GetWaterLevel()     => WaterLevel;
-    public int    GetDeathLevel()     => DeathLevel;
     public WorldType GetWorldType()   => WorldType;
     public int    GetWorldSize()      => WorldSize;
     public WorldDropType GetWorldDropType() => DropWorldType;
