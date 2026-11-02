@@ -181,6 +181,9 @@ public class AionConnection : AConnection<AionServerPacket>
                                     recorder!.OnClientPacketHandled(this, recordedPayload, pck, "flood-disconnect", stateBefore);
                                 return false;
                             }
+                            if (recordedPayload != null)
+                                recorder!.OnClientPacketHandled(this, recordedPayload, pck, "flood-dropped", stateBefore);
+                            return true; // mode 1: drop the packet instead of executing it
                         }
                     }
                 }

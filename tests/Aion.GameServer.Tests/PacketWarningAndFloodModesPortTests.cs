@@ -34,11 +34,15 @@ public sealed class PacketWarningAndFloodModesPortTests
         Assert.Equal(3, capture.Entries.Count(e => e.Message.Contains("shorter than expected")));
     }
 
+    /// <summary>
+    /// Upstream 55d0af937 made mode 1 drop the flooding packet as well as warn about it, so a flooded packet is no
+    /// longer executed in any mode: mode 1 keeps the connection and skips the packet, mode 2 disconnects.
+    /// </summary>
     [Theory]
-    [InlineData(0, 1, true, 2)]
-    [InlineData(1, 1, true, 2)]
-    [InlineData(2, 1, false, 1)]
-    [InlineData(2, 100, true, 2)]
+    [InlineData(0, 1, true, 2)] // off: the packet runs
+    [InlineData(1, 1, true, 1)] // flooding, dropped: connection kept, packet not executed
+    [InlineData(2, 1, false, 1)] // flooding, disconnected
+    [InlineData(2, 100, true, 2)] // within the threshold
     public void RealEncryptedPacketsUseModeOneForWarningsAndModeTwoForDisconnects(int mode, int elapsed, bool accepted, int executed)
     {
         int previousMode = PffConfig.PFF_MODE;
