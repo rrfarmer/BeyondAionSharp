@@ -20,9 +20,7 @@ public class _18400TheVanishings : AbstractQuestHandler
         qe.RegisterQuestNpc(799552).AddOnQuestStart(questId);
         qe.RegisterQuestNpc(799552).AddOnTalkEvent(questId);
         qe.RegisterQuestNpc(799584).AddOnTalkEvent(questId);
-        // D31: Java never registers Koray, so his end branch is unreachable (docs/upstream-reports/).
-        qe.RegisterQuestNpc(799585).AddOnTalkEvent(questId);
-        qe.RegisterQuestNpc(730014).AddOnTalkEvent(questId);
+        qe.RegisterQuestNpc(799585).AddOnTalkEvent(questId); // D31, adopted by upstream db5ae0453, which also dropped 730014
     }
 
     public override bool OnDialogEvent(QuestEnv env)

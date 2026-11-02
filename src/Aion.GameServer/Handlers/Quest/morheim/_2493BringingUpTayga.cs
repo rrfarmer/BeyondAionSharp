@@ -20,6 +20,9 @@ public class _2493BringingUpTayga : AbstractQuestHandler
         qe.RegisterOnLogOut(questId);
         qe.RegisterQuestNpc(204325).AddOnTalkEvent(questId);
         qe.RegisterQuestNpc(204435).AddOnTalkEvent(questId);
+        qe.RegisterQuestNpc(204436).AddOnTalkEvent(questId);
+        qe.RegisterQuestNpc(204437).AddOnTalkEvent(questId);
+        qe.RegisterQuestNpc(204438).AddOnTalkEvent(questId);
     }
 
     public override bool OnDialogEvent(QuestEnv env)

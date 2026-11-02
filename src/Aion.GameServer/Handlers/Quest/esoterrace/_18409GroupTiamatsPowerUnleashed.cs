@@ -21,7 +21,7 @@ public class _18409GroupTiamatsPowerUnleashed : AbstractQuestHandler
         qe.RegisterQuestNpc(799553).AddOnQuestStart(questId);
         qe.RegisterQuestNpc(799553).AddOnTalkEvent(questId);
         qe.RegisterQuestNpc(799552).AddOnTalkEvent(questId);
-        qe.RegisterQuestNpc(730014).AddOnTalkEvent(questId);
+        qe.RegisterQuestNpc(205232).AddOnTalkEvent(questId);
         qe.RegisterQuestNpc(215795).AddOnKillEvent(questId);
     }
 

@@ -1,8 +1,10 @@
 using Aion.GameServer.Model;
+using Aion.GameServer.Model.Animations;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.QuestEngine.Handlers;
 using Aion.GameServer.QuestEngine.Model;
+using Aion.GameServer.Services.Teleport;
 using Aion.GameServer.World.Zone;
 
 namespace Aion.GameServer.Handlers.Quest
@@ -18,8 +20,7 @@ namespace Aion.GameServer.Handlers.Quest
 
         public override void Register()
         {
-            // D30: Java never registers the teleport devices 730888 and 730898, so the var 10 -> 11 -> REWARD
-            // steps are unreachable (docs/upstream-reports/).
+            // D30, adopted by upstream db5ae0453: the teleport devices 730888 and 730898 carry the var 10 -> 11 -> REWARD steps.
             int[] npc_ids = { 204052, 801224, 203550, 203654, 204369, 730888, 730898 };
             qe.RegisterOnQuestCompleted(questId);
             qe.RegisterOnLevelChanged(questId);
@@ -51,9 +52,7 @@ namespace Aion.GameServer.Handlers.Quest
                             case DialogAction.QUEST_SELECT:
                                 return SendQuestDialog(env, 1011);
                             case DialogAction.SETPRO1:
-                                qs.SetQuestVar(1);
-                                UpdateQuestStatus(env);
-                                return CloseDialogWindow(env);
+                                return DefaultCloseDialog(env, 0, 1);
                         }
                         break;
                     case 801224:// Rapidfire Rita
@@ -62,9 +61,7 @@ namespace Aion.GameServer.Handlers.Quest
                             case DialogAction.QUEST_SELECT:
                                 return SendQuestDialog(env, 1352);
                             case DialogAction.SETPRO2:
-                                qs.SetQuestVar(2);
-                                UpdateQuestStatus(env);
-                                return CloseDialogWindow(env);
+                                return DefaultCloseDialog(env, 1, 2);
                         }
                         break;
                     case 203550:// Munin
@@ -75,9 +72,7 @@ namespace Aion.GameServer.Handlers.Quest
                             case DialogAction.SETPRO3:
                                 if (!GiveQuestItem(env, 182215394, 1))
                                     return true;
-                                qs.SetQuestVar(3);
-                                UpdateQuestStatus(env);
-                                return CloseDialogWindow(env);
+                                return DefaultCloseDialog(env, 2, 3);
                         }
                         break;
                     case 203654:// Aurtri
@@ -88,9 +83,7 @@ namespace Aion.GameServer.Handlers.Quest
                             case DialogAction.SETPRO5:
                                 if (!GiveQuestItem(env, 182215395, 1))
                                     return true;
-                                qs.SetQuestVar(5);
-                                UpdateQuestStatus(env);
-                                return CloseDialogWindow(env);
+                                return DefaultCloseDialog(env, 4, 5);
                         }
                         break;
                     case 204369:// Tyr
@@ -109,35 +102,26 @@ namespace Aion.GameServer.Handlers.Quest
                             case DialogAction.SETPRO7:
                                 if (!GiveQuestItem(env, 182215396, 1))
                                     return true;
-                                qs.SetQuestVar(7);
-                                UpdateQuestStatus(env);
-                                return CloseDialogWindow(env);
+                                return DefaultCloseDialog(env, 6, 7);
                             case DialogAction.SETPRO9:
-                                qs.SetQuestVar(9);
-                                UpdateQuestStatus(env);
-                                return CloseDialogWindow(env);
+                                TeleportService.TeleportTo(player, player.GetWorldMapInstance(), 3028.1926f, 873.0997f, 362.875f, (byte) 15, TeleportAnimation.FADE_OUT_BEAM);
+                                return DefaultCloseDialog(env, 8, 9);
                         }
                         break;
-                    case 730888: // Teleporter Device
-                        switch (dialogActionId)
+                    case 730888: // Large Teleporter
+                        if (dialogActionId == DialogAction.QUEST_SELECT && ChangeQuestStep(env, 10, 11))
                         {
-                            case DialogAction.QUEST_SELECT:
-                                // TODO:play movie find movie ID
-                                env.GetVisibleObject().GetController().Delete();
-                                qs.SetQuestVar(11);
-                                UpdateQuestStatus(env);
-                                Spawn(730898, player, (float) 262.9, (float) 224.5, (float) 212.2, (byte) 95); // Broken Teleporter Device
-                                break;
+                            PlayQuestMovie(env, 888);
+                            env.GetVisibleObject().GetController().Delete();
+                            Spawn(730898, player, 257, 257, 226.35f, (byte) 95); // Broken Large Teleporter
+                            return true;
                         }
                         break;
-                    case 730898: // Broken Teleporter
-                        switch (dialogActionId)
+                    case 730898: // Broken Large Teleporter
+                        if (dialogActionId == DialogAction.QUEST_SELECT && DefaultCloseDialog(env, 11, 11, true, false))
                         {
-                            case DialogAction.QUEST_SELECT:
-                                env.GetVisibleObject().GetController().Delete();
-                                qs.SetStatus(QuestStatus.REWARD);
-                                UpdateQuestStatus(env);
-                                break;
+                            TeleportService.TeleportTo(player, 120010000, 1275.37f, 1169.885f, 215.21492f, (byte) 90, TeleportAnimation.FADE_OUT_BEAM);
+                            return true;
                         }
                         break;
                 }
@@ -195,17 +179,28 @@ namespace Aion.GameServer.Handlers.Quest
         public override bool OnEnterWorldEvent(QuestEnv env)
         {
             Player player = env.GetPlayer();
+            if (player.GetWorldId() != 320040000 || player.GetWorldMapInstance().GetNpcs(730888, 730898).Count > 0)
+                return false;
             QuestState qs = player.GetQuestStateList().GetQuestState(questId);
-            if (qs != null && qs.GetStatus() == QuestStatus.START)
+            if (qs == null || qs.GetStatus() != QuestStatus.START)
+                return false;
+            int var = qs.GetQuestVars().GetQuestVars();
+            if (var == 9 || var == 10)
+                Spawn(730888, player, 257, 257, 226.35f, (byte) 95); // Large Teleporter
+            else if (var == 11)
+                Spawn(730898, player, 257, 257, 226.35f, (byte) 95); // Broken Large Teleporter
+            if (var == 9)
             {
-                int var = qs.GetQuestVars().GetQuestVars();
-                if (var == 9 && player.GetWorldId() == 320040000)
-                {
-                    SpawnForFiveMinutes(730888, player.GetWorldMapInstance(), (float) 262.9, (float) 224.5, (float) 211.2, (byte) 95);// Shattered Large Teleporter
-                    SpawnForFiveMinutes(233879, player.GetWorldMapInstance(), (float) 262.9, (float) 224.5, (float) 211.2, (byte) 95);// Captain Hagarkan
-                }
+                // Captain Hagarkan
+                Spawn(233879, player, 262.9f, 224.5f, 211.2f, (byte) 95);
+                // 5x Baranath Sentinel
+                Spawn(233886, player, 217.015f, 221.694f, 207.49455f, (byte) 97);
+                Spawn(233886, player, 239.732f, 211.250f, 209.19f, (byte) 97);
+                Spawn(233886, player, 257.065f, 204.49f, 209.094f, (byte) 97);
+                Spawn(233886, player, 274.899f, 199.398f, 208.83487f, (byte) 97);
+                Spawn(233886, player, 282.878f, 223.742f, 208.252f, (byte) 97);
             }
-            return false;
+            return true;
         }
 
         public override bool OnKillEvent(QuestEnv env)

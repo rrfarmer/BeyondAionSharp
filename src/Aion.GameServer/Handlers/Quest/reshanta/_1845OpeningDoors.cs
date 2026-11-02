@@ -2,11 +2,9 @@ using System.Threading.Tasks;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.QuestEngine.Handlers;
 using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Services;
-using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Handlers.Quest;
 
@@ -24,6 +22,7 @@ public class _1845OpeningDoors : AbstractQuestHandler
         qe.RegisterQuestNpc(278591).AddOnTalkEvent(questId);
         qe.RegisterQuestNpc(278624).AddOnTalkEvent(questId);
         qe.RegisterQuestNpc(798316).AddOnTalkEvent(questId);
+        qe.RegisterQuestNpc(204390).AddOnTalkEvent(questId);
         qe.RegisterQuestItem(182202181, questId);
     }
 
@@ -32,9 +31,7 @@ public class _1845OpeningDoors : AbstractQuestHandler
         Player player = env.GetPlayer();
         QuestState qs = player.GetQuestStateList().GetQuestState(questId);
 
-        int targetId = 0;
-        if (env.GetVisibleObject() is Npc)
-            targetId = ((Npc)env.GetVisibleObject()).GetNpcId();
+        int targetId = env.GetVisibleObject() is Npc npc ? npc.GetNpcId() : 0;
         if (targetId == 0)
         {
             if (env.GetDialogActionId() == DialogAction.QUEST_ACCEPT_1 && (qs == null || qs.IsStartable()))
@@ -43,59 +40,39 @@ public class _1845OpeningDoors : AbstractQuestHandler
                 return CloseDialogWindow(env);
             }
         }
-        else if (targetId == 278591)
+        else if (targetId == 278591) // Deidamia
         {
-            if (qs != null)
+            if (qs != null && qs.GetStatus() == QuestStatus.START)
             {
                 if (env.GetDialogActionId() == DialogAction.QUEST_SELECT)
                     return SendQuestDialog(env, 1352);
                 else if (env.GetDialogActionId() == DialogAction.SETPRO1)
-                {
-                    qs.SetQuestVarById(0, qs.GetQuestVarById(0) + 1);
-                    UpdateQuestStatus(env);
-                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
-                    return true;
-                }
-                else
-                    return SendQuestStartDialog(env);
+                    return DefaultCloseDialog(env, 0, 1);
             }
         }
-        else if (targetId == 798316)
+        else if (targetId == 278624) // Lycian
         {
-            if (qs != null)
+            if (qs != null && qs.GetStatus() == QuestStatus.START)
             {
                 if (env.GetDialogActionId() == DialogAction.QUEST_SELECT)
-                    return SendQuestDialog(env, 1352);
-                else if (env.GetDialogActionId() == DialogAction.SETPRO1)
-                {
-                    qs.SetQuestVarById(0, qs.GetQuestVarById(0) + 1);
-                    UpdateQuestStatus(env);
-                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
-                    return true;
-                }
-                else
-                    return SendQuestStartDialog(env);
+                    return SendQuestDialog(env, 1693);
+                else if (env.GetDialogActionId() == DialogAction.SETPRO2)
+                    return DefaultCloseDialog(env, 1, 2);
             }
         }
-        else if (targetId == 204390)
+        else if (targetId == 798316) // Anusis
         {
-            if (qs != null)
+            if (qs != null && qs.GetStatus() == QuestStatus.START)
             {
-                if (env.GetDialogActionId() == DialogAction.QUEST_SELECT && qs.GetStatus() == QuestStatus.START)
-                {
+                if (env.GetDialogActionId() == DialogAction.QUEST_SELECT)
                     return SendQuestDialog(env, 2375);
-                }
-                else if (env.GetDialogActionId() == DialogAction.SELECT_QUEST_REWARD && qs.GetStatus() != QuestStatus.COMPLETE)
+                else if (env.GetDialogActionId() == DialogAction.SELECT_QUEST_REWARD)
                 {
                     RemoveQuestItem(env, 182202181, 1);
-                    qs.SetQuestVar(1);
-                    qs.SetStatus(QuestStatus.REWARD);
-                    UpdateQuestStatus(env);
-                    return SendQuestEndDialog(env);
+                    return DefaultCloseDialog(env, 2, 2, true, true);
                 }
-                else
-                    return SendQuestEndDialog(env);
             }
+            return SendQuestEndDialog(env);
         }
         return false;
     }

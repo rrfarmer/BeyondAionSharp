@@ -20,8 +20,7 @@ public class _2916ManInTheLongBlackRobe : AbstractQuestHandler
         qe.RegisterQuestNpc(204141).AddOnTalkEvent(questId);
         qe.RegisterQuestNpc(204152).AddOnTalkEvent(questId);
         qe.RegisterQuestNpc(204150).AddOnTalkEvent(questId);
-        // D28: Java never registers Annju, so his var 2 -> 3 step is unreachable (docs/upstream-reports/).
-        qe.RegisterQuestNpc(204151).AddOnTalkEvent(questId);
+        qe.RegisterQuestNpc(204151).AddOnTalkEvent(questId); // D28, adopted by upstream db5ae0453
         qe.RegisterQuestNpc(798033).AddOnTalkEvent(questId);
         qe.RegisterQuestNpc(203673).AddOnTalkEvent(questId);
         qe.RegisterQuestNpc(700211).AddOnTalkEvent(questId);
