@@ -120,7 +120,7 @@ namespace Aion.GameServer.Handlers.Quest
                                 PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 0));
                                 // Create instance
                                 WorldMapInstance newInstance = InstanceService.GetNextAvailableInstance(WorldMapType.ATAXIAR_B.GetId(), player);
-                                TeleportService.TeleportTo(player, newInstance, 457.65f, 426.8f, 230.4f);
+                                TeleportService.TeleportTo(player, newInstance, 458.68f, 426.5f, 230.3f, (byte)75, TeleportAnimation.FADE_OUT_BEAM);
                                 return true;
                             }
                             return false;

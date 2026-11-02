@@ -29,7 +29,7 @@
     { "key": "q2008-v3-skuld", "questId": 2008, "var": 3, "mapId": 220010000, "npcId": 203546, "position": [1114.31, 1718.32, 271.179], "talkRange": 6,
       "actions": ["QUEST_SELECT", "SETPRO4"], "pages": [2034], "receivesItemId": 182203011, "teleport": { "mapId": 220010000, "position": [383.10248, 1895.3093, 327.625] } },
     { "key": "q2008-v4-munin", "questId": 2008, "var": 4, "mapId": 220010000, "npcId": 203550, "position": [378.74, 1895.46, 328.838], "talkRange": 6,
-      "actions": ["QUEST_SELECT", "SELECT5_1", "SETPRO5"], "pages": [2375, 2376], "movieId": 57, "teleport": { "mapId": 320020000, "position": [457.65, 426.8, 230.4] } },
+      "actions": ["QUEST_SELECT", "SELECT5_1", "SETPRO5"], "pages": [2375, 2376], "movieId": 57, "teleport": { "mapId": 320020000, "position": [458.68, 426.5, 230.3] } },
     { "key": "q2008-v99-hagen", "questId": 2008, "var": 99, "mapId": 320020000, "npcId": 205020, "position": [434.75, 399.5, 233.566], "talkRange": 6,
       "actions": ["QUEST_SELECT"], "pages": [], "flyPathId": 3 },
     { "key": "q2008-v6-munin-class", "questId": 2008, "var": 6, "mapId": 320020000, "npcId": 203550, "position": [301.93, 274.26, 205.7], "talkRange": 6,
@@ -56,7 +56,7 @@
   "dispatch": { "questId": 2904, "startsAfter": 2009, "startReward": 3, "classesPermitted": ["CHANTER", "CLERIC"], "unhandedWorkItemId": 182207004 },
   "instance": {
     "mapId": 320020000,
-    "entry": [457.65, 426.8, 230.4],
+    "entry": [458.68, 426.5, 230.3],
     "flyPathId": 3,
     "flyPathEnd": [308.21, 275.45, 206.27],
     "flightSeconds": 40,

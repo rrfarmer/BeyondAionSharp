@@ -90,7 +90,7 @@ namespace Aion.GameServer.Handlers.Quest
                                 return true;
                             case DialogAction.SETPRO3:
                                 WorldMapInstance newInstance = InstanceService.GetNextAvailableInstance(WorldMapType.KARAMATIS_B.GetId(), player);
-                                TeleportService.TeleportTo(player, newInstance, 52, 174, 229, (byte)10, TeleportAnimation.NONE);
+                                TeleportService.TeleportTo(player, newInstance, 52, 174, 229, (byte)10, TeleportAnimation.FADE_OUT_BEAM);
                                 qs.SetQuestVar(99); // 99
                                 UpdateQuestStatus(env);
                                 RemoveQuestItem(env, 182200009, 1);
