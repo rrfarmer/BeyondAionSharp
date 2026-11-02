@@ -173,11 +173,29 @@ public sealed class DecomposeCommandPortTests
             var template = new ItemTemplate { itemId = 199999991, castingDelay = 1000,
                 RestrictXml = "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
                 actions = new ItemActions { itemActions = new List<AbstractItemAction> { Action } } };
-            var data = new ItemData { its = new List<ItemTemplate> { template } };
+            var rewardTemplate = new ItemTemplate { itemId = 199999992, RestrictXml = "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1" };
+            var data = new ItemData { its = new List<ItemTemplate> { template, rewardTemplate } };
             data.AfterUnmarshal(null!);
             typeof(StaticData).GetProperty(nameof(StaticData.ItemDataDh))!.SetValue(harness.Data.StaticData, data);
+            // Upstream d254ea172 makes the command require a real decomposable entry (it reads the item's branches to
+            // exclude selectable boxes), so the bare holder this used to inject would now refuse every item.
+            var decomposables = new DecomposableItemsData
+            {
+                decomposableItems = new List<DecomposableItem>
+                {
+                    new()
+                    {
+                        itemId = template.itemId,
+                        sets = new List<DecomposableSet>
+                        {
+                            new() { items = new List<DecomposedItem> { new() { itemId = rewardTemplate.itemId } } },
+                        },
+                    },
+                },
+            };
+            decomposables.AfterUnmarshal(data, null);
             typeof(StaticData).GetProperty(nameof(StaticData.DecomposableItemsDataDh))!
-                .SetValue(harness.Data.StaticData, new DecomposableItemsData());
+                .SetValue(harness.Data.StaticData, decomposables);
             Item = new Item(991, template, 5, false, 0);
             var storage = (ItemStorage)typeof(Storage).GetField("itemStorage", BindingFlags.Instance | BindingFlags.NonPublic)!
                 .GetValue(Player.GetInventory())!;

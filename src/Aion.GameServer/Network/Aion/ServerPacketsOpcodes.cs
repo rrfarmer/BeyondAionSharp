@@ -248,9 +248,9 @@ public class ServerPacketsOpcodes
         AddPacketOpcode(279, typeof(SM_MARK_FRIENDLIST));
         AddPacketOpcode(280, typeof(SM_CHALLENGE_LIST));
         // AddPacketOpcode(283, typeof(SM_DISPUTE_LAND)); // not present in ServerPackets ns
-        AddPacketOpcode(284, typeof(SM_FIRST_SHOW_DECOMPOSABLE));
+        AddPacketOpcode(284, typeof(SM_SHOW_DECOMPOSABLE));
         AddPacketOpcode(285, typeof(SM_MEGAPHONE));
-        AddPacketOpcode(286, typeof(SM_SECONDARY_SHOW_DECOMPOSABLE));
+        AddPacketOpcode(286, typeof(SM_SELECT_DECOMPOSABLE_RESULT));
         AddPacketOpcode(288, typeof(SM_TUNE_RESULT));
         AddPacketOpcode(289, typeof(SM_UNWRAP_ITEM));
         AddPacketOpcode(290, typeof(SM_QUEST_REPEAT));

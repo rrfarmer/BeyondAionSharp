@@ -499,14 +499,15 @@ public sealed partial class StaticData
 		// (now-public skillTemplates) are merged via MergePending, then the single AfterUnmarshal builds the
 		// per-class/race templates map + templatesById (XmlSerializer doesn't auto-fire JAXB's afterUnmarshal).
 		SkillTreeDataDh = TryLoadMergedHolder(SkillTreeDataDh, Path.Combine(staticDataDirectory, "skill_tree"), (m, p) => m.MergePending(p), logger);
-		// Java imports the single file decomposable_items/decomposable_items.xml (<decomposable_items> root) and binds
-		// it to StaticData.decomposableItemsData; feeds DataManager.DECOMPOSABLE_ITEMS_DATA, read by DecomposeAction +
-		// CM_SELECT_DECOMPOSABLE for item-decompose rewards. Was a hollow new() -> always empty -> decompose yielded
-		// nothing. DecomposableItemInfo/ExtractedItemsCollection(:ResultedItemsCollection)/ResultedItem/RandomItem
+		// Java imports the decomposable_items dir with singleRootTag (<import file="decomposable_items" singleRootTag="true"/>,
+		// upstream d254ea172): decomposable_items.xml + custom_decomposable_items.xml both <decomposable_items> roots, merged
+		// into StaticData.decomposableItemsData; feeds DataManager.DECOMPOSABLE_ITEMS_DATA, read by DecomposeAction +
+		// CM_SELECT_DECOMPOSABLE for item-decompose rewards. The custom file's override="true" rows replace the retail ones,
+		// which is why all files must be read before the indexing runs. DecomposableItem/DecomposableSet/DecomposedItem
 		// primitive+enum attrs bind via the now-public fields; DecomposableItemsData.AfterUnmarshal cascades each
-		// ResultedItem/RandomItem.AfterUnmarshal children-first (validates reward item ids vs live ITEM_DATA +
-		// defaults/validates min/max counts) before the parent indexing (XmlSerializer doesn't auto-fire nested callbacks).
-		DecomposableItemsDataDh = TryLoadDecomposableItems(DecomposableItemsDataDh, Path.Combine(staticDataDirectory, "decomposable_items", "decomposable_items.xml"), ItemDataDh, logger);
+		// DecomposedItem.AfterUnmarshal children-first (validates reward item ids vs live ITEM_DATA + count and chance),
+		// then each DecomposableItem's own, before the parent indexing (XmlSerializer doesn't auto-fire nested callbacks).
+		DecomposableItemsDataDh = TryLoadDecomposableItems(DecomposableItemsDataDh, Path.Combine(staticDataDirectory, "decomposable_items"), ItemDataDh, logger);
 		// Java imports the single file quest_data/challenge_tasks.xml (<challenge_tasks> root) and binds it to
 		// StaticData.challengeData; feeds DataManager.CHALLENGE_DATA, read by ChallengeTaskService/ChallengeTasksDAO
 		// for legion/town challenge tasks. Was a hollow new() -> always empty -> challenge tasks unavailable.
@@ -685,29 +686,41 @@ public sealed partial class StaticData
 	// and invoke the ItemData overload explicitly with the already-loaded ItemDataDh. Mirrors Java's StaticDataListener.
 	private DecomposableItemsData TryLoadDecomposableItems(
 		DecomposableItemsData fallback,
-		string xmlFilePath,
+		string directory,
 		ItemData itemData,
 		Microsoft.Extensions.Logging.ILogger? logger,
 		StaticDataHolderRequirement? requirementOverride = null)
 	{
-		var requirement = requirementOverride ?? ClassifyHolderSource(xmlFilePath);
+		var requirement = requirementOverride ?? ClassifyHolderSource(directory);
 		try
 		{
-			if (!File.Exists(xmlFilePath))
-				throw new FileNotFoundException($"Static data file not found: {xmlFilePath}", xmlFilePath);
+			if (!Directory.Exists(directory))
+				throw new DirectoryNotFoundException($"Static data directory not found: {directory}");
 
-			var holder = LoadingUtils.JaxbHolderLoader.DeserializeFile<DecomposableItemsData>(xmlFilePath);
-			holder.AfterUnmarshal(itemData, null);
-			return holder;
+			DecomposableItemsData? merged = null;
+			foreach (var file in Directory.EnumerateFiles(directory, "*.xml", SearchOption.AllDirectories).OrderBy(f => f, StringComparer.Ordinal))
+			{
+				var part = LoadingUtils.JaxbHolderLoader.DeserializeFile<DecomposableItemsData>(file);
+				if (merged == null)
+					merged = part;
+				else
+					merged.MergePending(part);
+			}
+
+			if (merged == null)
+				throw new InvalidDataException($"Static data directory contains no XML files: {directory}");
+
+			merged.AfterUnmarshal(itemData, null);
+			return merged;
 		}
 		catch (Exception ex) when (requirement == StaticDataHolderRequirement.OptionalExtension)
 		{
-			logger?.LogError(ex, "Optional static data holder DecomposableItemsData failed to load from {Path}; preserving the current holder.", xmlFilePath);
+			logger?.LogError(ex, "Optional static data holder DecomposableItemsData failed to load from {Path}; preserving the current holder.", directory);
 			return fallback;
 		}
 		catch (Exception ex)
 		{
-			throw RequiredHolderFailure(typeof(DecomposableItemsData), xmlFilePath, ex);
+			throw RequiredHolderFailure(typeof(DecomposableItemsData), directory, ex);
 		}
 	}
 
@@ -1072,8 +1085,8 @@ public sealed partial class StaticData
 					currentDecomposableItem = null;
 				}
 
-				if (reader.Depth == 3 && reader.LocalName == "items" && currentDecomposableItem != null)
-					currentDecomposableItem.EndCollection();
+				if (reader.Depth == 3 && reader.LocalName == "set" && currentDecomposableItem != null)
+					currentDecomposableItem.EndSet();
 
 				if (reader.Depth == 3 && reader.LocalName == "purification_result" && currentItemPurificationResult != null && currentItemPurificationResults != null)
 				{
@@ -1517,7 +1530,9 @@ public sealed partial class StaticData
 			{
 				currentDecomposableItem = new DecomposableItemBuilder(
 					ReadRequiredIntAttribute(reader, "item_id"),
-					ReadBoolAttribute(reader, "selectable"));
+					ReadBoolAttribute(reader, "selectable"),
+					ReadBoolAttribute(reader, "only_one"),
+					ReadBoolAttribute(reader, "override"));
 				if (reader.IsEmptyElement)
 				{
 					decomposableItems.Add(currentDecomposableItem.ToSummary());
@@ -1577,15 +1592,17 @@ public sealed partial class StaticData
 				continue;
 			}
 
-			if (reader.Depth == 3 && reader.LocalName == "items" && currentDecomposableItem != null)
+			if (reader.Depth == 3 && reader.LocalName == "set" && currentDecomposableItem != null)
 			{
-				// Java parity: model/templates/rewards/ExtractedItemsCollection default chance/min/max values.
-				currentDecomposableItem.StartCollection(
+				// Java parity: model/templates/item/DecomposableSet default chance/level/race values.
+				currentDecomposableItem.StartSet(
 					ReadOptionalFloatAttribute(reader, "chance", 100f),
-					ReadOptionalIntAttribute(reader, "minlevel", 0),
-					ReadOptionalIntAttribute(reader, "maxlevel", 99));
+					ReadOptionalIntAttribute(reader, "min_level", 1),
+					ReadOptionalIntAttribute(reader, "max_level", 80),
+					reader.GetAttribute("race") ?? "PC_ALL",
+					ReadPlayerClasses(reader.GetAttribute("player_classes")));
 				if (reader.IsEmptyElement)
-					currentDecomposableItem.EndCollection();
+					currentDecomposableItem.EndSet();
 
 				continue;
 			}
@@ -1593,36 +1610,14 @@ public sealed partial class StaticData
 			if (reader.Depth == 4
 				&& reader.LocalName == "item"
 				&& currentDecomposableItem != null
-				&& elementPath.GetValueOrDefault(3) == "items")
+				&& elementPath.GetValueOrDefault(3) == "set")
 			{
-				var minCount = ReadOptionalIntAttribute(reader, "min_count", 1);
-				var maxCount = ReadOptionalIntAttribute(reader, "max_count", minCount);
-				if (maxCount == 0)
-					maxCount = minCount;
+				// Java parity: model/templates/item/DecomposedItem default count/chance values.
 				currentDecomposableItem.AddItem(
-					new ResultedItemSummary(
+					new DecomposedItemSummary(
 						ReadRequiredIntAttribute(reader, "id"),
-						minCount,
-						maxCount,
-						reader.GetAttribute("race") ?? "PC_ALL",
-						ReadPlayerClasses(reader.GetAttribute("player_classes"))));
-				continue;
-			}
-
-			if (reader.Depth == 4
-				&& reader.LocalName == "random_item"
-				&& currentDecomposableItem != null
-				&& elementPath.GetValueOrDefault(3) == "items")
-			{
-				var minCount = ReadOptionalIntAttribute(reader, "min_count", 1);
-				var maxCount = ReadOptionalIntAttribute(reader, "max_count", minCount);
-				if (maxCount == 0)
-					maxCount = minCount;
-				currentDecomposableItem.AddRandomItem(
-					new RandomItemSummary(
-						reader.GetAttribute("type") ?? string.Empty,
-						minCount,
-						maxCount));
+						ReadOptionalIntAttribute(reader, "count", 1),
+						ReadOptionalFloatAttribute(reader, "chance", 100f)));
 				continue;
 			}
 

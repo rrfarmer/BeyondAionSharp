@@ -52,8 +52,8 @@ public sealed class BotServerPacketDecoderTests
 		Assert.Contains(typeof(SM_BIND_POINT_INFO), decoder.PacketTypes);
 		Assert.Contains(typeof(SM_KISK_UPDATE), decoder.PacketTypes);
 		Assert.Contains(typeof(SM_UNWRAP_ITEM), decoder.PacketTypes);
-		Assert.Contains(typeof(SM_FIRST_SHOW_DECOMPOSABLE), decoder.PacketTypes);
-		Assert.Contains(typeof(SM_SECONDARY_SHOW_DECOMPOSABLE), decoder.PacketTypes);
+		Assert.Contains(typeof(SM_SHOW_DECOMPOSABLE), decoder.PacketTypes);
+		Assert.Contains(typeof(SM_SELECT_DECOMPOSABLE_RESULT), decoder.PacketTypes);
 		Assert.Contains(typeof(SM_TUNE_RESULT), decoder.PacketTypes);
 		Assert.Contains(typeof(SM_SKILL_REMOVE), decoder.PacketTypes);
 		Assert.Contains(typeof(SM_SKILL_ACTIVATION), decoder.PacketTypes);
@@ -247,8 +247,7 @@ public sealed class BotServerPacketDecoderTests
 	}
 
 	[Theory]
-	[InlineData(typeof(SM_FIRST_SHOW_DECOMPOSABLE), 2)]
-	[InlineData(typeof(SM_SECONDARY_SHOW_DECOMPOSABLE), 1)]
+	[InlineData(typeof(SM_SHOW_DECOMPOSABLE), 2)]
 	[InlineData(typeof(SM_UNWRAP_ITEM), 1)]
 	public void UnwrapAndBoxPreviewsMatchGoldenInputsAndRejectMalformedLengths(Type packetType, int caseCount)
 	{
@@ -277,6 +276,32 @@ public sealed class BotServerPacketDecoderTests
 			for (int length = 0; length < body.Length; length++)
 				Assert.Throws<InvalidDataException>(() => decoder.Decode(packetType, body[..length]));
 			Assert.Throws<InvalidDataException>(() => decoder.Decode(packetType, [.. body, 0]));
+		}
+	}
+
+	/// <summary>
+	/// Upstream d254ea172 answers a pick with this instead of an empty second preview: the box's object id and one byte
+	/// saying whether the chosen item was handed out. It carries no items, so it is not part of the preview theory above.
+	/// </summary>
+	[Fact]
+	public void SelectionResultDecodesBothVerdictsWithoutApplyingThemToInventory()
+	{
+		using var fixture = LoadFixture("SM_SELECT_DECOMPOSABLE_RESULT.json");
+		Assert.Equal(2, fixture.RootElement.GetProperty("cases").GetArrayLength());
+		foreach (var example in fixture.RootElement.GetProperty("cases").EnumerateArray())
+		{
+			var input = example.GetProperty("inputs");
+			byte[] body = Convert.FromHexString(example.GetProperty("payloadHex").GetString()!);
+			var packet = decoder.Decode(typeof(SM_SELECT_DECOMPOSABLE_RESULT), body);
+			Assert.Equal(input.GetProperty("objectId").GetInt32(), packet.Get<int>("objectId"));
+			Assert.Equal(0, packet.Get<int>("reserved"));
+			Assert.Equal(input.GetProperty("result").GetInt32() == 0, packet.Get<bool>("granted"));
+			var world = new Aion.Bots.World.BotWorldModel();
+			world.Apply(packet);
+			Assert.Empty(world.Inventory); // The verdict is not an inventory update; the item arrives in its own packet.
+			for (int length = 0; length < body.Length; length++)
+				Assert.Throws<InvalidDataException>(() => decoder.Decode(typeof(SM_SELECT_DECOMPOSABLE_RESULT), body[..length]));
+			Assert.Throws<InvalidDataException>(() => decoder.Decode(typeof(SM_SELECT_DECOMPOSABLE_RESULT), [.. body, 0]));
 		}
 	}
 
@@ -613,9 +638,9 @@ public sealed class BotServerPacketDecoderTests
 		var methods = typeof(SM_SYSTEM_MESSAGE).GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
 			.Where(method => method.Name.StartsWith("STR_", StringComparison.Ordinal))
 			.ToArray();
-		Assert.Equal(4_115, methods.Length);
+		Assert.Equal(4_116, methods.Length); // upstream d254ea172 added STR_MSG_CAN_NOT_DISASSEMBLE_LORE_ITEM
 		Assert.Equal(SystemMessageNames.FactoryCount, methods.Length);
-		Assert.Equal(4_110, SystemMessageNames.All.Count);
+		Assert.Equal(4_111, SystemMessageNames.All.Count);
 
 		var source = File.ReadAllText(Path.Combine(RepoRoot(),
 			"src", "Aion.GameServer", "Network", "Aion", "ServerPackets", "SM_SYSTEM_MESSAGE.cs"));

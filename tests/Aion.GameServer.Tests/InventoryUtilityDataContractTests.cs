@@ -24,22 +24,22 @@ public sealed class InventoryUtilityDataContractTests
 		var ore = data.ItemDataDh.GetItemTemplate(InventoryUtilityScenario.OreId);
 		Assert.Equal(3000, ore.GetCastingDelay());
 		Assert.Equal(0, ore.GetUseLimits().GetDelayTime());
-		var collection = Assert.Single(data.DecomposableItemsDataDh.GetInfoByItemId(InventoryUtilityScenario.OreId));
-		Assert.Empty(collection.GetRandomItems());
-		var reward = Assert.Single(collection.GetItems());
+		var ironOre = data.DecomposableItemsDataDh.Get(InventoryUtilityScenario.OreId);
+		Assert.False(ironOre.IsSelectable());
+		var oreSet = Assert.Single(ironOre.GetSets());
+		var reward = Assert.Single(oreSet.GetItems());
 		Assert.Equal(InventoryUtilityScenario.ProductId, reward.GetItemId());
-		Assert.Equal(3, reward.GetMinCount());
-		Assert.Equal(3, reward.GetMaxCount());
-		var choices = data.DecomposableItemsDataDh.GetSelectableItems(InventoryUtilityScenario.BoxId);
-		Assert.Equal(13, choices.Count);
-		Assert.Equal(InventoryUtilityScenario.Choices, choices.Select(choice => choice.GetItemId()));
-		foreach (var choice in choices)
-		{
-			Assert.Equal(1, choice.GetMinCount());
-			Assert.Equal(1, choice.GetMaxCount());
-			Assert.Null(choice.GetPlayerClasses());
-			Assert.Equal(Race.PC_ALL, choice.GetRace());
-		}
+		Assert.Equal(3, reward.GetCount());
+		Assert.Equal(100, reward.GetChance());
+		// Upstream d254ea172 reshaped this box from a selection window into an only_one box with a branch per class.
+		var box = data.DecomposableItemsDataDh.Get(InventoryUtilityScenario.BoxId);
+		Assert.False(box.IsSelectable());
+		var gladiator = Assert.Single(box.GetSets(), set => set.PlayerClassesRaw == nameof(PlayerClass.GLADIATOR));
+		Assert.Equal(InventoryUtilityScenario.GladiatorRolls, gladiator.GetItems().Select(item => item.GetItemId()).Order());
+		// The branch covers the whole roll, so the scenario's Gladiator always receives exactly one of its weapons.
+		Assert.Equal(100f, gladiator.GetItems().Sum(item => item.GetChance()), 2);
+		foreach (var item in gladiator.GetItems())
+			Assert.Equal(1, item.GetCount());
 		Assert.True(data.NpcDataDh.GetNpcTemplate(InventoryUtilityScenario.NpcId).SupportsAction(DialogAction.EXTEND_INVENTORY));
 		Assert.Equal(1000, data.CubeExpandDataDh.GetCubeExpansionTemplate(InventoryUtilityScenario.NpcId).GetPrice(1));
 		var spawns = XDocument.Load(Path.Combine(RealStaticData.RepoRoot(), "game-server/data/static_data/spawns/Npcs/110010000_Sanctum.xml"));

@@ -45,7 +45,8 @@ public class Decompose : PlayerCommand
         ItemActions itemActions = item.GetItemTemplate().GetActions();
         DecomposeAction decomposeAction = itemActions == null ? null
             : itemActions.GetItemActions().OfType<DecomposeAction>().FirstOrDefault();
-        if (decomposeAction == null || DataManager.DECOMPOSABLE_ITEMS_DATA.GetSelectableItems(item.GetItemId()) != null) // exclude selectable decomposables
+        Aion.GameServer.Model.Templates.Items.DecomposableItem decomposableItem = DataManager.DECOMPOSABLE_ITEMS_DATA.Get(item.GetItemId());
+        if (decomposeAction == null || decomposableItem == null || decomposableItem.IsSelectable())
         {
             PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_IT_CAN_NOT_BE_DECOMPOSED(item.GetItemTemplate().GetL10n()));
             return;
@@ -115,13 +116,15 @@ public class Decompose : PlayerCommand
         private void Run()
         {
             Item item = player.GetInventory().GetFirstItemByItemId(itemId);
+            if (item != null && player.HasCooldown(item)) // the previous decompose started it, wait for it instead of aborting
+                return;
             if (Interlocked.Increment(ref processedCount) >= count || item == null || item.GetItemCount() <= 0)
             {
                 outer.CancelTask(player, observer, "Decomposing finished: Processed " + Interlocked.Read(ref processedCount) + "x " + ChatUtil.Item(itemId) + ".");
                 return;
             }
 
-            if (!decomposeAction.CanAct(player, item, item))
+            if (!PlayerRestrictions.CanUseItem(player, item) || !decomposeAction.CanAct(player, item, item))
             {
                 observer.Abort();
                 return;

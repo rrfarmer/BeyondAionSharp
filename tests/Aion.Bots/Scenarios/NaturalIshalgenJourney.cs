@@ -2489,7 +2489,7 @@ public sealed partial class NaturalIshalgenJourney(INaturalJourneySession sessio
 								// The bundle asks which stone before it is used up (Java DecomposeAction, a selectable decomposable).
 								BotInventoryItem bundle = world.Inventory.Values.First(item => item.ItemId == NaturalStigma.BundleItemId);
 								await session.SendPacketAsync(session.Api.UseItem(bundle.ObjectId, runtime.Data.ItemDataDh.GetItemTemplate(bundle.ItemId)), token);
-								DecodedBotServerPacket offered = await session.WaitForPacketAsync(typeof(SM_FIRST_SHOW_DECOMPOSABLE), token, p => p.Get<int>("objectId") == bundle.ObjectId);
+								DecodedBotServerPacket offered = await session.WaitForPacketAsync(typeof(SM_SHOW_DECOMPOSABLE), token, p => p.Get<int>("objectId") == bundle.ObjectId);
 								BotDecomposableChoice pick = offered.Get<BotDecomposableChoice[]>("choices").SingleOrDefault(choice => choice.ItemId == stigma.StoneItemId)
 									?? throw new InvalidDataException($"The bundle does not offer a {combat.ClassProfile.Class} the stone {stigma.StoneItemId}.");
 								await session.SendPacketAsync(GameClientPackets.SelectDecomposable(bundle.ObjectId, pick.Index), token);

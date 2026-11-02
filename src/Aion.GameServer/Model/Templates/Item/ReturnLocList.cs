@@ -4,7 +4,7 @@ namespace Aion.GameServer.Model.Templates.Items;
 
 /// <summary>Java parity: model/templates/item/ReturnLocList (ginho1).</summary>
 [XmlType("ReturnLocList")]
-public class ReturnLocList : ResultedItemsCollection
+public class ReturnLocList
 {
     [XmlAttribute("index")] public int index;
     [XmlAttribute("worldid")] public int worldid;

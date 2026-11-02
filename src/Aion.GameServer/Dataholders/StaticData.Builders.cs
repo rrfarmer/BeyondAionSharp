@@ -572,47 +572,51 @@ public sealed partial class StaticData
 
 	private sealed class DecomposableItemBuilder
 	{
-		private readonly List<ExtractedItemsCollectionBuilder> _collections = [];
-		private ExtractedItemsCollectionBuilder? _currentCollection;
+		private readonly List<DecomposableSetBuilder> _sets = [];
+		private DecomposableSetBuilder? _currentSet;
 
-		public DecomposableItemBuilder(int itemId, bool isSelectable)
+		public DecomposableItemBuilder(int itemId, bool isSelectable, bool isOnlyOne, bool isOverride)
 		{
 			ItemId = itemId;
 			IsSelectable = isSelectable;
+			IsOnlyOne = isOnlyOne;
+			IsOverride = isOverride;
 		}
 
 		private int ItemId { get; }
 
 		private bool IsSelectable { get; }
 
-		public void StartCollection(float chance, int minLevel, int maxLevel)
+		private bool IsOnlyOne { get; }
+
+		private bool IsOverride { get; }
+
+		public void StartSet(float chance, int minLevel, int maxLevel, string race, IReadOnlySet<string> playerClasses)
 		{
-			_currentCollection = new ExtractedItemsCollectionBuilder(chance, minLevel, maxLevel);
-			_collections.Add(_currentCollection);
+			_currentSet = new DecomposableSetBuilder(chance, minLevel, maxLevel, race, playerClasses);
+			_sets.Add(_currentSet);
 		}
 
-		public void AddItem(ResultedItemSummary item)
+		public void AddItem(DecomposedItemSummary item)
 		{
-			_currentCollection?.Items.Add(item);
+			_currentSet?.Items.Add(item);
 		}
 
-		public void AddRandomItem(RandomItemSummary item)
+		public void EndSet()
 		{
-			_currentCollection?.RandomItems.Add(item);
-		}
-
-		public void EndCollection()
-		{
-			_currentCollection = null;
+			_currentSet = null;
 		}
 
 		public DecomposableItemSummary ToSummary()
 		{
-			// Java parity: dataholders/DecomposableItemsData maps normal groups separately from selectable rewards.
+			// Java parity: model/templates/item/DecomposableItem.afterUnmarshal sorts the branches so the rarest rolls first.
+			IEnumerable<DecomposableSetBuilder> sets = IsOnlyOne ? _sets.OrderBy(set => set.Chance) : _sets;
 			return new DecomposableItemSummary(
 				ItemId,
 				IsSelectable,
-				_collections.Select(collection => collection.ToSummary()).ToArray());
+				IsOnlyOne,
+				IsOverride,
+				sets.Select(set => set.ToSummary()).ToArray());
 		}
 	}
 
@@ -652,34 +656,39 @@ public sealed partial class StaticData
 		}
 	}
 
-	private sealed class ExtractedItemsCollectionBuilder
+	private sealed class DecomposableSetBuilder
 	{
-		public ExtractedItemsCollectionBuilder(float chance, int minLevel, int maxLevel)
+		public DecomposableSetBuilder(float chance, int minLevel, int maxLevel, string race, IReadOnlySet<string> playerClasses)
 		{
 			Chance = chance;
 			MinLevel = minLevel;
 			MaxLevel = maxLevel;
+			Race = race;
+			PlayerClasses = playerClasses;
 		}
 
-		private float Chance { get; }
+		public float Chance { get; }
 
 		private int MinLevel { get; }
 
 		private int MaxLevel { get; }
 
-		public List<ResultedItemSummary> Items { get; } = [];
+		private string Race { get; }
 
-		public List<RandomItemSummary> RandomItems { get; } = [];
+		private IReadOnlySet<string> PlayerClasses { get; }
 
-		public ExtractedItemsCollectionSummary ToSummary()
+		public List<DecomposedItemSummary> Items { get; } = [];
+
+		public DecomposableSetSummary ToSummary()
 		{
-			// Java parity: model/templates/rewards/ResultedItemsCollection fixed items plus random_item entries.
-			return new ExtractedItemsCollectionSummary(
+			// Java parity: model/templates/item/DecomposableSet.
+			return new DecomposableSetSummary(
 				Chance,
 				MinLevel,
 				MaxLevel,
-				Items.ToArray(),
-				RandomItems.ToArray());
+				Race,
+				PlayerClasses,
+				Items.ToArray());
 		}
 	}
 

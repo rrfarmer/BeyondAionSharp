@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "packet": "SM_FIRST_SHOW_DECOMPOSABLE",
+  "packet": "SM_SHOW_DECOMPOSABLE",
   "opcode": null,
   "source": "Java",
   "cases": [

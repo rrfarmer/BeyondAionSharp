@@ -6,8 +6,8 @@ namespace Aion.Bots.Protocol;
 
 public static class SystemMessageNames
 {
-	public const int FactoryCount = 4115;
-	public const string SourceSha256 = "CEBDB89698E49C8E08158DFBA29FCD6FA0EEF1823A78B8839ABF109D36F408AE";
+	public const int FactoryCount = 4116;
+	public const string SourceSha256 = "50E6C214A4742C193440B6D92138921F910023913C04FBF7EBAE089D443B86E3";
 
 	private static readonly FrozenDictionary<int, string> Names =
 		new Dictionary<int, string>
@@ -3697,6 +3697,7 @@ public static class SystemMessageNames
 			[1401440] = "STR_MSG_ITEM_PAINT_ERROR_CANNOTREMOVE",
 			[1401445] = "STR_MSG_F2P_CASH_HOUSE_FEE_FREE",
 			[1401454] = "STR_MSG_INVADE_DIRECT_PORTAL_OPEN_NOTICE",
+			[1401466] = "STR_MSG_CAN_NOT_DISASSEMBLE_LORE_ITEM",
 			[1401470] = "STR_MSG_HOUSING_OBJECT_DELETE_USE_COUNT_FINAL",
 			[1401474] = "STR_MSG_INVADE_DIRECT_PORTAL_OUT_COMPULSION",
 			[1401497] = "STR_MSG_HOUSING_CANT_BID_EXCESS_ACCOUNT",

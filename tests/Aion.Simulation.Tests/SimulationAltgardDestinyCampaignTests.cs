@@ -73,7 +73,7 @@ public sealed partial class SimulationFastScenarioTests
 		// Probe only: opening this actual reward demonstrates eligibility; the natural endpoint keeps its bundle sealed.
 		BotInventoryItem bundle = session.Api.World.Inventory.Values.Single(item => item.ItemId == destiny.RewardBundleId);
 		await session.SendPacketAsync(session.Api.UseItem(bundle.ObjectId, fixture.DataManager.StaticData.ItemDataDh.GetItemTemplate(bundle.ItemId)), token);
-		var preview = await session.WaitForPacketAsync(typeof(SM_FIRST_SHOW_DECOMPOSABLE), token, p => p.Get<int>("objectId") == bundle.ObjectId);
+		var preview = await session.WaitForPacketAsync(typeof(SM_SHOW_DECOMPOSABLE), token, p => p.Get<int>("objectId") == bundle.ObjectId);
 		BotDecomposableChoice[] choices = preview.Get<BotDecomposableChoice[]>("choices");
 		Assert.NotEmpty(choices);
 		BotDecomposableChoice choice = choices.First(c => fixture.DataManager.StaticData.ItemDataDh.GetItemTemplate(c.ItemId).IsStigma());

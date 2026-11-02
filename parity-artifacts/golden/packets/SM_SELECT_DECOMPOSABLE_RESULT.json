@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_SELECT_DECOMPOSABLE_RESULT",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "granted",
+      "inputs": {
+        "objectId": 700402,
+        "result": 0
+      },
+      "payloadHex": "F2AF0A000000000000"
+    },
+    {
+      "name": "refused",
+      "inputs": {
+        "objectId": 700403,
+        "result": 1
+      },
+      "payloadHex": "F3AF0A000000000001"
+    }
+  ]
+}

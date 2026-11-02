@@ -46,8 +46,8 @@ public sealed partial class BotServerPacketDecoder
 			[typeof(SM_ITEM_USAGE_ANIMATION)] = DecodeItemUsage,
 			[typeof(SM_TUNE_RESULT)] = DecodeTuneResult,
 			[typeof(SM_UNWRAP_ITEM)] = DecodeUnwrapItem,
-			[typeof(SM_FIRST_SHOW_DECOMPOSABLE)] = DecodeDecomposable,
-			[typeof(SM_SECONDARY_SHOW_DECOMPOSABLE)] = DecodeDecomposable,
+			[typeof(SM_SHOW_DECOMPOSABLE)] = DecodeDecomposable,
+			[typeof(SM_SELECT_DECOMPOSABLE_RESULT)] = DecodeDecomposableResult,
 			[typeof(SmAttackStatus)] = DecodeAttackStatus,
 			[typeof(SM_ATTACK)] = DecodeAttack,
 			[typeof(SM_MOVE)] = DecodeMove,
@@ -267,6 +267,10 @@ public sealed partial class BotServerPacketDecoder
 		return fields;
 	}
 
+	/// <summary>
+	/// Upstream d254ea172 writes the object id as one 64-bit value where the old packet wrote two 32-bit words, which is
+	/// the same bytes on the wire: the second word was always zero and is the high half.
+	/// </summary>
 	private static IReadOnlyDictionary<string, object?> DecodeDecomposable(ReadOnlySpan<byte> body)
 	{
 		var r = new PacketBodyReader(body);
@@ -276,6 +280,17 @@ public sealed partial class BotServerPacketDecoder
 			choices[i] = new(r.ReadByte(), r.ReadInt32(), r.ReadInt32(), r.ReadByte(), r.ReadByte(), r.ReadByte(), r.ReadByte());
 		if (r.Remaining != 0) throw new InvalidDataException("Decomposable preview has unexpected trailing bytes.");
 		return Fields(("objectId", objectId), ("reserved", reserved), ("choices", choices));
+	}
+
+	/// <summary>The answer to a pick in the decomposable window: the box's object id and whether the item was handed out.</summary>
+	private static IReadOnlyDictionary<string, object?> DecodeDecomposableResult(ReadOnlySpan<byte> body)
+	{
+		var r = new PacketBodyReader(body);
+		int objectId = r.ReadInt32(), reserved = r.ReadInt32();
+		byte result = r.ReadByte();
+		if (r.Remaining != 0 || reserved != 0 || result > 1)
+			throw new InvalidDataException("Invalid decomposable selection result.");
+		return Fields(("objectId", objectId), ("reserved", reserved), ("granted", result == 0));
 	}
 
 	private static IReadOnlyDictionary<string, object?> DecodeTuneResult(ReadOnlySpan<byte> body)

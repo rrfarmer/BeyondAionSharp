@@ -137,8 +137,8 @@ public sealed class GoldenPacketFixtureTests
 	[InlineData("SM_AFTER_SIEGE_LOCINFO_475.json")]
 	[InlineData("SM_NEARBY_QUESTS.json")]
 	[InlineData("SM_MACRO_LIST.json")]
-	[InlineData("SM_FIRST_SHOW_DECOMPOSABLE.json")]
-	[InlineData("SM_SECONDARY_SHOW_DECOMPOSABLE.json")]
+	[InlineData("SM_SHOW_DECOMPOSABLE.json")]
+	[InlineData("SM_SELECT_DECOMPOSABLE_RESULT.json")]
 	// ----- Batch 11: con-null-safe scalar / simple-DTO list packets -----
 	[InlineData("SM_ABYSS_RANKING_LEGIONS.json")]
 	[InlineData("SM_ABYSS_RANKING_PLAYERS.json")]
@@ -295,8 +295,8 @@ public sealed class GoldenPacketFixtureTests
 		"SM_AFTER_SIEGE_LOCINFO_475" => new SM_AFTER_SIEGE_LOCINFO_475(),
 		"SM_NEARBY_QUESTS" => new SM_NEARBY_QUESTS(ReconstructIntIntMap(inputs.GetProperty("entries"))),
 		"SM_MACRO_LIST" => new SM_MACRO_LIST(inputs.GetProperty("playerObjectId").GetInt32(), ReconstructMacros(inputs.GetProperty("macros")), inputs.GetProperty("clearList").GetBoolean(), true),
-		"SM_FIRST_SHOW_DECOMPOSABLE" => new SM_FIRST_SHOW_DECOMPOSABLE(inputs.GetProperty("objectId").GetInt32(), ReconstructResultedItems(inputs.GetProperty("items"))),
-		"SM_SECONDARY_SHOW_DECOMPOSABLE" => new SM_SECONDARY_SHOW_DECOMPOSABLE(inputs.GetProperty("objectId").GetInt32(), ReconstructResultedItems(inputs.GetProperty("items"))),
+		"SM_SHOW_DECOMPOSABLE" => new SM_SHOW_DECOMPOSABLE(inputs.GetProperty("objectId").GetInt32(), ReconstructDecomposedItems(inputs.GetProperty("items"))),
+		"SM_SELECT_DECOMPOSABLE_RESULT" => new SM_SELECT_DECOMPOSABLE_RESULT(inputs.GetProperty("objectId").GetInt32(), inputs.GetProperty("result").GetInt32()),
 		// ----- Batch 11 -----
 		"SM_ABYSS_RANKING_LEGIONS" => ReconstructAbyssRankingLegions(inputs),
 		"SM_ABYSS_RANKING_PLAYERS" => ReconstructAbyssRankingPlayers(inputs),
@@ -357,12 +357,12 @@ public sealed class GoldenPacketFixtureTests
 		return list;
 	}
 
-	// ResultedItem is XML-built; set itemId/minCount directly (public XML fields), bypassing afterUnmarshal (no DataManager).
-	private static List<Aion.GameServer.Model.Templates.Items.ResultedItem> ReconstructResultedItems(JsonElement items)
+	// DecomposedItem is XML-built; set itemId/count directly (public XML fields), bypassing AfterUnmarshal (no DataManager).
+	private static List<Aion.GameServer.Model.Templates.Items.DecomposedItem> ReconstructDecomposedItems(JsonElement items)
 	{
-		var list = new List<Aion.GameServer.Model.Templates.Items.ResultedItem>();
+		var list = new List<Aion.GameServer.Model.Templates.Items.DecomposedItem>();
 		foreach (var it in items.EnumerateArray())
-			list.Add(new Aion.GameServer.Model.Templates.Items.ResultedItem { itemId = it[0].GetInt32(), minCount = it[1].GetInt32() });
+			list.Add(new Aion.GameServer.Model.Templates.Items.DecomposedItem { itemId = it[0].GetInt32(), count = it[1].GetInt32() });
 		return list;
 	}
 

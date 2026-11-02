@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Xml.Serialization;
 using Aion.GameServer.Model.Templates.Items;
 
@@ -9,10 +11,23 @@ namespace Aion.GameServer.Dataholders;
 public class DecomposableItemsData
 {
     // XmlSerializer binds public members only (Java @XmlAccessorType(FIELD) on private fields).
-    [XmlElement("decomposable")] public List<DecomposableItemInfo> decomposableItemsTemplates;
+    [XmlElement("decomposable")] public List<DecomposableItem> decomposableItems;
 
-    [XmlIgnore] private readonly Dictionary<int, List<ExtractedItemsCollection>> decomposableItemsInfo = new();
-    [XmlIgnore] private readonly Dictionary<int, List<ResultedItem>> selectableDecomposables = new();
+    [XmlIgnore] private readonly Dictionary<int, DecomposableItem> decomposableItemById = new();
+    [XmlIgnore] private int overrideCount;
+
+    /// <summary>
+    /// Java merges the files of the decomposable_items folder into one &lt;decomposable_items&gt; root before unmarshalling
+    /// (<c>&lt;import file="decomposable_items" singleRootTag="true"/&gt;</c>); XmlSerializer reads one file at a time, so the
+    /// loader appends each file's rows here and runs AfterUnmarshal once over the whole set, as JAXB would.
+    /// </summary>
+    public void MergePending(DecomposableItemsData other)
+    {
+        if (other.decomposableItems == null)
+            return;
+        decomposableItems ??= [];
+        decomposableItems.AddRange(other.decomposableItems);
+    }
 
     public void AfterUnmarshal(object parent)
     {
@@ -24,57 +39,51 @@ public class DecomposableItemsData
     // handing afterUnmarshal the StaticData currently being unmarshalled).
     public void AfterUnmarshal(ItemData itemData, object parent)
     {
-        // Children-first cascade: JAXB fires each ResultedItem/RandomItem.afterUnmarshal during unmarshal (validating
-        // the reward item id against the in-progress ITEM_DATA + defaulting/validating min/max counts) BEFORE this
-        // holder's afterUnmarshal runs. XmlSerializer does not auto-fire nested JAXB callbacks, so replicate the
-        // cascade here before the parent indexing logic. ResultedItem throws on an invalid item id, exactly as Java.
-        foreach (DecomposableItemInfo template in decomposableItemsTemplates)
+        // Children-first cascade: JAXB fires each DecomposedItem.afterUnmarshal during unmarshal (validating the reward
+        // item id against the in-progress ITEM_DATA, and its count and chance) BEFORE this holder's afterUnmarshal, and
+        // each DecomposableItem's after its own children. XmlSerializer does not auto-fire nested JAXB callbacks, so
+        // replicate the cascade here in that order before the parent indexing logic.
+        foreach (DecomposableItem template in decomposableItems)
         {
-            if (template.itemsCollections == null)
-                continue;
-            foreach (ExtractedItemsCollection collection in template.itemsCollections)
-            {
-                if (collection.items != null)
-                    foreach (ResultedItem item in collection.items)
-                        item.AfterUnmarshal(itemData, parent);
-                if (collection.randomItems != null)
-                    foreach (RandomItem randomItem in collection.randomItems)
-                        randomItem.AfterUnmarshal();
-            }
+            if (template.sets != null)
+                foreach (DecomposableSet set in template.sets)
+                {
+                    if (set.items != null)
+                        foreach (DecomposedItem item in set.items)
+                            item.AfterUnmarshal(itemData, parent);
+                }
+            template.AfterUnmarshal(parent);
         }
 
-        decomposableItemsInfo.Clear();
-        foreach (DecomposableItemInfo template in decomposableItemsTemplates)
+        decomposableItemById.Clear();
+        Dictionary<int, DecomposableItem> overrides = new();
+        foreach (DecomposableItem template in decomposableItems)
         {
-            List<ExtractedItemsCollection> itemGroups = template.GetItemsCollections();
-            if (itemGroups != null)
-            {
-                if (template.IsIsSelectable())
-                {
-                    selectableDecomposables[template.GetItemId()] = itemGroups[0].GetItems();
-                }
-                else
-                {
-                    decomposableItemsInfo[template.GetItemId()] = itemGroups;
-                }
-            }
+            Dictionary<int, DecomposableItem> target = template.IsOverride() ? overrides : decomposableItemById;
+            if (!target.TryAdd(template.GetItemId(), template))
+                throw new ArgumentException("Duplicate decomposable item " + template.GetItemId());
         }
-        decomposableItemsTemplates = null;
+        // the files of the folder are merged in no particular order, so the custom entries replace the retail ones only after all are read
+        foreach (KeyValuePair<int, DecomposableItem> entry in overrides)
+            decomposableItemById[entry.Key] = entry.Value;
+        foreach (int itemId in decomposableItemById.Where(e => e.Value.GetSets().Count == 0).Select(e => e.Key).ToList())
+            decomposableItemById.Remove(itemId);
+        overrideCount = overrides.Count;
+        decomposableItems = null;
     }
 
     public int Size()
     {
-        return decomposableItemsInfo.Count;
+        return decomposableItemById.Count;
     }
 
-    public List<ResultedItem> GetSelectableItems(int itemId)
+    public int OverrideCount()
     {
-        List<ResultedItem> items = selectableDecomposables.TryGetValue(itemId, out var v) ? v : null;
-        return items == null ? null : new List<ResultedItem>(items);
+        return overrideCount;
     }
 
-    public List<ExtractedItemsCollection> GetInfoByItemId(int itemId)
+    public DecomposableItem Get(int itemId)
     {
-        return decomposableItemsInfo.TryGetValue(itemId, out var v) ? v : null;
+        return decomposableItemById.TryGetValue(itemId, out DecomposableItem item) ? item : null;
     }
 }

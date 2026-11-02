@@ -10,8 +10,10 @@ public sealed partial class BotGameClientPacketWriterTests
 	{
 		yield return C("unwrap-item", GameClientPackets.UnwrapItem(123), game,
 			new Dictionary<string, object?> { ["objectId"] = 123 });
+		// Upstream d254ea172 reads the object id as one 64-bit value, so the parser no longer has the second word as
+		// its own field; the writer's two 32-bit words are the same bytes and stay as they are.
 		yield return C("select-decomposable", GameClientPackets.SelectDecomposable(123, 255), game,
-			new Dictionary<string, object?> { ["objectId"] = 123, ["unk"] = 0, ["index"] = 255 });
+			new Dictionary<string, object?> { ["objectId"] = 123, ["index"] = 255 });
 		yield return C("purify-five-materials", GameClientPackets.PurifyItem(1, 2, 3, 4, 5, 6, 7, 8), game,
 			new Dictionary<string, object?> { ["playerObjectId"] = 1, ["upgradedItemObjectId"] = 2, ["resultItemId"] = 3,
 				["requireItemObjectId1"] = 4, ["requireItemObjectId2"] = 5, ["requireItemObjectId3"] = 6, ["requireItemObjectId4"] = 7, ["requireItemObjectId5"] = 8 });

@@ -1,21 +1,26 @@
-using Aion.Bots.Protocol;
+﻿using Aion.Bots.Protocol;
 using Aion.Bots.World;
 using Aion.GameServer.Model;
 using Aion.GameServer.Network.Aion.ServerPackets;
 
 namespace Aion.Bots.Scenarios;
 
-/// <summary>G6: ordinary wrapping/unwrapping, timed decomposition, selectable loot and paid cube expansion.</summary>
+/// <summary>G6: ordinary wrapping/unwrapping, timed decomposition, a per-class random box and paid cube expansion.</summary>
 public static class InventoryUtilityScenario
 {
 	public const int MapId = 110010000, NpcId = 798011;
 	public static BotPosition Position { get; } = new(1407.79f, 1434.3f, 573.483f, 98);
 	public const int WeaponId = 100001129, WrapId = 165020008;
 	public const int OreId = 152000103, ProductId = 152000102, BoxId = 188051396;
-	public static IReadOnlyList<int> Choices { get; } = new[]
+	/// <summary>
+	/// The weapons the box can yield to this scenario's Gladiator. Upstream d254ea172 reshaped 188051396 from a
+	/// selection window into an only_one box with a branch per class, so the applicable branch is the Gladiator one and
+	/// its six chances add up to 100: exactly one of these always arrives. The other classes' branches are never
+	/// reachable here, which is what makes this list the whole expected outcome.
+	/// </summary>
+	public static IReadOnlyList<int> GladiatorRolls { get; } = new[]
 	{
-		100100191, 100600219, 100900197, 101700216, 101300194, 100000275, 100500204,
-		100200298, 101500205, 101900290, 101800872, 102000301, 102100761
+		100000275, 100100191, 100200298, 100900197, 101300194, 101700216
 	};
 	public static IReadOnlyList<(int Id, int Count)> Grants { get; } = new[]
 	{
@@ -71,25 +76,19 @@ public static class InventoryUtilityScenario
 				AddProduct(before, ProductId, 3);
 				AssertInventory(before, "decompose");
 			}, token);
-		await driver.StepAsync("open-selection-box-without-consuming-until-choice", async ct =>
+		await driver.StepAsync("open-class-box-consuming-it-for-one-rolled-weapon", async ct =>
 		{
 			var before = Copy(); var box = Item(BoxId);
 			driver.Api.Timing.EnsureCanMove();
 			await driver.SendAsync(GameClientPackets.UseItem(box.ObjectId), ct);
-			var preview = await driver.WaitAsync(typeof(SM_FIRST_SHOW_DECOMPOSABLE), p => p.Get<int>("objectId") == box.ObjectId, ct);
-			var choices = preview.Get<BotDecomposableChoice[]>("choices");
-			Require(choices.Length == Choices.Count, "Box choice count differs from its shipped definition.");
-			for (int i = 0; i < choices.Length; i++)
-				Require(choices[i] == new BotDecomposableChoice((byte)i, Choices[i], 1, 0, 0, 0, 1), "Wrong box index, item or quantity.");
-			await driver.SynchronizeAsync(ct);
-			AssertInventory(before, "preview must not consume box or grant a reward");
-			await driver.SendAsync(driver.Api.SelectDecomposable(box.ObjectId, 5), ct);
-			var close = await driver.WaitAsync(typeof(SM_SECONDARY_SHOW_DECOMPOSABLE), p => p.Get<int>("objectId") == box.ObjectId, ct);
-			Require(close.Get<BotDecomposableChoice[]>("choices").Length == 0, "Selection did not close the box.");
+			// No selection window: the box rolls its class branch, is consumed, and the weapon arrives on its own.
+			await driver.WaitAsync(typeof(SM_ITEM_USAGE_ANIMATION), p => p.Get<int>("itemObjId") == box.ObjectId && p.Get<byte>("animationId") == 1, ct);
 			await driver.SynchronizeAsync(ct);
 			Consume(before, box);
-			AddProduct(before, Choices[5], 1);
-			AssertInventory(before, "select reward");
+			int[] rolled = [.. driver.Api.World.Inventory.Values.Select(item => item.ItemId).Where(GladiatorRolls.Contains)];
+			Require(rolled.Length == 1, "An only_one box granted none or several of its class branch's weapons.");
+			AddProduct(before, rolled[0], 1);
+			AssertInventory(before, "open class box");
 		}, token);
 		await driver.StepAsync("decline-then-accept-priced-cube-expansion", async ct =>
 		{

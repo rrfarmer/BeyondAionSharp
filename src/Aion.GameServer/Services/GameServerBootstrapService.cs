@@ -159,19 +159,6 @@ public sealed class GameServerBootstrapService : IHostedService
 			Aion.GameServer.GeoEngine.RetailPath.SkyTempleNpcNavigationAssets.InitializeCohorts(
 				Aion.GameServer.Retail.RetailNpcCohortCatalog.GetPreparedMaps());
 
-		// Java parity: DataManager.init() runs DecomposeAction.validateRandomItemIds() AFTER the holders are wired
-		// (it reads the DataManager.ITEM_DATA bridge). Must run here, after RegisterInstance — not inside
-		// StaticData.LoadLeafHoldersFromFiles, where the bridge isn't bound yet ("DataManager singleton bridge not
-		// initialized"). try/catch keeps a bad/absent reward id non-fatal at boot.
-		try
-		{
-			Aion.GameServer.Model.Templates.Items.Actions.DecomposeAction.ValidateRandomItemIds();
-		}
-		catch (Exception ex)
-		{
-			_logger.LogError(ex, "Failed to validate decompose random reward item ids.");
-		}
-
 		_logger.LogInformation(
 			"Static data cache loaded from {CacheFile}; {Count} XML files imported",
 			dataManager.StaticData.CacheFilePath,

@@ -41,7 +41,7 @@ public sealed class ItemUseReworkPortTests
                 }
             }
         }
-        Assert.Equal(6103, count);
+        Assert.Equal(6105, count); // upstream d254ea172 added the two Vasharti boxes, both with a casting delay
         Assert.Equal(3000, juicyPepentoDelay);
     }
 

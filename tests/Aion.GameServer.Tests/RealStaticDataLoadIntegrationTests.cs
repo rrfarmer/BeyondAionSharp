@@ -332,14 +332,17 @@ public sealed class RealStaticDataLoadIntegrationTests
 		var rangerLvl10 = sd.SkillTreeDataDh.GetTemplatesFor(Model.PlayerClass.RANGER, 10, Model.Race.ELYOS);
 		Assert.Contains(rangerLvl10, t => t.GetSkillId() == 1);
 
-		// decomposable_items/decomposable_items.xml: faithful DecomposableItemsData (Java parity DataManager.init binds
-		// data.decomposableItemsData). Previously hollow new() -> always empty -> decompose granted nothing. Known
-		// non-selectable box item_id 152000065 (Juicy Pepento) decomposes to item 152000064 (Pepento, min_count 2);
-		// proves the children-first AfterUnmarshal cascade ran (ResultedItem validated vs ITEM_DATA, indexed).
+		// decomposable_items: faithful DecomposableItemsData, merged from the folder's retail and custom files (Java
+		// parity DataManager.init binds data.decomposableItemsData). Previously hollow new() -> always empty ->
+		// decompose granted nothing. Known non-selectable box item_id 152000065 (Juicy Pepento) decomposes to item
+		// 152000064 (Pepento, count 2); proves the children-first AfterUnmarshal cascade ran (DecomposedItem validated
+		// vs ITEM_DATA, DecomposableItem's own callback after it, indexed). The custom file's override rows are counted
+		// separately, so a non-zero override count also proves both files of the folder were read before the indexing.
 		Assert.True(sd.DecomposableItemsDataDh.Size() > 0, "DecomposableItemsDataDh empty after boot");
-		var pepento = sd.DecomposableItemsDataDh.GetInfoByItemId(152000065);
+		Assert.True(sd.DecomposableItemsDataDh.OverrideCount() > 0, "custom_decomposable_items.xml overrides not merged");
+		var pepento = sd.DecomposableItemsDataDh.Get(152000065);
 		Assert.NotNull(pepento);
-		Assert.Contains(pepento!.SelectMany(c => c.GetItems()), r => r.GetItemId() == 152000064);
+		Assert.Contains(pepento!.GetSets().SelectMany(s => s.GetItems()), r => r.GetItemId() == 152000064 && r.GetCount() == 2);
 
 		// quest_data/challenge_tasks.xml: faithful ChallengeData (Java parity DataManager.init binds data.challengeData).
 		// Previously hollow new() -> always empty -> ChallengeTaskService had no tasks. Known task id 300 (LEGION/ELYOS)
