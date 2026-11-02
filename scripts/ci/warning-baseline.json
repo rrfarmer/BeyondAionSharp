@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "solution": "AionServer.slnx",
   "build": "dotnet build -t:Rebuild -v:minimal",
-  "sdkVersion": "10.0.301",
+  "sdkVersion": "10.0.403",
   "total": 4097,
   "codes": {
     "CS0105": 2,
