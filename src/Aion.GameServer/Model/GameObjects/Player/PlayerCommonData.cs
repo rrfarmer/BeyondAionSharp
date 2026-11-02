@@ -22,6 +22,8 @@ public class PlayerCommonData : Aion.GameServer.Model.GameObjects.CreatureTempla
     private Aion.GameServer.Model.Gender gender;
     private DateTime? lastOnline;
     private bool online;
+    public const int MAX_NOTE_LENGTH = 64;
+
     private string note;
     private int mapId;
     private float x, y, z;
@@ -491,7 +493,8 @@ public class PlayerCommonData : Aion.GameServer.Model.GameObjects.CreatureTempla
 
     public void SetNote(string note)
     {
-        this.note = note;
+        // The note is inlined into SM_PLAYER_INFO and other packets, which the client reads only up to 8192 bytes.
+        this.note = note == null || note.Length <= MAX_NOTE_LENGTH ? note! : note.Substring(0, MAX_NOTE_LENGTH);
     }
 
     public int GetTitleId()

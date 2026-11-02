@@ -26,6 +26,8 @@ public class CM_SET_NOTE : AionClientPacket
     protected override void RunImpl()
     {
         Player player = GetConnection().GetActivePlayer();
+        if (note.Length > PlayerCommonData.MAX_NOTE_LENGTH) // retail refuses the packet instead of truncating a longer note
+            return;
         if (note.Equals(player.GetCommonData().GetNote()))
             return;
         player.GetCommonData().SetNote(note);

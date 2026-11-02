@@ -255,7 +255,9 @@ public class PrivateStoreService
 
     public static void OpenPrivateStore(Player activePlayer, string name)
     {
-        activePlayer.GetStore().SetStoreMessage(name);
+        if (name != null && name.Length > PrivateStore.MAX_STORE_MESSAGE_LENGTH) // retail refuses longer messages instead of truncating them
+            return;
+        activePlayer.GetStore().SetStoreMessage(name!);
         PacketSendUtility.BroadcastPacket(activePlayer, new SM_PRIVATE_STORE_NAME(activePlayer), true);
     }
 }
