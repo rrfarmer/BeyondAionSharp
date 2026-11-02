@@ -137,67 +137,88 @@ public class PrivateStoreService
         if (store == null)
             return;
 
-        List<TradePSItem>? boughtItems = GetBoughtItems(seller, store, tradeList);
-        if (boughtItems == null || boughtItems.Count == 0)
-            return; // Invalid items found or store was empty
-
-        if (buyer.GetInventory().GetFreeSlots() < boughtItems.Count)
+        long refund = 0;
+        lock (store) // buyers must not take the same stack twice: the store count is the only limit
         {
-            PacketSendUtility.SendPacket(buyer, SM_SYSTEM_MESSAGE.STR_MSG_DICE_INVEN_ERROR());
-            return;
-        }
+            List<TradePSItem>? boughtItems = GetBoughtItems(seller, store, tradeList);
+            if (boughtItems == null || boughtItems.Count == 0)
+                return; // Invalid items found or store was empty
 
-        long price = 0;
-        try
-        {
+            if (buyer.GetInventory().GetFreeSlots() < boughtItems.Count)
+            {
+                PacketSendUtility.SendPacket(buyer, SM_SYSTEM_MESSAGE.STR_MSG_DICE_INVEN_ERROR());
+                return;
+            }
+
+            long price = 0;
+            try
+            {
+                foreach (TradePSItem boughtItem in boughtItems)
+                    price = checked(price + checked(boughtItem.GetPrice() * boughtItem.GetCount()));
+            }
+            catch (System.OverflowException)
+            {
+                AuditLogger.Log(buyer, "tried to buy items for more than " + long.MaxValue + " kinah from private store of " + seller);
+                return;
+            }
+
+            if (price < 0) // Kinah dupe
+            {
+                AuditLogger.Log(buyer, "tried to buy item with negative kinah price from private store");
+                return;
+            }
+
+            foreach (TradePSItem boughtItem in boughtItems) // the stack may be gone since the snapshot
+            {
+                Item snapshot = seller.GetInventory().GetItemByObjId(boughtItem.GetItemObjId());
+                if (snapshot == null || snapshot.GetItemCount() < boughtItem.GetCount())
+                    return;
+            }
+
+            if (!buyer.GetInventory().TryDecreaseKinah(price))
+                return;
+
             foreach (TradePSItem boughtItem in boughtItems)
-                price = checked(price + checked(boughtItem.GetPrice() * boughtItem.GetCount()));
+            {
+                Item item = seller.GetInventory().GetItemByObjId(boughtItem.GetItemObjId());
+                long soldCount = item == null ? 0 : DecreaseItemFromPlayer(seller, store, item, boughtItem);
+                if (soldCount < boughtItem.GetCount())
+                    refund += boughtItem.GetPrice() * (boughtItem.GetCount() - soldCount);
+                if (soldCount == 0)
+                    continue;
+                // unpack
+                if (item.GetPackCount() > 0)
+                    item.SetPackCount(item.GetPackCount() - 1);
+
+                ItemService.AddItem(buyer, item, soldCount);
+
+                if (soldCount == 1)
+                    PacketSendUtility.SendPacket(seller, SM_SYSTEM_MESSAGE.STR_MSG_PERSONAL_SHOP_SELL_ITEM(item.GetL10n()));
+                else
+                    PacketSendUtility.SendPacket(seller, SM_SYSTEM_MESSAGE.STR_MSG_PERSONAL_SHOP_SELL_ITEM_MULTI(soldCount, item.GetL10n()));
+                log.LogInformation("[PRIVATE STORE] > [Seller: {SellerGetName}] sold [Item: {ItemGetItemId}][Amount: {BoughtItemGetCount}] to [Buyer: {BuyerGetName}] for [Price: {BoughtItemGetPriceBoughtItemGetCount}]", seller.GetName(), item.GetItemId(), soldCount, buyer.GetName(), boughtItem.GetPrice() * soldCount);
+            }
+            if (refund > 0)
+                buyer.GetInventory().IncreaseKinah(refund);
+            seller.GetInventory().IncreaseKinah(price - refund);
         }
-        catch (System.OverflowException)
-        {
-            AuditLogger.Log(buyer, "tried to buy items for more than " + long.MaxValue + " kinah from private store of " + seller);
-            return;
-        }
-
-        if (price < 0) // Kinah dupe
-        {
-            AuditLogger.Log(buyer, "tried to buy item with negative kinah price from private store");
-            return;
-        }
-
-        if (!buyer.GetInventory().TryDecreaseKinah(price))
-            return;
-
-        foreach (TradePSItem boughtItem in boughtItems)
-        {
-            Item item = seller.GetInventory().GetItemByObjId(boughtItem.GetItemObjId());
-            DecreaseItemFromPlayer(seller, store, item, boughtItem);
-            // unpack
-            if (item.GetPackCount() > 0)
-                item.SetPackCount(item.GetPackCount() - 1);
-
-            ItemService.AddItem(buyer, item, boughtItem.GetCount());
-
-            if (boughtItem.GetCount() == 1)
-                PacketSendUtility.SendPacket(seller, SM_SYSTEM_MESSAGE.STR_MSG_PERSONAL_SHOP_SELL_ITEM(item.GetL10n()));
-            else
-                PacketSendUtility.SendPacket(seller, SM_SYSTEM_MESSAGE.STR_MSG_PERSONAL_SHOP_SELL_ITEM_MULTI(boughtItem.GetCount(), item.GetL10n()));
-            log.LogInformation("[PRIVATE STORE] > [Seller: {SellerGetName}] sold [Item: {ItemGetItemId}][Amount: {BoughtItemGetCount}] to [Buyer: {BuyerGetName}] for [Price: {BoughtItemGetPriceBoughtItemGetCount}]", seller.GetName(), item.GetItemId(), boughtItem.GetCount(), buyer.GetName(), boughtItem.GetPrice() * boughtItem.GetCount());
-        }
-        seller.GetInventory().IncreaseKinah(price);
 
         if (store.GetSoldItems().Count == 0)
             ClosePrivateStore(seller);
     }
 
     /// <summary>Decrease item count and update inventory.</summary>
-    private static void DecreaseItemFromPlayer(Player seller, PrivateStore store, Item item, TradePSItem boughtItem)
+    /// <returns>The removed amount, which may be less than requested.</returns>
+    private static long DecreaseItemFromPlayer(Player seller, PrivateStore store, Item item, TradePSItem boughtItem)
     {
-        seller.GetInventory().DecreaseItemCount(item, boughtItem.GetCount());
+        long soldCount = boughtItem.GetCount() - seller.GetInventory().DecreaseItemCount(item, boughtItem.GetCount());
+        if (soldCount <= 0)
+            return 0;
         TradePSItem storeItem = store.GetTradeItemByObjId(item.GetObjectId());
-        storeItem.DecreaseCount(boughtItem.GetCount());
+        storeItem.DecreaseCount(soldCount);
         if (storeItem.GetCount() == 0)
             store.RemoveItem(item.GetObjectId());
+        return soldCount;
     }
 
     /// <summary>Entries are unique indexes into the seller's store list.</summary>
