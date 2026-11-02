@@ -30,6 +30,7 @@ public class _2002WheresRae : AbstractQuestHandler
 		qe.RegisterOnLevelChanged(questId);
 		qe.RegisterQuestNpc(210377).AddOnKillEvent(questId);
 		qe.RegisterQuestNpc(210378).AddOnKillEvent(questId);
+		qe.RegisterOnFlightPathEnd(questId);
 		foreach (int npc_id in npc_ids)
 			qe.RegisterQuestNpc(npc_id).AddOnTalkEvent(questId);
 		qe.RegisterOnEnterWorld(questId);
@@ -164,14 +165,8 @@ public class _2002WheresRae : AbstractQuestHandler
 							{
 								player.SetState(CreatureState.FLYING);
 								player.UnsetState(CreatureState.ACTIVE);
-								player.SetFlightTeleportId(3001);
-								PacketSendUtility.SendPacket(player, new SM_EMOTION(player, EmotionType.START_FLYTELEPORT, 3001, 0));
-								ThreadPoolManager.GetInstance().Schedule(ct =>
-								{
-									ChangeQuestStep(env, 99, 13);
-									TeleportService.TeleportTo(player, 220010000, 940.15f, 2295.64f, 265.7f, (byte)43);
-									return ValueTask.CompletedTask;
-								}, 40000L);
+								player.SetFlightTeleportId(4001);
+								PacketSendUtility.SendPacket(player, new SM_EMOTION(player, EmotionType.START_FLYTELEPORT, 4001, 0));
 								return true;
 							}
 							return false;
@@ -206,32 +201,18 @@ public class _2002WheresRae : AbstractQuestHandler
 		return ChangeQuestStep(env, 99, 12);
 	}
 
+	public override bool OnFlightPathEndEvent(QuestEnv env, int teleportId)
+	{
+		if (teleportId != 4001 || !ChangeQuestStep(env, 99, 13))
+			return false;
+		TeleportService.TeleportTo(env.GetPlayer(), 220010000, 940.15f, 2295.64f, 265.7f, (byte)43);
+		return true;
+	}
+
 	public override bool OnKillEvent(QuestEnv env)
 	{
-		Player player = env.GetPlayer();
-		QuestState qs = player.GetQuestStateList().GetQuestState(questId);
-		if (qs == null)
-			return false;
-
-		int var = qs.GetQuestVarById(0);
-		int targetId = 0;
-		if (env.GetVisibleObject() is Npc npc)
-			targetId = npc.GetNpcId();
-
-		if (qs.GetStatus() != QuestStatus.START)
-			return false;
-		switch (targetId)
-		{
-			case 210377:
-			case 210378:
-				if (var >= 3 && var < 10)
-				{
-					ChangeQuestStep(env, var, Math.Min(10, var + 1));
-					return true;
-				}
-				break;
-		}
-		return false;
+		int[] npcIds = { 210377, 210378 };
+		return DefaultOnKillEvent(env, npcIds, 3, 10);
 	}
 
 	public override void OnQuestCompletedEvent(QuestEnv env)

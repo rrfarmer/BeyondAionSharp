@@ -59,7 +59,7 @@
     "entry": [457.65, 426.8, 230.4],
     "flyPathId": 3,
     "flyPathEnd": [308.21, 275.45, 206.27],
-    "flightSeconds": 45,
+    "flightSeconds": 40,
     "trial": [
       { "npcId": 205040, "count": 4, "positions": [[294, 277, 207], [305, 279, 206.5], [298, 253, 205.7], [306, 251, 206]] },
       { "npcId": 205041, "count": 1, "positions": [[301, 259, 205.5]] }

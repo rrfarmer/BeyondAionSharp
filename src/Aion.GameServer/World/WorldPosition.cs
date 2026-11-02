@@ -70,6 +70,16 @@ public sealed class WorldPosition
     // Java parity: getInstanceId() — derived from the map region's parent instance.
     public int GetInstanceId() => _mapRegion == null ? 1 : _mapRegion.GetParent().GetInstanceId();
 
+    /// <summary>
+    /// The world id the client knows this map instance by: the map id plus the channel (instance id - 1), negated on personal maps.
+    /// Java parity: getClientWorldId()
+    /// </summary>
+    public int GetClientWorldId()
+    {
+        int worldId = GetMapId() + GetInstanceId() - 1;
+        return WorldMapTypeExtensions.GetWorld(GetMapId())!.Value.IsPersonal() ? -worldId : worldId;
+    }
+
     // Java parity: isInstanceMap()
     public bool IsInstanceMap() => _mapRegion != null && _mapRegion.GetParent().GetParent().IsInstanceType();
 

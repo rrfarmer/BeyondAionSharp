@@ -107,7 +107,7 @@ namespace Aion.GameServer.Handlers.Quest
                                 }
                                 break;
                             case DialogAction.SETPRO5:
-                                if (var == 4)
+                                if (ChangeQuestStep(env, 4, 5))
                                 {
                                     Aion.GameServer.SkillEngine.SkillEngine.GetInstance().ApplyEffectDirectly(18563, player, player);
                                     Aion.GameServer.SkillEngine.SkillEngine.GetInstance().ApplyEffectDirectly(18564, player, player);
@@ -115,9 +115,8 @@ namespace Aion.GameServer.Handlers.Quest
                                     Aion.GameServer.SkillEngine.SkillEngine.GetInstance().ApplyEffectDirectly(18566, player, player);
                                     player.SetState(CreatureState.FLYING);
                                     player.UnsetState(CreatureState.ACTIVE);
-                                    player.SetFlightTeleportId(1001);
-                                    PacketSendUtility.SendPacket(player, new SM_EMOTION(player, EmotionType.START_FLYTELEPORT, 1001, 0));
-                                    ChangeQuestStep(env, 4, 5);
+                                    player.SetFlightTeleportId(74001);
+                                    PacketSendUtility.SendPacket(player, new SM_EMOTION(player, EmotionType.START_FLYTELEPORT, 74001, 0));
                                     return true;
                                 }
                                 break;

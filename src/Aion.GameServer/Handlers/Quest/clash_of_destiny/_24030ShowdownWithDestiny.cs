@@ -128,8 +128,8 @@ namespace Aion.GameServer.Handlers.Quest
                                 Aion.GameServer.SkillEngine.SkillEngine.GetInstance().ApplyEffectDirectly(18570, player, player);
                                 player.SetState(CreatureState.FLYING);
                                 player.UnsetState(CreatureState.ACTIVE);
-                                player.SetFlightTeleportId(1001);
-                                PacketSendUtility.SendPacket(player, new SM_EMOTION(player, EmotionType.START_FLYTELEPORT, 1001, 0));
+                                player.SetFlightTeleportId(75001);
+                                PacketSendUtility.SendPacket(player, new SM_EMOTION(player, EmotionType.START_FLYTELEPORT, 75001, 0));
                                 return DefaultCloseDialog(env, 5, 6);
                         }
                         break;

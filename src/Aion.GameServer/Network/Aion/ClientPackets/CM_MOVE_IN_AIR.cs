@@ -39,7 +39,7 @@ public class CM_MOVE_IN_AIR : AionClientPacket
         Player player = GetConnection().GetActivePlayer();
         if (!player.IsSpawned())
             return;
-        if (!player.IsInState(CreatureState.FLYING) || worldId != player.GetWorldId())
+        if (!player.IsInState(CreatureState.FLYING) || worldId != player.GetPosition().GetClientWorldId())
             return;
 
         if (player.GetFlightPath() != null)

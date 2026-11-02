@@ -664,6 +664,7 @@ public class PlayerController : CreatureController<Player>
     public void OnFlyTeleportEnd()
     {
         Player player = GetOwner();
+        FlightPath flightPath = player.GetFlightPath();
         if (player.IsUsingFlightPath(Aion.GameServer.Model.Templates.Flypath.FlightPath.Type.WINDSTREAM))
         {
             player.UnsetState(CreatureState.FLYING);
@@ -676,7 +677,6 @@ public class PlayerController : CreatureController<Player>
         }
         else if (player.IsUsingFlightPath(FlightPath.Type.FLIGHT_TRANSPORTER))
         {
-            FlightPath flightPath = player.GetFlightPath();
             FlyPathEntry? path = player.GetFlightPathTemplate();
             if (path == null)
             {
@@ -691,7 +691,8 @@ public class PlayerController : CreatureController<Player>
                         path.GetEndY(), path.GetEndZ()) + "m away from its end" + (player.GetWorldId() == path.GetEndWorldId() ? "" : " on another map"));
                     return;
                 }
-                // Java allows 1 s tolerance; an early landing is retried only for this same spawned flight.
+                // Java allows 1 s tolerance; an early landing is retried only for this same spawned flight. The client lands 5-10 ms
+                // after the path's sequence ends.
                 long remainingTime = path.GetTimeInMs() - flightPath.GetElapsedTime() - FLIGHT_LANDING_TIME_TOLERANCE;
                 if (remainingTime > 0)
                 {
@@ -713,6 +714,8 @@ public class PlayerController : CreatureController<Player>
             return;
         }
         player.SetFlightPath(null);
+        if (flightPath.GetType_() == FlightPath.Type.FLIGHT_TRANSPORTER)
+            Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnFlightPathEnd(new Aion.GameServer.QuestEngine.Model.QuestEnv(null, player, 0), flightPath.GetId());
     }
 
     public void StartStance(int skillId)

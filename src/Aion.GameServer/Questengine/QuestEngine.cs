@@ -67,6 +67,7 @@ public class QuestEngine : GameEngine
     private readonly List<int> reachTarget = new();
     private readonly List<int> lostTarget = new();
     private readonly List<int> questOnEnterWindStream = new();
+    private readonly List<int> questOnFlightPathEnd = new();
     private readonly List<int> questRideAction = new();
     private readonly Dictionary<string, List<int>> questOnKillInZone = new();
 
@@ -143,6 +144,7 @@ public class QuestEngine : GameEngine
         reachTarget.Clear();
         lostTarget.Clear();
         questOnEnterWindStream.Clear();
+        questOnFlightPathEnd.Clear();
         questRideAction.Clear();
         questHandlers.Clear();
     }
@@ -860,6 +862,26 @@ public class QuestEngine : GameEngine
         }
     }
 
+    public void OnFlightPathEnd(QuestEnv env, int teleportId)
+    {
+        try
+        {
+            foreach (int questId in questOnFlightPathEnd)
+            {
+                AbstractQuestHandler questHandler = GetQuestHandlerByQuestId(questId);
+                if (questHandler != null)
+                {
+                    env.SetQuestId(questId);
+                    questHandler.OnFlightPathEndEvent(env, teleportId);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            log.LogError(ex, "QE: exception in onFlightPathEnd");
+        }
+    }
+
     public void RideAction(QuestEnv env, int itemId)
     {
         try
@@ -1079,6 +1101,12 @@ public class QuestEngine : GameEngine
     {
         if (!questOnEnterWindStream.Contains(questId))
             questOnEnterWindStream.Add(questId);
+    }
+
+    public void RegisterOnFlightPathEnd(int questId)
+    {
+        if (!questOnFlightPathEnd.Contains(questId))
+            questOnFlightPathEnd.Add(questId);
     }
 
     public void RegisterOnRide(int questId)

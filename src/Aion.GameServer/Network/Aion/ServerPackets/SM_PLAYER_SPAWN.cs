@@ -18,12 +18,10 @@ public class SM_PLAYER_SPAWN : AionServerPacket
     // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_PLAYER_SPAWN.java): 2026-06-17. Reads live World singleton (getWorldMap().getTemplate().getBeginnerTwinCount()) + live Player position graph.
     protected override void WriteImpl(AionConnection con)
     {
-        bool isPersonal = WorldMapTypeExtensions.GetWorld(player.GetWorldId()).IsPersonal();
-        int worldChannel = player.GetWorldId() + player.GetInstanceId() - 1;
-        WriteD(isPersonal ? -worldChannel : worldChannel); // world + chnl
+        WriteD(player.GetPosition().GetClientWorldId());
         WriteD(player.GetWorldId());
         WriteD(0x00); // unk
-        WriteC(isPersonal ? 1 : 0);
+        WriteC(WorldMapTypeExtensions.GetWorld(player.GetWorldId()).IsPersonal() ? 1 : 0);
         WriteF(player.GetX()); // x
         WriteF(player.GetY()); // y
         WriteF(player.GetZ()); // z

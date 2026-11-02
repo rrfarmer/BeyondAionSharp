@@ -27,6 +27,7 @@ namespace Aion.GameServer.Handlers.Quest
             qe.RegisterOnQuestCompleted(questId);
             qe.RegisterOnLevelChanged(questId);
             qe.RegisterOnEnterWorld(questId);
+            qe.RegisterOnFlightPathEnd(questId);
             foreach (int npc in npcs)
             {
                 qe.RegisterQuestNpc(npc).AddOnTalkEvent(questId);
@@ -142,7 +143,6 @@ namespace Aion.GameServer.Handlers.Quest
                             case DialogAction.SETPRO5:
                                 WorldMapInstance newInstance = InstanceService.GetNextAvailableInstance(WorldMapType.KARAMATIS.GetId(), player);
                                 TeleportService.TeleportTo(player, newInstance, 52, 174, 229);
-                                ChangeQuestStep(env, 13, 20); // 20
                                 return CloseDialogWindow(env);
                             case DialogAction.SETPRO6:
                                 return DefaultCloseDialog(env, 14, 14, true, false); // reward
@@ -156,14 +156,8 @@ namespace Aion.GameServer.Handlers.Quest
                                 {
                                     player.SetState(CreatureState.FLYING);
                                     player.UnsetState(CreatureState.ACTIVE);
-                                    player.SetFlightTeleportId(1001);
-                                    PacketSendUtility.SendPacket(player, new SM_EMOTION(player, EmotionType.START_FLYTELEPORT, 1001, 0));
-                                    ThreadPoolManager.GetInstance().Schedule(ct =>
-                                    {
-                                        ChangeQuestStep(env, 20, 14); // 14
-                                        TeleportService.TeleportTo(player, 210010000, 1, 603, 1537, 116, (byte)20);
-                                        return ValueTask.CompletedTask;
-                                    }, 43000L);
+                                    player.SetFlightTeleportId(2001);
+                                    PacketSendUtility.SendPacket(player, new SM_EMOTION(player, EmotionType.START_FLYTELEPORT, 2001, 0));
                                     return true;
                                 }
                                 break;
@@ -194,21 +188,22 @@ namespace Aion.GameServer.Handlers.Quest
             QuestState qs = player.GetQuestStateList().GetQuestState(questId);
             if (qs != null && qs.GetStatus() == QuestStatus.START)
             {
-                if (player.GetWorldId() == 310010000)
+                if (player.GetWorldId() == WorldMapType.KARAMATIS.GetId())
                 {
                     PacketSendUtility.SendPacket(player, new SM_ASCENSION_MORPH(1));
-                    return true;
+                    return ChangeQuestStep(env, 13, 20);
                 }
-                else
-                {
-                    int var = qs.GetQuestVarById(0);
-                    if (var == 20)
-                    {
-                        ChangeQuestStep(env, 20, 13); // 13
-                    }
-                }
+                return ChangeQuestStep(env, 20, 13);
             }
             return false;
+        }
+
+        public override bool OnFlightPathEndEvent(QuestEnv env, int teleportId)
+        {
+            if (teleportId != 2001 || !ChangeQuestStep(env, 20, 14))
+                return false;
+            TeleportService.TeleportTo(env.GetPlayer(), 210010000, 1, 603, 1537, 116, (byte)20);
+            return true;
         }
 
         public override bool OnCanAct(QuestEnv env, QuestActionType questEventType, params object[] objects)

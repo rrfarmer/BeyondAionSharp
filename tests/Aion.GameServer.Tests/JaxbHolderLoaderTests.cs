@@ -398,8 +398,8 @@ public sealed class JaxbHolderLoaderTests
         Assert.Equal(310020000, path1.GetStartWorldId());
         Assert.Equal(218.85f, path1.GetEndX(), 3);
         Assert.Equal(310020000, path1.GetEndWorldId());
-        // time="45" seconds -> GetTimeInMs multiplies by 1000.
-        Assert.Equal(45000, path1.GetTimeInMs());
+        // time="40" seconds -> GetTimeInMs multiplies by 1000 (upstream 30612bc3d matched the times to the client's paths).
+        Assert.Equal(40000, path1.GetTimeInMs());
 
         Assert.Null(data.GetPathTemplate(-99999));
     }

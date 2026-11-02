@@ -42,6 +42,7 @@ namespace Aion.GameServer.Handlers.Quest
             qe.RegisterQuestNpc(205041).AddOnKillEvent(questId);
             qe.RegisterOnEnterWorld(questId);
             qe.RegisterOnDie(questId);
+            qe.RegisterOnFlightPathEnd(questId);
         }
 
         public override bool OnKillEvent(QuestEnv env)
@@ -51,33 +52,23 @@ namespace Aion.GameServer.Handlers.Quest
             if (qs == null || qs.GetStatus() != QuestStatus.START)
                 return false;
 
-            int var = qs.GetQuestVarById(0);
             int targetId = env.GetTargetId();
             if (targetId == 205040) // Guardian Assassin
             {
                 env.GetVisibleObject().GetController().Delete();
-                if (var >= 51 && var <= 53)
+                if (ChangeQuestStep(env, 54, 5))
                 {
-                    qs.SetQuestVar(qs.GetQuestVars().GetQuestVars() + 1);
-                    UpdateQuestStatus(env);
-                    return true;
-                }
-                else if (var == 54)
-                {
-                    qs.SetQuestVar(5);
-                    UpdateQuestStatus(env);
                     Npc mob = (Npc)Spawn(205041, player, 301f, 259f, 205.5f, (byte)0);
                     mob.GetAggroList().AddHate(player, 1000);
                     return true;
                 }
+                return DefaultOnKillEvent(env, 205040, 51, 54);
             }
-            else if (targetId == 205041 && var == 5)
+            else if (targetId == 205041 && ChangeQuestStep(env, 5, 6))
             {
                 PlayQuestMovie(env, 152);
                 player.GetWorldMapInstance().ForEachNpc(npc => npc.GetController().Delete());
                 Spawn(203550, player, 301.92999f, 274.26001f, 205.7f, (byte)0);
-                qs.SetQuestVar(6);
-                UpdateQuestStatus(env);
                 return true;
             }
             return false;
@@ -230,33 +221,16 @@ namespace Aion.GameServer.Handlers.Quest
                     switch (env.GetDialogActionId())
                     {
                         case DialogAction.QUEST_SELECT:
-                            if (var == 99)
+                            if (ChangeQuestStep(env, 99, 50))
                             {
                                 Aion.GameServer.SkillEngine.SkillEngine.GetInstance().ApplyEffectDirectly(257, player, player);
                                 player.SetState(CreatureState.FLYING);
                                 player.UnsetState(CreatureState.ACTIVE);
                                 player.SetFlightTeleportId(3001);
                                 PacketSendUtility.SendPacket(player, new SM_EMOTION(player, EmotionType.START_FLYTELEPORT, 3001, 0));
-                                qs.SetQuestVar(50);
-                                UpdateQuestStatus(env);
-                                ThreadPoolManager.GetInstance().Schedule(ct =>
-                                {
-                                    qs.SetQuestVar(51);
-                                    UpdateQuestStatus(env);
-                                    List<Npc> mobs = new List<Npc>();
-                                    mobs.Add((Npc)Spawn(205040, player, 294f, 277f, 207f, (byte)0));
-                                    mobs.Add((Npc)Spawn(205040, player, 305f, 279f, 206.5f, (byte)0));
-                                    mobs.Add((Npc)Spawn(205040, player, 298f, 253f, 205.7f, (byte)0));
-                                    mobs.Add((Npc)Spawn(205040, player, 306f, 251f, 206f, (byte)0));
-                                    foreach (Npc mob in mobs)
-                                    {
-                                        mob.GetAggroList().AddHate(player, 1000);
-                                    }
-                                    return ValueTask.CompletedTask;
-                                }, 43000L);
                                 return true;
                             }
-                            return false;
+                            break;
                     }
                 }
             }
@@ -277,6 +251,21 @@ namespace Aion.GameServer.Handlers.Quest
                 }
             }
             return false;
+        }
+
+        public override bool OnFlightPathEndEvent(QuestEnv env, int teleportId)
+        {
+            if (teleportId != 3001 || !ChangeQuestStep(env, 50, 51))
+                return false;
+            Player player = env.GetPlayer();
+            List<Npc> mobs = new List<Npc>();
+            mobs.Add((Npc)Spawn(205040, player, 294f, 277f, 207f, (byte)0));
+            mobs.Add((Npc)Spawn(205040, player, 305f, 279f, 206.5f, (byte)0));
+            mobs.Add((Npc)Spawn(205040, player, 298f, 253f, 205.7f, (byte)0));
+            mobs.Add((Npc)Spawn(205040, player, 306f, 251f, 206f, (byte)0));
+            foreach (Npc mob in mobs)
+                mob.GetAggroList().AddHate(player, 1000);
+            return true;
         }
 
         public override void OnLevelChangedEvent(Player player)

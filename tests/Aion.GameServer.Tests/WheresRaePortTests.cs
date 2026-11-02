@@ -130,13 +130,18 @@ public sealed class WheresRaePortTests
     }
 
     [Fact]
-    public void ReturnFlightChanges99To13BeforeSendingTheDelayedTeleport()
+    public void ReturnFlightChanges99To13WhenTheFlightPathEnds()
     {
+        // Upstream 30612bc3d dropped the 40 s timer: the landing event carries the step and the teleport now.
         using var s = new Scope(); s.State.SetQuestVar(99);
         Assert.True(s.Dialog(BareNpc(205020), DialogAction.QUEST_SELECT)); Assert.Single(s.Connection.Sent.OfType<SM_EMOTION>());
         Assert.True(s.Player.IsUsingFlightTransporterOrWindstream());
-        s.H.Clock.Advance(TimeSpan.FromMilliseconds(39_999)); Assert.Equal(99, s.State.GetQuestVars().GetQuestVars());
-        s.Connection.Sent.Clear(); s.H.Clock.Advance(TimeSpan.FromMilliseconds(1)); Assert.Equal(13, s.State.GetQuestVars().GetQuestVars());
+        s.H.Clock.Advance(TimeSpan.FromMinutes(5)); Assert.Equal(99, s.State.GetQuestVars().GetQuestVars());
+        s.Connection.Sent.Clear();
+        Assert.False(s.Handler.OnFlightPathEndEvent(new QuestEnv(null, s.Player, Quest), 3001)); // another path's landing is ignored
+        Assert.Equal(99, s.State.GetQuestVars().GetQuestVars());
+        Assert.True(s.Handler.OnFlightPathEndEvent(new QuestEnv(null, s.Player, Quest), 4001));
+        Assert.Equal(13, s.State.GetQuestVars().GetQuestVars());
         int update = s.Connection.Sent.FindIndex(p => p is SM_QUEST_ACTION);
         // Use a real same-map landing to exercise the callback without booting a second instance.
         int teleport = s.Connection.Sent.FindIndex(p => p is SM_CHANNEL_INFO);
