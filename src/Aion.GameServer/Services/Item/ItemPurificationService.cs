@@ -76,6 +76,12 @@ public class ItemPurificationService
         Dictionary<int, PurificationResult> resultItemMap = DataManager.ITEM_PURIFICATION_DATA.GetResultItemMap(baseItem.GetItemId());
 
         PurificationResult purificationResult = resultItemMap.GetValueOrDefault(resultItemId);
+        if (purificationResult == null)
+            return false;
+
+        // Take the fee first: spent materials cannot be returned.
+        if (purificationResult.GetNecessaryKinah() > 0 && !player.GetInventory().TryDecreaseKinah(purificationResult.GetNecessaryKinah()))
+            return false;
 
         foreach (RequiredMaterial reqMaterial in purificationResult.GetRequiredMaterials())
         {
@@ -89,11 +95,6 @@ public class ItemPurificationService
 
         if (purificationResult.GetNecessaryAbyssPoints() > 0)
             AbyssPointsService.AddAp(player, -purificationResult.GetNecessaryAbyssPoints());
-
-        if (purificationResult.GetNecessaryKinah() > 0)
-            // Intentional upstream bug fix (E2E plan §7 #47): Java ce54b7931 negates this
-            // cost, but Storage ignores nonpositive decreases, making purification free.
-            player.GetInventory().DecreaseKinah(purificationResult.GetNecessaryKinah());
 
         player.GetInventory().DecreaseByObjectId(baseItem.GetObjectId(), 1);
 
