@@ -1364,7 +1364,8 @@ public class LegionService
 
         public override void AcceptRequest(Player requester, Player responder)
         {
-            outer.AddToLegion(legion, responder, requester);
+            if (!responder.IsLegionMember())
+                outer.AddToLegion(legion, responder, requester);
         }
 
         public override void DenyRequest(Player requester, Player responder)
