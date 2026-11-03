@@ -32,6 +32,10 @@ public sealed class BroadcastService : IBroadcastService
 
 	public async Task BroadcastMessageAsync(Message message, CancellationToken cancellationToken = default)
 	{
+		// The client may name any channel id, so require the sender to be a member.
+		if (!message.Sender.IsInChannel(message.Channel))
+			return;
+
 		var recipients = GetRecipients(message);
 		_logger.LogDebug("Broadcasting chat message in channel {ChannelId} to {Count} recipients", message.Channel.ChannelId, recipients.Count);
 		foreach (var recipient in recipients)

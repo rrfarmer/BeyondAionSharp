@@ -1,17 +1,26 @@
 using System.Collections.Concurrent;
+using Aion.ChatServer.Services;
 using Microsoft.Extensions.Logging;
 
 namespace Aion.ChatServer.Models.Channels;
 
 public sealed class ChatChannels
 {
+	/// <summary>A channel name is a map, class or language name, so 64 characters is generous.</summary>
+	private const int MaxMetaLength = 64;
+
+	/// <summary>Every distinct name the client sends stays forever, and a real server needs a few dozen.</summary>
+	private const int MaxChannels = 256;
+
 	private readonly ConcurrentDictionary<int, Channel> _channels = new();
 	private readonly object _creationLock = new();
 	private readonly ILogger<ChatChannels> _logger;
+	private readonly IGameServerService? _gameServerService;
 
-	public ChatChannels(ILogger<ChatChannels> logger)
+	public ChatChannels(ILogger<ChatChannels> logger, IGameServerService? gameServerService = null)
 	{
 		_logger = logger;
+		_gameServerService = gameServerService;
 	}
 
 	public Channel? GetChannelById(int channelId)
@@ -23,9 +32,25 @@ public sealed class ChatChannels
 	{
 		var parsed = ParseIdentifier(identifier);
 		if (parsed == null)
+		{
+			_logger.LogWarning("{Client} requested a malformed channel: {Identifier}", client, identifier);
 			return null;
+		}
 
 		var (channelType, gameServerId, race, channelMeta) = parsed.Value;
+		if (channelMeta.Length > MaxMetaLength)
+		{
+			_logger.LogWarning("{Client} requested a channel with a too long name: {Identifier}", client, identifier);
+			return null;
+		}
+
+		// retail: 99 is forbidden and it must be this session's server
+		if (gameServerId == 99 || _gameServerService?.GameServerId is byte ownId && gameServerId != ownId)
+		{
+			_logger.LogWarning("{Client} requested a channel of game server {GameServerId}: {Identifier}", client, gameServerId, identifier);
+			return null;
+		}
+
 		if (client.Race != race && client.AccessLevel == 0)
 		{
 			_logger.LogWarning("{Client} requested channel of race: {Race}", client, race);
@@ -40,6 +65,12 @@ public sealed class ChatChannels
 			{
 				if (channel.Matches(channelType, gameServerId, race, channelMeta))
 					return channel;
+			}
+
+			if (_channels.Count >= MaxChannels)
+			{
+				_logger.LogWarning("{Client} requested a new channel, but {Count} already exist: {Identifier}", client, _channels.Count, identifier);
+				return null;
 			}
 
 			var newChannel = AddChannel(channelType, gameServerId, race, channelMeta);
