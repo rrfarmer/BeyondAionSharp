@@ -219,7 +219,7 @@ public class Legion : AionObject
     }
 
     /// <summary>True if a legion is able to add a member.</summary>
-    private bool CanAddMember()
+    public bool CanAddMember()
     {
         int memberSize = GetMemberIds().Count;
         switch (GetLegionLevel())

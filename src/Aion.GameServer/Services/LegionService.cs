@@ -240,6 +240,7 @@ public class LegionService
             AddHistory(legion, invited.GetName(), LegionHistoryAction.JOIN);
             return true;
         }
+        PacketSendUtility.SendPacket(invited, SM_SYSTEM_MESSAGE.STR_GUILD_INVITE_CAN_NOT_JOIN_TO_GUILD_BY_SIZE_LIMIT());
         PacketSendUtility.SendPacket(inviter, SM_SYSTEM_MESSAGE.STR_GUILD_INVITE_CAN_NOT_ADD_MEMBER_ANY_MORE());
         return false;
     }
@@ -860,6 +861,39 @@ public class LegionService
             return true;
         }
 
+        // Java keeps this private; here the invite response handler is a sibling nested class, which cannot reach
+        // a private member of this one.
+        public bool CanAcceptInvitation(Legion legion, Player inviter, Player invited)
+        {
+            if (!inviter.IsOnline())
+            {
+                PacketSendUtility.SendPacket(invited, SM_SYSTEM_MESSAGE.STR_GUILD_INVITE_CAN_NOT_JOIN_TO_GUILD());
+                return false;
+            }
+            else if (inviter.IsDead())
+            {
+                PacketSendUtility.SendPacket(invited, SM_SYSTEM_MESSAGE.STR_GUILD_INVITE_CAN_NOT_JOIN_TO_GUILD_INVITOR_IS_DEAD());
+                return false;
+            }
+            else if (inviter.GetLegion() != legion)
+            {
+                PacketSendUtility.SendPacket(invited, SM_SYSTEM_MESSAGE.STR_GUILD_INVITE_CAN_NOT_JOIN_TO_GUILD_INVITOR_IS_LEFT());
+                return false;
+            }
+            else if (invited.IsLegionMember())
+            {
+                PacketSendUtility.SendPacket(invited, SM_SYSTEM_MESSAGE.STR_GUILD_INVITE_YOU_ARE_ALREADY_BELONGS_TO_GUILD());
+                PacketSendUtility.SendPacket(inviter, SM_SYSTEM_MESSAGE.STR_GUILD_INVITE_HE_IS_OTHER_GUILD_MEMBER(invited.GetName()));
+                return false;
+            }
+            else if (!inviter.GetLegionMember().HasRights(LegionPermissionsMask.INVITE))
+            {
+                PacketSendUtility.SendPacket(invited, SM_SYSTEM_MESSAGE.STR_GUILD_INVITE_CAN_NOT_JOIN_TO_GUILD());
+                return false;
+            }
+            return true;
+        }
+
         public bool CanInvitePlayer(Player activePlayer, Player targetPlayer)
         {
             Legion legion = activePlayer.GetLegion();
@@ -898,6 +932,11 @@ public class LegionService
             else if (!activePlayer.GetLegionMember().HasRights(LegionPermissionsMask.INVITE))
             {
                 PacketSendUtility.SendPacket(activePlayer, SM_SYSTEM_MESSAGE.STR_GUILD_INVITE_DONT_HAVE_RIGHT_TO_INVITE());
+                return false;
+            }
+            else if (!legion.CanAddMember())
+            {
+                PacketSendUtility.SendPacket(activePlayer, SM_SYSTEM_MESSAGE.STR_GUILD_INVITE_CAN_NOT_ADD_MEMBER_ANY_MORE());
                 return false;
             }
             else if (activePlayer.GetRace() != targetPlayer.GetRace() && !LegionConfig.LEGION_INVITEOTHERFACTION)
@@ -1364,7 +1403,7 @@ public class LegionService
 
         public override void AcceptRequest(Player requester, Player responder)
         {
-            if (!responder.IsLegionMember())
+            if (outer.legionRestrictions.CanAcceptInvitation(legion, requester, responder))
                 outer.AddToLegion(legion, responder, requester);
         }
 
