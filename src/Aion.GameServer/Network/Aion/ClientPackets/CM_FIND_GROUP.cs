@@ -10,6 +10,12 @@ namespace Aion.GameServer.Network.Aion.ClientPackets;
 /// <summary>Java parity: network/aion/clientpackets/CM_FIND_GROUP (cura, MrPoke). Find-group / find-instance-group window actions. FindGroupService red-tolerated.</summary>
 public class CM_FIND_GROUP : AionClientPacket
 {
+    /// <summary>
+    /// The message is sent to every player who opens the group finder, so it must not be able to grow the packet
+    /// beyond what the client reads.
+    /// </summary>
+    private const int MAX_MESSAGE_LENGTH = 255;
+
     private int action;
     private int playerOrTeamId;
     private int bannedPlayerId;
@@ -119,6 +125,17 @@ public class CM_FIND_GROUP : AionClientPacket
     protected override void RunImpl()
     {
         Player player = GetConnection().GetActivePlayer();
+        // Upstream truncates the field in place. Here it is read into a local first, because testing the field for
+        // null would make it nullable for the whole dispatch below; ReadS never returns null, so the empty default
+        // only stands in for an action that read no message, and none of those reach a call that uses one.
+        string message = this.message ?? "";
+        if (message.Length > MAX_MESSAGE_LENGTH)
+        {
+            global::Aion.GameServer.Utils.Audit.AuditLogger.Log(player, "sent group recruitment or application message exceeding "
+                + MAX_MESSAGE_LENGTH + " characters: " + message);
+            message = message.Substring(0, MAX_MESSAGE_LENGTH);
+        }
+
         switch (action)
         {
             case 0:
