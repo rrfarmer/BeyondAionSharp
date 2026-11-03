@@ -33,8 +33,8 @@ public class ItemSplitService
             return;
         }
 
-        IStorage sourceStorage = player.GetStorage(sourceStorageType);
-        IStorage destStorage = player.GetStorage(destinationStorageType);
+        Aion.GameServer.Model.Items.Storage.Storage sourceStorage = player.GetStorage(sourceStorageType);
+        Aion.GameServer.Model.Items.Storage.Storage destStorage = player.GetStorage(destinationStorageType);
         if (sourceStorage == null || destStorage == null)
         {
             log.LogWarning(string.Format("storage null playerName sourceStorage destStorage {0} {1} {2}", player.GetName(), sourceStorageType,
@@ -77,9 +77,10 @@ public class ItemSplitService
 
         if (targetItem == null)
         {
-            if (destStorage.IsFull())
+            if (destStorage.IsFull(sourceItem.GetItemTemplate().GetExtraInventoryId()))
             {
-                PacketSendUtility.SendPacket(player, destStorage.GetStorageIsFullMessage());
+                // GetStorageIsFullMessage is a C# default interface member, so it is only reachable through IStorage.
+                PacketSendUtility.SendPacket(player, ((IStorage)destStorage).GetStorageIsFullMessage());
                 return;
             }
             long oldItemCount = sourceItem.GetItemCount() - splitAmount;
