@@ -59,7 +59,7 @@ public class FollowingNpcCheckTask
         Npc npc = (Npc)destinationChecker.GetFollower();
         player.GetController().CancelTask(TaskId.QUEST_FOLLOW);
         npc.GetAi().OnCreatureEvent(AiEventType.STOP_FOLLOW_ME, player);
-        if (!npc.GetAi().GetName().Equals("following"))
+        if (!npc.GetAi().GetName().Equals(ZoneChecker.FOLLOWING_AI_NAME))
             npc.GetController().Delete();
     }
 }

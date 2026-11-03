@@ -2,11 +2,12 @@ using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Ai.Handler;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.QuestEngine.Task.Checker;
 
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>Java parity: ai/FollowingNpcAI (ATracer).</summary>
-[AIName("following")]
+[AIName(ZoneChecker.FOLLOWING_AI_NAME)]
 public class FollowingNpcAI : GeneralNpcAI
 {
     public FollowingNpcAI(Npc owner)

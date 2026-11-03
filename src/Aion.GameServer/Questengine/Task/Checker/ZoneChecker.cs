@@ -6,6 +6,9 @@ namespace Aion.GameServer.QuestEngine.Task.Checker;
 /// <summary>Java parity: questEngine/task/checker/ZoneChecker.</summary>
 public class ZoneChecker : DestinationChecker
 {
+    // Java declares this static final; here it is const, because the AIName attribute needs a constant.
+    public const string FOLLOWING_AI_NAME = "following";
+
     protected readonly string zoneName;
 
     public ZoneChecker(Creature follower, string zoneName)

@@ -1,6 +1,7 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Geometry;
 using Aion.GameServer.Model.Templates.Zone;
+using Aion.GameServer.QuestEngine.Task.Checker;
 using Aion.GameServer.Utils.Collections;
 using Aion.GameServer.World.Zone.Handler;
 
@@ -43,8 +44,11 @@ public class ZoneInstance
         _mapId == creature.GetWorldId() && _template.GetArea().IsInside3D(creature.GetX(), creature.GetY(), creature.GetZ());
 
     /// <summary>Whether this zone is irrelevant to the creature and should not track it.</summary>
+    // Java reads the AI name directly; this port can reach the zone check before an npc has its AI, so a missing
+    // one counts as not the following AI, which is how the npc was treated before this check existed.
     public virtual bool IsIgnored(Creature creature) =>
-        ignoreRegularNpcs && creature is Npc && creature is not SummonedObject;
+        ignoreRegularNpcs && creature is Npc npc && creature is not SummonedObject
+        && !ZoneChecker.FOLLOWING_AI_NAME.Equals(npc.GetAi()?.GetName());
 
     // Java parity: synchronized onEnter(Creature) — non-final in Java (Fly/NoFly/PvP ZoneInstance override), so virtual.
     public virtual bool OnEnter(Creature creature)
