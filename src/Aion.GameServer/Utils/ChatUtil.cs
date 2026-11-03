@@ -399,6 +399,14 @@ public static class ChatUtil
 		return string.Concat(System.Linq.Enumerable.Repeat("	", width - num.Length)) + num;
 	}
 
+	/// <summary>
+	/// True for control characters (e.g. \n or DEL), which the client cannot send via chat or other input fields.
+	/// </summary>
+	public static bool IsInvalidCharacter(int codePoint)
+	{
+		return codePoint < 32 && codePoint != '\t' || codePoint == 127;
+	}
+
 	private static string FormatColorComponent(float value)
 	{
 		// Java DecimalFormat.applyPattern(".##") gives a pattern without a zero digit one, so it formats like ".0#":

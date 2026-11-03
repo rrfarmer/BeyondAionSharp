@@ -38,6 +38,13 @@ public class CM_CHAT_MESSAGE_WHISPER : AionClientPacket
     {
         string realName = ChatUtil.GetRealCharName(name);
         Player sender = GetConnection().GetActivePlayer();
+
+        if (message.Any(c => ChatUtil.IsInvalidCharacter(c)))
+        {
+            global::Aion.GameServer.Utils.Audit.AuditLogger.Log(sender, "sent whisper message containing control characters: " + message);
+            return;
+        }
+
         Player receiver = global::Aion.GameServer.World.World.GetInstance().GetPlayer(realName);
 
         if (receiver == null)

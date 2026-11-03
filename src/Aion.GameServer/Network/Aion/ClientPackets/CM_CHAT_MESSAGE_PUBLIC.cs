@@ -37,6 +37,12 @@ public class CM_CHAT_MESSAGE_PUBLIC : AionClientPacket
     {
         Player player = GetConnection().GetActivePlayer();
 
+        if (message.Any(c => global::Aion.GameServer.Utils.ChatUtil.IsInvalidCharacter(c)))
+        {
+            global::Aion.GameServer.Utils.Audit.AuditLogger.Log(player, "sent chat message containing control characters: " + message);
+            return;
+        }
+
         if (ChatProcessor.GetInstance().HandleChatCommand(player, message))
             return;
 
