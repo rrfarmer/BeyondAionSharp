@@ -456,7 +456,7 @@ public class TeleportService
     {
         Aion.GameServer.World.WorldMap map = player.GetWorldMapInstance().GetParent();
         // Channels exist only in open worlds; on instance maps the number would select another group's instance.
-        if (map.IsInstanceType() || map.GetWorldMapInstance(channel + 1) == null)
+        if (map.IsInstanceType() || channel < 0 || map.GetWorldMapInstance(channel + 1) == null)
         {
             AuditLogger.Log(player, "tried to change to invalid channel " + channel + " of map " + player.GetWorldId() + " at " + player.GetPosition());
             return;

@@ -96,13 +96,6 @@ public class WorldMap : IEnumerable<WorldMapInstance>
         // instanceId is a count, some code still uses 0 for the default instance
         if (instanceId == 0)
             instanceId = 1;
-        if (!IsInstanceType())
-        {
-            if (instanceId > GetInstanceCount())
-            {
-                throw new ArgumentException("WorldMapInstance " + GetMapId() + " has lower instances count than " + instanceId);
-            }
-        }
         return instances.GetValueOrDefault(instanceId);
     }
 
