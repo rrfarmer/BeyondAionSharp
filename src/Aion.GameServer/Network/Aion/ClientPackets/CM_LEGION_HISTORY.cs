@@ -12,7 +12,7 @@ namespace Aion.GameServer.Network.Aion.ClientPackets;
 public class CM_LEGION_HISTORY : AionClientPacket
 {
     private int page;
-    private Type type;
+    private Type? type;
 
     public CM_LEGION_HISTORY(int opcode, ISet<State> validStates)
         : base(opcode, validStates)
@@ -22,16 +22,17 @@ public class CM_LEGION_HISTORY : AionClientPacket
     protected override void ReadImpl()
     {
         page = ReadD();
-        type = Enum.GetValues<Type>()[ReadUC()];
+        int typeId = ReadUC();
+        type = typeId < Enum.GetValues<Type>().Length ? Enum.GetValues<Type>()[typeId] : null;
     }
 
     protected override void RunImpl()
     {
         Player player = GetConnection().GetActivePlayer();
-        if (player.GetLegion() == null)
+        if (player.GetLegion() == null || type == null)
             return;
         if (type == Type.REWARD && !player.GetLegionMember().IsBrigadeGeneral())
             return;
-        SendPacket(new SM_LEGION_HISTORY(player.GetLegion().GetHistory(type), page, type));
+        SendPacket(new SM_LEGION_HISTORY(player.GetLegion().GetHistory(type.Value), page, type.Value));
     }
 }

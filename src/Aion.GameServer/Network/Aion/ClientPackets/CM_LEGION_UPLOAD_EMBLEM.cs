@@ -24,13 +24,20 @@ public class CM_LEGION_UPLOAD_EMBLEM : AionClientPacket
 
     protected override void RunImpl()
     {
-        Player activePlayer = GetConnection().GetActivePlayer();
-        if (activePlayer == null)
+        Player player = GetConnection().GetActivePlayer();
+        // Upstream dropped this null check when it added the membership one. Kept: this port reaches the packet layer
+        // from in-process transports too, and IsLegionMember would throw on a null player instead of refusing.
+        if (player == null)
             return;
+        if (!player.IsLegionMember())
+        {
+            global::Aion.GameServer.Utils.Audit.AuditLogger.Log(player, "uploaded a legion emblem without being member of a legion");
+            return;
+        }
 
         if (data != null && data.Length > 0)
         {
-            LegionService.GetInstance().UploadEmblemData(activePlayer, data);
+            LegionService.GetInstance().UploadEmblemData(player, data);
         }
     }
 }

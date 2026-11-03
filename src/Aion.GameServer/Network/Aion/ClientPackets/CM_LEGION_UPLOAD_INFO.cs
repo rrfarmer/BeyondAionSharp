@@ -33,7 +33,14 @@ public class CM_LEGION_UPLOAD_INFO : AionClientPacket
 
     protected override void RunImpl()
     {
-        Player activePlayer = GetConnection().GetActivePlayer();
-        LegionService.GetInstance().UploadEmblemInfo(activePlayer, totalSize, alpha, red, green, blue, LegionEmblemType.CUSTOM);
+        Player player = GetConnection().GetActivePlayer();
+        if (player == null)
+            return;
+        if (!player.IsLegionMember())
+        {
+            global::Aion.GameServer.Utils.Audit.AuditLogger.Log(player, "sent legion emblem info without being member of a legion");
+            return;
+        }
+        LegionService.GetInstance().UploadEmblemInfo(player, totalSize, alpha, red, green, blue, LegionEmblemType.CUSTOM);
     }
 }
