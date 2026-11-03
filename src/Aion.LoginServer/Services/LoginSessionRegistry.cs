@@ -50,6 +50,8 @@ public interface ILoginSessionRegistry
 
 	IReadOnlyDictionary<byte, int> GetGameServerCharacterCounts(int accountId);
 
+	void RemoveGameServerCharacterCounts(int accountId);
+
 	Task UpdateServerListForAllLoggedInPlayersAsync(IReadOnlyCollection<GameServerInfo> gameServers);
 }
 
@@ -81,6 +83,7 @@ public sealed class LoginSessionRegistry : ILoginSessionRegistry
 		_accountsOnLoginServer.TryGetValue(account.Id, out var currentSession);
 		if (ReferenceEquals(currentSession, session))
 			_accountsOnLoginServer.TryRemove(account.Id, out _);
+		RemoveGameServerCharacterCounts(account.Id);
 	}
 
 	public ILoginClientSession? GetLoginSession(int accountId)
@@ -93,6 +96,8 @@ public sealed class LoginSessionRegistry : ILoginSessionRegistry
 	{
 		if (!_accountsOnLoginServer.TryRemove(accountId, out var session))
 			return false;
+
+		RemoveGameServerCharacterCounts(accountId);
 
 		await session.CloseWithPacketAsync(new SmAccountKick(response));
 		return true;
@@ -108,6 +113,8 @@ public sealed class LoginSessionRegistry : ILoginSessionRegistry
 
 		var removed = ((ICollection<KeyValuePair<int, ILoginClientSession>>)_accountsOnLoginServer)
 			.Remove(new KeyValuePair<int, ILoginClientSession>(sessionKey.AccountId, session));
+		if (removed)
+			RemoveGameServerCharacterCounts(sessionKey.AccountId);
 		return removed ? session : null;
 	}
 
@@ -151,6 +158,15 @@ public sealed class LoginSessionRegistry : ILoginSessionRegistry
 		return _accountsGameServerCharacterCounts.TryGetValue(accountId, out var counts)
 			? new Dictionary<byte, int>(counts)
 			: new Dictionary<byte, int>();
+	}
+
+	/// <summary>
+	/// The per-account character counts are only ever added to while an account sits on the login server, so every path
+	/// that takes a session off it has to drop them too, or they accumulate for the lifetime of the process.
+	/// </summary>
+	public void RemoveGameServerCharacterCounts(int accountId)
+	{
+		_accountsGameServerCharacterCounts.TryRemove(accountId, out _);
 	}
 
 	public async Task UpdateServerListForAllLoggedInPlayersAsync(IReadOnlyCollection<GameServerInfo> gameServers)

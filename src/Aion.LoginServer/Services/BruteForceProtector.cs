@@ -9,6 +9,8 @@ public interface IBruteForceProtector
 
 public sealed class BruteForceProtector : IBruteForceProtector
 {
+	private const int PurgeThreshold = 1024;
+
 	private readonly ConcurrentDictionary<string, FailedLoginInfo> _failedConnections = new();
 
 	public bool AddFailedConnect(string ip, int loginTryBeforeBan, int banWindowMinutes)
@@ -17,6 +19,11 @@ public sealed class BruteForceProtector : IBruteForceProtector
 		var banWindowMillis = banWindowMinutes * 60_000L;
 		if (!_failedConnections.TryGetValue(ip, out var failed) || failed.Time + banWindowMillis < now)
 		{
+			if (_failedConnections.Count > PurgeThreshold) // the map only grows: drop the entries that can no longer be banned
+			{
+				foreach (var stale in _failedConnections.Where(e => e.Value.Time + banWindowMillis < now).Select(e => e.Key).ToArray())
+					_failedConnections.TryRemove(stale, out _);
+			}
 			_failedConnections[ip] = new FailedLoginInfo(1, now);
 			return false;
 		}
