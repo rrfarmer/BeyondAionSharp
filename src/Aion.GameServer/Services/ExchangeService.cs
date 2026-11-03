@@ -24,6 +24,12 @@ public class ExchangeService
 
     private readonly ConcurrentDictionary<int, Exchange> exchanges = new ConcurrentDictionary<int, Exchange>();
 
+    /// <summary>
+    /// Java's instance-level monitor for this singleton's synchronized methods. Both partners' confirmations have to be
+    /// serialized against each other, or each can see the other as unconfirmed and the trade runs twice or not at all.
+    /// </summary>
+    private readonly object confirmationGate = new object();
+
     public static ExchangeService GetInstance()
     {
         return SingletonHolder.instance;
@@ -242,22 +248,23 @@ public class ExchangeService
         if (activePlayer == null || !activePlayer.IsOnline())
             return;
 
-        Exchange currentExchange = GetCurrentExchange(activePlayer);
-
-        // TODO: Why is exchange null =/
-        if (currentExchange == null)
-            return;
-        currentExchange.Confirm();
-
-        Player currentPartner = GetCurrentParter(activePlayer);
-        Exchange? partnerExchange = currentPartner == null ? null : GetCurrentExchange(currentPartner);
-        if (partnerExchange == null)
-            return;
-        PacketSendUtility.SendPacket(currentPartner!, new SM_EXCHANGE_CONFIRMATION(SM_EXCHANGE_CONFIRMATION.Action.PARTNER_CONFIRMED));
-
-        if (partnerExchange.IsConfirmed())
+        lock (confirmationGate)
         {
-            PerformTrade(activePlayer, currentPartner!);
+            Exchange currentExchange = GetCurrentExchange(activePlayer);
+            if (currentExchange == null)
+                return;
+            currentExchange.Confirm();
+
+            Player currentPartner = GetCurrentParter(activePlayer);
+            Exchange? partnerExchange = currentPartner == null ? null : GetCurrentExchange(currentPartner);
+            if (partnerExchange == null)
+                return;
+            PacketSendUtility.SendPacket(currentPartner!, new SM_EXCHANGE_CONFIRMATION(SM_EXCHANGE_CONFIRMATION.Action.PARTNER_CONFIRMED));
+
+            if (partnerExchange.IsConfirmed())
+            {
+                PerformTrade(activePlayer, currentPartner!);
+            }
         }
     }
 

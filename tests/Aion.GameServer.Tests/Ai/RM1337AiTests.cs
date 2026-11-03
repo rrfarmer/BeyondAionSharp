@@ -108,6 +108,11 @@ public sealed class RM1337AiTests
 	/// <remarks>
 	/// Retail's <c>spawn_on_multi_target</c> puts it on the attacker rather than around the boss, so at
 	/// least five of the twenty-three stand where somebody is.
+	/// <para>
+	/// At least, not exactly: the wave also scatters sparks within five metres of the boss and the player stands four
+	/// away, so one of those can land on the player by chance. Asserting equality here failed once in a full run while
+	/// passing in isolation; the claim the pin exists for is the lower bound its own remark states.
+	/// </para>
 	/// </remarks>
 	[Fact]
 	public void SomeOfTheWoundedFireLandsOnAPlayer()
@@ -122,7 +127,7 @@ public sealed class RM1337AiTests
 		int onPlayer = harness.LiveNpcs().Count(n => n.GetNpcId() == Spark
 			&& Math.Abs(n.GetX() - player.GetX()) < 0.5f
 			&& Math.Abs(n.GetY() - player.GetY()) < 0.5f);
-		Assert.Equal(5, onPlayer);
+		Assert.True(onPlayer >= 5, $"Expected at least the five attacker drops to stand on the player, found {onPlayer}.");
 	}
 
 	/// <summary>
