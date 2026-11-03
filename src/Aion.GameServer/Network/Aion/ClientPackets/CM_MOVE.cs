@@ -161,8 +161,15 @@ public class CM_MOVE : AionClientPacket
 
         if ((type & MovementMask.FALL) == MovementMask.FALL)
         {
-            player.GetFlyController().OnStopGliding();
-            m.UpdateFalling(z);
+            if ((type & MovementMask.VEHICLE) == MovementMask.VEHICLE)
+            {
+                m.RestartFalling(z);
+            }
+            else
+            {
+                player.GetFlyController().OnStopGliding();
+                m.UpdateFalling(z);
+            }
         }
         else
         {
