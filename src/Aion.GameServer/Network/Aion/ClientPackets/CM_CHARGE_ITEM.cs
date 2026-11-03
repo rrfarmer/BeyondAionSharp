@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using Aion.GameServer.Model;
+using Aion.GameServer.Utils.Audit;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
@@ -32,9 +34,11 @@ public class CM_CHARGE_ITEM : AionClientPacket
     protected override void RunImpl()
     {
         Player player = GetConnection().GetActivePlayer();
-        if (!player.IsTargeting(targetNpcObjectId))
+        if (!player.IsTargetingNpcWithFunctionNearby(targetNpcObjectId, DialogAction.CHARGE_ITEM_MULTI, DialogAction.CHARGE_ITEM_SINGLE,
+            DialogAction.CHARGE_ITEM_MULTI2, DialogAction.CHARGE_ITEM_SINGLE2))
         {
-            return; // TODO audit?
+            AuditLogger.Log(player, "tried to charge items without targeting a conditioning or augmenting officer in range");
+            return;
         }
 
         List<Item> itemsToCharge = new List<Item>();

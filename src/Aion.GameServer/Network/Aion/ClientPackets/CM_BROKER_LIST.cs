@@ -32,9 +32,11 @@ public class CM_BROKER_LIST : AionClientPacket
     protected override void RunImpl()
     {
         Player player = GetConnection().GetActivePlayer();
-        if (player.IsTargetingNpcWithFunction(brokerObjId, DialogAction.OPEN_VENDOR))
-            BrokerService.GetInstance().ShowRequestedItems(player, listMask, sortType, page, null);
-        else
-            AuditLogger.Log(player, "tried to browse for broker items without targeting a broker");
+        if (!player.IsTargetingNpcWithFunctionNearby(brokerObjId, DialogAction.OPEN_VENDOR))
+        {
+            AuditLogger.Log(player, "tried to browse for broker items without targeting a broker in range");
+            return;
+        }
+        BrokerService.GetInstance().ShowRequestedItems(player, listMask, sortType, page, null);
     }
 }

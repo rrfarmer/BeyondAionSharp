@@ -38,9 +38,11 @@ public class CM_REGISTER_BROKER_ITEM : AionClientPacket
         if (player.IsTrading() || itemCount <= 0)
             return;
 
-        if (player.IsTargetingNpcWithFunction(brokerObjId, DialogAction.OPEN_VENDOR))
-            BrokerService.GetInstance().RegisterItem(player, itemUniqueId, itemCount, price, splittingAvailable);
-        else
-            AuditLogger.Log(player, "tried to register a broker item without targeting a broker");
+        if (!player.IsTargetingNpcWithFunctionNearby(brokerObjId, DialogAction.OPEN_VENDOR))
+        {
+            AuditLogger.Log(player, "tried to register a broker item without targeting a broker in range");
+            return;
+        }
+        BrokerService.GetInstance().RegisterItem(player, itemUniqueId, itemCount, price, splittingAvailable);
     }
 }

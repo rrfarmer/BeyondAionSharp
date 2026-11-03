@@ -28,9 +28,11 @@ public class CM_BROKER_CANCEL_REGISTERED : AionClientPacket
     protected override void RunImpl()
     {
         Player player = GetConnection().GetActivePlayer();
-        if (player.IsTargetingNpcWithFunction(brokerObjId, DialogAction.OPEN_VENDOR))
-            BrokerService.GetInstance().CancelRegisteredItem(player, brokerItemId);
-        else
-            AuditLogger.Log(player, "tried to unregister his registered broker item without targeting a broker");
+        if (!player.IsTargetingNpcWithFunctionNearby(brokerObjId, DialogAction.OPEN_VENDOR))
+        {
+            AuditLogger.Log(player, "tried to unregister his registered broker item without targeting a broker in range");
+            return;
+        }
+        BrokerService.GetInstance().CancelRegisteredItem(player, brokerItemId);
     }
 }

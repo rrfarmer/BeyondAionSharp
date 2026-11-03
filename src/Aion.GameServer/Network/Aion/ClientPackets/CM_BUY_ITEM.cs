@@ -116,6 +116,11 @@ public class CM_BUY_ITEM : AionClientPacket
 
     private void TradeWithNpc(Player player, Npc npc)
     {
+        if (!global::Aion.GameServer.Utils.PositionUtil.IsInTalkRange(player, npc))
+        {
+            AuditLogger.Log(player, "might be abusing CM_BUY_ITEM: too far from " + npc + " at " + player.GetPosition());
+            return;
+        }
         if (!DialogService.IsInteractionAllowed(player, npc))
         {
             AuditLogger.Log(player, "might be abusing CM_BUY_ITEM: no right trading with " + npc);

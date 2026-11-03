@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Model.GameObjects.State;
@@ -140,10 +141,10 @@ public partial class Player
         return creature.GetMaster() is Player;
     }
 
-    public bool IsTargetingNpcWithFunction(int objectId, int dialogActionId)
+    public bool IsTargetingNpcWithFunctionNearby(int objectId, params int[] dialogActionIds)
     {
-        VisibleObject target = GetTarget();
-        return target is Npc npc && target.GetObjectId() == objectId && npc.GetObjectTemplate().SupportsAction(dialogActionId);
+        return GetTarget() is Npc npc && npc.GetObjectId() == objectId && Aion.GameServer.Utils.PositionUtil.IsInTalkRange(this, npc)
+            && dialogActionIds.Any(id => npc.GetObjectTemplate().SupportsAction(id));
     }
 
     /// <summary>the motions</summary>

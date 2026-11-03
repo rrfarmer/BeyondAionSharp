@@ -32,9 +32,11 @@ public class CM_BUY_BROKER_ITEM : AionClientPacket
         Player player = GetConnection().GetActivePlayer();
         if (itemCount < 1)
             return;
-        if (player.IsTargetingNpcWithFunction(brokerObjId, DialogAction.OPEN_VENDOR))
-            BrokerService.GetInstance().BuyBrokerItem(player, itemUniqueId, itemCount);
-        else
-            AuditLogger.Log(player, "tried to buy an item from broker without targeting a broker");
+        if (!player.IsTargetingNpcWithFunctionNearby(brokerObjId, DialogAction.OPEN_VENDOR))
+        {
+            AuditLogger.Log(player, "tried to buy an item from broker without targeting a broker in range");
+            return;
+        }
+        BrokerService.GetInstance().BuyBrokerItem(player, itemUniqueId, itemCount);
     }
 }

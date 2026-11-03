@@ -28,9 +28,11 @@ public class CM_BREAK_WEAPONS : AionClientPacket
     protected override void RunImpl()
     {
         Player player = GetConnection().GetActivePlayer();
-        if (player.IsTargetingNpcWithFunction(npcObjId, DialogAction.DECOMPOUND_WEAPON))
-            ArmsfusionService.BreakWeapons(player, weaponObjId);
-        else
-            AuditLogger.Log(player, "tried to defuse a weapon without targeting an armsfusion officer");
+        if (!player.IsTargetingNpcWithFunctionNearby(npcObjId, DialogAction.DECOMPOUND_WEAPON))
+        {
+            AuditLogger.Log(player, "tried to defuse a weapon without targeting an armsfusion officer in range");
+            return;
+        }
+        ArmsfusionService.BreakWeapons(player, weaponObjId);
     }
 }

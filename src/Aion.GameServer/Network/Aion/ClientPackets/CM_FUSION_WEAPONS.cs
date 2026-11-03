@@ -30,9 +30,11 @@ public class CM_FUSION_WEAPONS : AionClientPacket
     protected override void RunImpl()
     {
         Player player = GetConnection().GetActivePlayer();
-        if (player.IsTargetingNpcWithFunction(npcObjId, DialogAction.COMPOUND_WEAPON))
-            ArmsfusionService.FusionWeapons(GetConnection().GetActivePlayer(), mainWeaponObjId, fuseWeaponObjId);
-        else
-            AuditLogger.Log(player, "tried to fuse weapons without targeting an armsfusion officer");
+        if (!player.IsTargetingNpcWithFunctionNearby(npcObjId, DialogAction.COMPOUND_WEAPON))
+        {
+            AuditLogger.Log(player, "tried to fuse weapons without targeting an armsfusion officer in range");
+            return;
+        }
+        ArmsfusionService.FusionWeapons(GetConnection().GetActivePlayer(), mainWeaponObjId, fuseWeaponObjId);
     }
 }
