@@ -19,6 +19,9 @@ public class ItemActionService
 {
     public static void IdentifyItem(Player player, Item item)
     {
+        // A second identify cancels the task of the first one, and that task is the only place that removes its observer.
+        if (player.GetController().HasTask(TaskId.ITEM_USE))
+            return;
         int itemId = item.GetItemId();
         PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), item.GetObjectId(), itemId, 5000, ItemUseAnimation.IDENTIFY_START), true);
         ItemUseObserver observer = new IdentifyItemObserver(player, item, itemId);
